@@ -1,0 +1,13 @@
+Package     Version
+----------- -------
+keyboard    0.13.5
+Nuitka      2.4.8
+ordered-set 4.1.0
+pillow      10.4.0
+pip         24.2
+pynput      1.7.7
+pywin32     306
+screeninfo  0.8.1
+six         1.16.0
+wxPython    4.2.1
+zstandard   0.23.0
