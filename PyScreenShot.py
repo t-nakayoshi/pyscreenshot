@@ -122,13 +122,13 @@ class MyScreenShot(TaskBarIcon):
         * タスクトレイアイコンを右クリックした際に、Popupメニューを生成して表示する
         * 現バージョンでは生成したメニューが破棄されて再利用できない。
         """
-        print("CreatePopupMenu")
+        # print("CreatePopupMenu")
         menu = wx.Menu()
         # Help
         sub_menu = wx.Menu()
-        create_menu_item(sub_menu, rdata.ID_MENU_HELP, u'Helpを表示', self.on_menu_show_help)
+        create_menu_item(sub_menu, rdata.ID_MENU_HELP, 'Helpを表示', self.on_menu_show_help)
         sub_menu.AppendSeparator()
-        create_menu_item(sub_menu, rdata.ID_MENU_ABOUT, _app_name_ + 'について...', self.on_menu_show_about)
+        create_menu_item(sub_menu, rdata.ID_MENU_ABOUT, 'バージョン情報...', self.on_menu_show_about)
         item = menu.AppendSubMenu(sub_menu, 'Help')
         #item.SetBitmap(wx.Bitmap(os.path.join(_RESRC_PATH, 'menu_icon_Help.png')))
         item.SetBitmap(wx.Bitmap(self._icon_img[rdata.ID_ICON_HELP].ConvertToBitmap()))
@@ -240,7 +240,7 @@ class MyScreenShot(TaskBarIcon):
 
         if os.path.exists(_CONFIG_FILE):
             try:
-                with open(_CONFIG_FILE, 'r') as f:
+                with open(_CONFIG_FILE, 'r', encoding='utf-8') as f:
                     self.config.read_file(f)
             except OSError as e:
                 wx.MessageBox(f'Configration file load failed.\n ({e})\n Use default settings.', 'ERROR', wx.ICON_ERROR)
