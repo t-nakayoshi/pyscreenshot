@@ -13,11 +13,122 @@ import wx
 # end wxGlade
 
 
+
+class PeridicDialog(wx.Dialog):
+    def __init__(self, *args, **kwds):
+        # begin wxGlade: PeridicDialog.__init__
+        kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_DIALOG_STYLE
+        wx.Dialog.__init__(self, *args, **kwds)
+        self.SetSize((400, 300))
+        self.SetTitle("dialog")
+
+        sizer_1 = wx.BoxSizer(wx.VERTICAL)
+
+        sizer_3 = wx.BoxSizer(wx.VERTICAL)
+        sizer_1.Add(sizer_3, 1, wx.EXPAND, 0)
+
+        sizer_4 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_3.Add(sizer_4, 0, wx.ALL | wx.EXPAND, 2)
+
+        label_1 = wx.StaticText(self, wx.ID_ANY, u"保存先: ")
+        sizer_4.Add(label_1, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
+
+        self.text_ctrl_1 = wx.TextCtrl(self, wx.ID_ANY, "")
+        sizer_4.Add(self.text_ctrl_1, 1, wx.TOP, 4)
+
+        self.button_1 = wx.Button(self, wx.ID_ANY, "...")
+        self.button_1.SetMinSize((23, 23))
+        sizer_4.Add(self.button_1, 0, wx.ALL, 4)
+
+        sizer_5 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_3.Add(sizer_5, 0, wx.ALL, 2)
+
+        label_2 = wx.StaticText(self, wx.ID_ANY, u"間隔(秒): ")
+        sizer_5.Add(label_2, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+
+        self.spin_ctrl_1 = wx.SpinCtrl(self, wx.ID_ANY, "3", min=0, max=3600)
+        sizer_5.Add(self.spin_ctrl_1, 0, wx.ALIGN_CENTER_VERTICAL | wx.BOTTOM | wx.TOP, 4)
+
+        label_3 = wx.StaticText(self, wx.ID_ANY, u"終了キー: ")
+        sizer_5.Add(label_3, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 16)
+
+        sizer_9 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_5.Add(sizer_9, 1, wx.EXPAND, 0)
+
+        self.checkbox_1 = wx.CheckBox(self, wx.ID_ANY, "Shift")
+        sizer_9.Add(self.checkbox_1, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+
+        label_4 = wx.StaticText(self, wx.ID_ANY, "+")
+        sizer_9.Add(label_4, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+
+        self.checkbox_2 = wx.CheckBox(self, wx.ID_ANY, "Alt")
+        sizer_9.Add(self.checkbox_2, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 4)
+
+        label_5 = wx.StaticText(self, wx.ID_ANY, "+")
+        sizer_9.Add(label_5, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+
+        self.choice_1 = wx.Choice(self, wx.ID_ANY, choices=["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"])
+        self.choice_1.SetSelection(10)
+        sizer_5.Add(self.choice_1, 0, wx.BOTTOM | wx.LEFT | wx.TOP, 4)
+
+        sizer_6 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_3.Add(sizer_6, 0, wx.ALL, 0)
+
+        sizer_7 = wx.StaticBoxSizer(wx.StaticBox(self, wx.ID_ANY, u"対象: "), wx.VERTICAL)
+        sizer_6.Add(sizer_7, 0, wx.ALL | wx.EXPAND, 2)
+
+        self.radio_btn_1 = wx.RadioButton(sizer_7.GetStaticBox(), wx.ID_ANY, u"デスクトップ")
+        sizer_7.Add(self.radio_btn_1, 0, wx.BOTTOM | wx.TOP, 2)
+
+        sizer_8 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_7.Add(sizer_8, 0, wx.EXPAND, 0)
+
+        self.radio_btn_2 = wx.RadioButton(self, wx.ID_ANY, u"ディスプレイ")
+        sizer_8.Add(self.radio_btn_2, 0, wx.ALIGN_CENTER_VERTICAL | wx.BOTTOM | wx.TOP, 2)
+
+        self.choice_2 = wx.Choice(self, wx.ID_ANY, choices=["1"])
+        self.choice_2.SetSelection(0)
+        sizer_8.Add(self.choice_2, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+
+        self.radio_btn_3 = wx.RadioButton(sizer_7.GetStaticBox(), wx.ID_ANY, u"アクティブウィンドウ")
+        sizer_7.Add(self.radio_btn_3, 0, wx.BOTTOM | wx.TOP, 2)
+
+        self.radio_box_1 = wx.RadioBox(self, wx.ID_ANY, u"ナンバリング: ", choices=["YYYYMMDD-HHMMSS", u"自動保存の設定に従う"], majorDimension=1, style=wx.RA_SPECIFY_COLS)
+        self.radio_box_1.SetSelection(0)
+        sizer_6.Add(self.radio_box_1, 0, wx.ALL | wx.EXPAND, 2)
+
+        sizer_3.Add((20, 20), 1, wx.EXPAND, 0)
+
+        sizer_2 = wx.StdDialogButtonSizer()
+        sizer_1.Add(sizer_2, 0, wx.ALIGN_RIGHT | wx.ALL, 4)
+
+        self.button_YES = wx.Button(self, wx.ID_ANY, u"開始")
+        self.button_YES.SetDefault()
+        sizer_2.Add(self.button_YES, 0, 0, 0)
+
+        self.button_NO = wx.Button(self, wx.ID_ANY, u"終了")
+        sizer_2.Add(self.button_NO, 0, 0, 0)
+
+        self.button_CANCEL = wx.Button(self, wx.ID_CANCEL, "")
+        sizer_2.AddButton(self.button_CANCEL)
+
+        sizer_2.Realize()
+
+        self.SetSizer(sizer_1)
+
+        self.SetAffirmativeId(self.button_YES.GetId())
+        self.SetEscapeId(self.button_CANCEL.GetId())
+
+        self.Layout()
+        # end wxGlade
+
+# end of class PeridicDialog
 class SettingsDialog(wx.Dialog):
     def __init__(self, *args, **kwds):
         # begin wxGlade: SettingsDialog.__init__
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_DIALOG_STYLE
         wx.Dialog.__init__(self, *args, **kwds)
+        self.SetSize((400, 400))
         self.SetTitle("Settings")
 
         sizer_1 = wx.BoxSizer(wx.VERTICAL)
@@ -30,14 +141,14 @@ class SettingsDialog(wx.Dialog):
 
         sizer_3 = wx.BoxSizer(wx.VERTICAL)
 
-        sizer_4 = wx.StaticBoxSizer(wx.StaticBox(self.notebook_1_pane_1, wx.ID_ANY, u"保存設定"), wx.HORIZONTAL)
+        sizer_4 = wx.StaticBoxSizer(wx.StaticBox(self.notebook_1_pane_1, wx.ID_ANY, u"保存設定: "), wx.HORIZONTAL)
         sizer_3.Add(sizer_4, 1, wx.EXPAND, 0)
 
         sizer_5 = wx.BoxSizer(wx.VERTICAL)
         sizer_4.Add(sizer_5, 1, wx.EXPAND, 0)
 
         self.radio_btn_1 = wx.RadioButton(self.notebook_1_pane_1, wx.ID_ANY, u"ファイル自動保存")
-        sizer_5.Add(self.radio_btn_1, 0, 0, 0)
+        sizer_5.Add(self.radio_btn_1, 0, wx.BOTTOM | wx.EXPAND, 4)
 
         sizer_6 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_5.Add(sizer_6, 1, wx.EXPAND, 0)
@@ -46,76 +157,131 @@ class SettingsDialog(wx.Dialog):
         sizer_6.Add(label_1, 0, 0, 0)
 
         self.list_box_1 = wx.ListBox(self.notebook_1_pane_1, wx.ID_ANY, choices=["choice 1"])
-        sizer_6.Add(self.list_box_1, 1, 0, 0)
+        sizer_6.Add(self.list_box_1, 1, wx.EXPAND, 0)
 
         sizer_7 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_5.Add(sizer_7, 1, wx.EXPAND, 0)
+        sizer_5.Add(sizer_7, 0, wx.BOTTOM | wx.EXPAND | wx.TOP, 4)
 
-        sizer_7.Add((41, 20), 0, 0, 0)
+        sizer_7.Add((49, 20), 0, wx.ALIGN_CENTER_VERTICAL, 0)
 
         self.button_1 = wx.Button(self.notebook_1_pane_1, wx.ID_ANY, u"追加")
         self.button_1.SetMinSize((49, 23))
-        sizer_7.Add(self.button_1, 0, 0, 0)
+        sizer_7.Add(self.button_1, 0, wx.ALIGN_CENTER_VERTICAL, 0)
 
         self.button_2 = wx.Button(self.notebook_1_pane_1, wx.ID_ANY, u"削除")
         self.button_2.SetMinSize((49, 23))
-        sizer_7.Add(self.button_2, 0, 0, 0)
+        sizer_7.Add(self.button_2, 0, wx.ALIGN_CENTER_VERTICAL, 0)
 
-        sizer_7.Add((20, 20), 1, 0, 0)
+        sizer_7.Add((20, 20), 1, wx.ALIGN_CENTER_VERTICAL, 0)
 
         self.button_3 = wx.Button(self.notebook_1_pane_1, wx.ID_ANY, u"△")
         self.button_3.SetMinSize((41, 23))
-        sizer_7.Add(self.button_3, 0, 0, 0)
+        sizer_7.Add(self.button_3, 0, wx.ALIGN_CENTER_VERTICAL, 0)
 
         self.button_4 = wx.Button(self.notebook_1_pane_1, wx.ID_ANY, u"▽")
         self.button_4.SetMinSize((41, 23))
-        sizer_7.Add(self.button_4, 0, 0, 0)
+        sizer_7.Add(self.button_4, 0, wx.ALIGN_CENTER_VERTICAL, 0)
 
         sizer_8 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_5.Add(sizer_8, 1, wx.EXPAND, 0)
+        sizer_5.Add(sizer_8, 0, wx.BOTTOM | wx.EXPAND | wx.TOP, 4)
 
-        label_2 = wx.StaticText(self.notebook_1_pane_1, wx.ID_ANY, u"接頭語: ")
-        sizer_8.Add(label_2, 0, 0, 0)
+        label_2 = wx.StaticText(self.notebook_1_pane_1, wx.ID_ANY, u"接頭語: ", style=wx.ALIGN_CENTER_HORIZONTAL)
+        sizer_8.Add(label_2, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 4)
 
         self.text_ctrl_1 = wx.TextCtrl(self.notebook_1_pane_1, wx.ID_ANY, "SS")
-        self.text_ctrl_1.SetMinSize((65, 23))
-        sizer_8.Add(self.text_ctrl_1, 0, 0, 0)
+        self.text_ctrl_1.SetMinSize((41, 23))
+        sizer_8.Add(self.text_ctrl_1, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 4)
 
         label_3 = wx.StaticText(self.notebook_1_pane_1, wx.ID_ANY, u"シーケンス桁数: ")
-        sizer_8.Add(label_3, 0, 0, 0)
+        sizer_8.Add(label_3, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 4)
 
         self.spin_ctrl_1 = wx.SpinCtrl(self.notebook_1_pane_1, wx.ID_ANY, "6", min=1, max=6)
-        sizer_8.Add(self.spin_ctrl_1, 0, wx.ALL, 1)
+        self.spin_ctrl_1.SetMinSize((41, 23))
+        sizer_8.Add(self.spin_ctrl_1, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 4)
 
-        label_4 = wx.StaticText(self.notebook_1_pane_1, wx.ID_ANY, u"開始番号: ")
-        sizer_8.Add(label_4, 0, 0, 0)
+        label_4 = wx.StaticText(self.notebook_1_pane_1, wx.ID_ANY, u"開始番号: ", style=wx.ALIGN_CENTER_HORIZONTAL)
+        sizer_8.Add(label_4, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 4)
 
         self.spin_ctrl_2 = wx.SpinCtrl(self.notebook_1_pane_1, wx.ID_ANY, "0", min=0, max=100000)
-        sizer_8.Add(self.spin_ctrl_2, 0, 0, 0)
+        sizer_8.Add(self.spin_ctrl_2, 0, wx.ALIGN_CENTER_VERTICAL, 0)
 
         self.radio_btn_2 = wx.RadioButton(self.notebook_1_pane_1, wx.ID_ANY, u"保存ファイル名を毎回指定する")
-        sizer_5.Add(self.radio_btn_2, 0, 0, 0)
+        sizer_5.Add(self.radio_btn_2, 0, wx.ALL, 4)
 
         self.cb_mcursor = wx.CheckBox(self.notebook_1_pane_1, wx.ID_ANY, u"マウスカーソルをキャプチャする")
         sizer_3.Add(self.cb_mcursor, 0, wx.ALL, 4)
 
+        self.checkbox_1 = wx.CheckBox(self.notebook_1_pane_1, wx.ID_ANY, u"キャプチャ終了時に音を鳴らす")
+        sizer_3.Add(self.checkbox_1, 0, wx.ALL, 4)
+
         self.notebook_1_pane_2 = wx.Panel(self.notebook_1, wx.ID_ANY)
-        self.notebook_1.AddPage(self.notebook_1_pane_2, u"ホット・キー")
+        self.notebook_1.AddPage(self.notebook_1_pane_2, u"その他の設定")
 
         sizer_9 = wx.BoxSizer(wx.VERTICAL)
 
-        sizer_10 = wx.StaticBoxSizer(wx.StaticBox(self.notebook_1_pane_2, wx.ID_ANY, u"クリップボードへコピー"), wx.VERTICAL)
-        sizer_9.Add(sizer_10, 1, wx.EXPAND, 0)
+        sizer_12 = wx.StaticBoxSizer(wx.StaticBox(self.notebook_1_pane_2, wx.ID_ANY, u"遅延キャプチャ: "), wx.HORIZONTAL)
+        sizer_9.Add(sizer_12, 0, wx.ALL | wx.EXPAND, 0)
 
-        sizer_10.Add((0, 0), 0, 0, 0)
+        self.checkbox_2 = wx.CheckBox(sizer_12.GetStaticBox(), wx.ID_ANY, u"遅延キャプチャ", style=wx.CHK_2STATE)
+        sizer_12.Add(self.checkbox_2, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 4)
 
-        sizer_11 = wx.StaticBoxSizer(wx.StaticBox(self.notebook_1_pane_2, wx.ID_ANY, u"PNGで保存"), wx.VERTICAL)
-        sizer_9.Add(sizer_11, 1, wx.EXPAND, 0)
+        self.spin_ctrl_3 = wx.SpinCtrl(sizer_12.GetStaticBox(), wx.ID_ANY, "5", min=1, max=600)
+        sizer_12.Add(self.spin_ctrl_3, 0, wx.ALIGN_CENTER_VERTICAL | wx.BOTTOM | wx.LEFT | wx.RIGHT, 4)
 
-        sizer_11.Add((0, 0), 0, 0, 0)
+        label_10 = wx.StaticText(sizer_12.GetStaticBox(), wx.ID_ANY, u"秒後")
+        sizer_12.Add(label_10, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, 4)
 
-        self.notebook_1_pane_3 = wx.Panel(self.notebook_1, wx.ID_ANY)
-        self.notebook_1.AddPage(self.notebook_1_pane_3, u"トリミング")
+        sizer_13 = wx.StaticBoxSizer(wx.StaticBox(self.notebook_1_pane_2, wx.ID_ANY, u"ホット・キー: "), wx.HORIZONTAL)
+        sizer_9.Add(sizer_13, 1, wx.EXPAND, 0)
+
+        sizer_10 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_13.Add(sizer_10, 0, wx.EXPAND, 0)
+
+        self.radio_box_1 = wx.RadioBox(self.notebook_1_pane_2, wx.ID_ANY, u"クリップボードへコピー: ", choices=["Ctrl + Alt", "Ctrl + Shift"], majorDimension=1, style=wx.RA_SPECIFY_COLS)
+        self.radio_box_1.SetMinSize((125, 65))
+        self.radio_box_1.SetSelection(0)
+        sizer_10.Add(self.radio_box_1, 0, wx.BOTTOM | wx.RIGHT, 4)
+
+        self.radio_box_2 = wx.RadioBox(self.notebook_1_pane_2, wx.ID_ANY, u"PNGへ保存: ", choices=["Ctrl + Alt", "Ctrl + Shift"], majorDimension=1, style=wx.RA_SPECIFY_COLS)
+        self.radio_box_2.SetMinSize((113, 65))
+        self.radio_box_2.SetSelection(1)
+        sizer_10.Add(self.radio_box_2, 0, wx.BOTTOM | wx.EXPAND | wx.RIGHT, 4)
+
+        sizer_11 = wx.StaticBoxSizer(wx.StaticBox(self.notebook_1_pane_2, wx.ID_ANY, u"アクティブウィンドウ: "), wx.VERTICAL)
+        sizer_10.Add(sizer_11, 0, wx.BOTTOM | wx.EXPAND, 4)
+
+        self.choice_1 = wx.Choice(sizer_11.GetStaticBox(), wx.ID_ANY, choices=["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"])
+        self.choice_1.SetSelection(8)
+        sizer_11.Add(self.choice_1, 0, wx.EXPAND, 0)
+
+        sizer_14 = wx.StaticBoxSizer(wx.StaticBox(self.notebook_1_pane_2, wx.ID_ANY, u"トリミング: "), wx.HORIZONTAL)
+        sizer_9.Add(sizer_14, 0, wx.EXPAND, 0)
+
+        label_11 = wx.StaticText(sizer_14.GetStaticBox(), wx.ID_ANY, u"上: ")
+        sizer_14.Add(label_11, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+
+        self.spin_ctrl_4 = wx.SpinCtrl(sizer_14.GetStaticBox(), wx.ID_ANY, "0", min=0, max=100)
+        sizer_14.Add(self.spin_ctrl_4, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
+
+        label_12 = wx.StaticText(sizer_14.GetStaticBox(), wx.ID_ANY, u"下: ")
+        sizer_14.Add(label_12, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+
+        self.spin_ctrl_5 = wx.SpinCtrl(sizer_14.GetStaticBox(), wx.ID_ANY, "0", min=0, max=100)
+        sizer_14.Add(self.spin_ctrl_5, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
+
+        label_13 = wx.StaticText(sizer_14.GetStaticBox(), wx.ID_ANY, u"左: ")
+        sizer_14.Add(label_13, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+
+        self.spin_ctrl_6 = wx.SpinCtrl(sizer_14.GetStaticBox(), wx.ID_ANY, "0", min=0, max=100)
+        sizer_14.Add(self.spin_ctrl_6, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
+
+        label_14 = wx.StaticText(sizer_14.GetStaticBox(), wx.ID_ANY, u"右: ")
+        sizer_14.Add(label_14, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+
+        self.spin_ctrl_7 = wx.SpinCtrl(sizer_14.GetStaticBox(), wx.ID_ANY, "0", min=0, max=100)
+        sizer_14.Add(self.spin_ctrl_7, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
+
+        sizer_9.Add((20, 20), 1, wx.EXPAND, 0)
 
         sizer_2 = wx.StdDialogButtonSizer()
         sizer_1.Add(sizer_2, 0, wx.ALIGN_RIGHT | wx.ALL, 4)
@@ -134,7 +300,6 @@ class SettingsDialog(wx.Dialog):
         self.notebook_1_pane_1.SetSizer(sizer_3)
 
         self.SetSizer(sizer_1)
-        sizer_1.Fit(self)
 
         self.SetAffirmativeId(self.button_OK.GetId())
         self.SetEscapeId(self.button_CANCEL.GetId())
