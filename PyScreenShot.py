@@ -12,10 +12,11 @@ import os
 from screeninfo import get_monitors
 import sys
 
-from myutils import get_running_path, platform_info, scan_directory, atof, natural_keys
-
 import wx
 from wx.adv import TaskBarIcon, EVT_TASKBAR_LEFT_DCLICK, Sound, AboutBox, AboutDialogInfo
+
+from myutils import get_running_path, platform_info, scan_directory, atof, natural_keys
+import pyscreenshot_res as rdata
 
 __version__ = '1.0.0'
 __author__ = 't-nakayoshi (Takayoshi Tagawa)'
@@ -68,42 +69,14 @@ def create_menu_item(menu: wx.Menu, id: int = -1, label: str = '', func = None, 
 
 
 class MyScreenShot(TaskBarIcon):
-    # Menu IDs
-    #--- Help
-    ID_MENU_HELP = 901
-    ID_MENU_ABOUT = 902
-    #--- Settings
-    ID_MENU_SETTINGS = 101
-    ID_MENU_MCURSOR = 102
-    ID_MENU_DELAYED = 103
-    #--- Folders
-    ID_MENU_FOLDER0 = 200
-    ID_MENU_FOLDER1 = 201
-    ID_MENU_FOLDER2 = 202
-    ID_MENU_FOLDER3 = 203
-    ID_MENU_FOLDER4 = 204
-    ID_MENU_FOLDER5 = 205
-    ID_MENU_FOLDER6 = 206
-    ID_MENU_FOLDER7 = 207       # 最大保存フォルダー数に合わせること
-    ID_MENU_OPEN_AUTO = 301
-    ID_MENU_OPEN_PERIODIC = 302
-    #--- Periodic settings
-    ID_MENU_PERIODIC = 401
-    #--- Capture
-    ID_MENU_ACTIVE_CB = 500
-    ID_MENU_SCREEN0_CB = 501
-    ID_MENU_SCREEN1_CB = 502
-    ID_MENU_SCREEN2_CB = 503
-    ID_MENU_SCREEN3_CB = 504
-    ID_MENU_SCREEN4_CB = 505    # 最大ディスプレイ数に合わせること
-    ID_MENU_ACTIVE= 600
-    ID_MENU_SCREEN0 = 601
-    ID_MENU_SCREEN1 = 602
-    ID_MENU_SCREEN2 = 603
-    ID_MENU_SCREEN3 = 604
-    ID_MENU_SCREEN4 = 605    # 最大ディスプレイ数に合わせること
-    #--- Exit
-    ID_MENU_EXIT = 903
+    MENU_ICON_LIST = [
+        rdata.ID_ICON_HELP,
+        rdata.ID_ICON_SETTINGS,
+        rdata.ID_ICON_AUTO_SAVE_FOLDER, rdata.ID_ICON_OPEN_FOLDER,
+        rdata.ID_ICON_PERIODIC,
+        rdata.ID_ICON_COPY_TO_CB, rdata.ID_ICON_SAVE_TO_PNG,
+        rdata.ID_ICON_EXIT
+    ]
 
     def __init__(self, frame):
         self.frame = frame
@@ -121,58 +94,74 @@ class MyScreenShot(TaskBarIcon):
         menu = wx.Menu()
         # Help
         sub_menu = wx.Menu()
-        create_menu_item(sub_menu, MyScreenShot.ID_MENU_HELP, 'Show Help', self.on_menu_show_help)
+        create_menu_item(sub_menu, rdata.ID_MENU_HELP, 'Show Help', self.on_menu_show_help)
         sub_menu.AppendSeparator()
-        create_menu_item(sub_menu, MyScreenShot.ID_MENU_ABOUT, 'About...', self.on_menu_show_about)
-        menu.AppendSubMenu(sub_menu, 'Help')
+        create_menu_item(sub_menu, rdata.ID_MENU_ABOUT, 'About...', self.on_menu_show_about)
+        item = menu.AppendSubMenu(sub_menu, 'Help')
+        #item.SetBitmap(wx.Bitmap(os.path.join(_RESRC_PATH, 'menu_icon_Help.png')))
+        item.SetBitmap(wx.Bitmap(self._icon_img[rdata.ID_ICON_HELP].ConvertToBitmap()))
         menu.AppendSeparator()
         # Settings
-        create_menu_item(menu, MyScreenShot.ID_MENU_SETTINGS, 'Settings...', self.on_menu_settings)
+        item = create_menu_item(menu, rdata.ID_MENU_SETTINGS, 'Settings...', self.on_menu_settings)
+        # item.SetBitmap(wx.Bitmap(os.path.join(_RESRC_PATH, 'menu_icon_Settings.png')))
+        item.SetBitmap(wx.Bitmap(self._icon_img[rdata.ID_ICON_SETTINGS].ConvertToBitmap()))
         sub_menu = wx.Menu()
-        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_MCURSOR, 'Mouse cursor capture', self.on_menu_toggle_mouse_capture, kind = wx.ITEM_CHECK)
+        sub_item = create_menu_item(sub_menu, rdata.ID_MENU_MCURSOR, 'Mouse cursor capture', self.on_menu_toggle_mouse_capture, kind = wx.ITEM_CHECK)
         sub_item.Check(self.config.getboolean('other', 'mouse_cursor', fallback = False))
-        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_DELAYED, 'Time delayed capture', self.on_menu_toggle_delayed_capture, kind = wx.ITEM_CHECK)
+        sub_item = create_menu_item(sub_menu, rdata.ID_MENU_DELAYED, 'Time delayed capture', self.on_menu_toggle_delayed_capture, kind = wx.ITEM_CHECK)
         sub_item.Check(self.config.getboolean('other', 'delayed_capture', fallback = False))
         menu.AppendSubMenu(sub_menu, 'Quick setting')
         menu.AppendSeparator()
         # Auto save folder
         sub_menu = wx.Menu()
-        value = self.config.get('basic', 'folder0', fallback = r'C:\Users\u1601\Pictures')
-        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_FOLDER0, f'1: {value}', self.on_menu_select_save_folder, kind = wx.ITEM_RADIO)
+        value = self.config.get('basic', 'folder0', fallback = 'ピクチャ')
+        sub_item = create_menu_item(sub_menu, rdata.ID_MENU_FOLDER0, f'1: {value}', self.on_menu_select_save_folder, kind = wx.ITEM_RADIO)
         for n in range(1, _MAX_SAVE_FOLDERS):
             value = self.config.get('basic', f'folder{n}', fallback = '')
             if len(value) == 0:
                 break
-            sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_FOLDER0 + n, f'{n}: {value}', self.on_menu_select_save_folder, kind = wx.ITEM_RADIO)
+            sub_item = create_menu_item(sub_menu, rdata.ID_MENU_FOLDER0 + n, f'{n}: {value}', self.on_menu_select_save_folder, kind = wx.ITEM_RADIO)
             self.save_folder_count += 1
             if n == self.config.getint('basic', 'save_folder_index', fallback = 0):
                 sub_item.Check()
-        menu.AppendSubMenu(sub_menu, 'Auto save folder')
+        item = menu.AppendSubMenu(sub_menu, 'Auto save folder')
+        # item.SetBitmap(wx.Bitmap(os.path.join(_RESRC_PATH, 'menu_icon_Auto_save_folder.png')))
+        item.SetBitmap(wx.Bitmap(self._icon_img[rdata.ID_ICON_AUTO_SAVE_FOLDER].ConvertToBitmap()))
         # Open folder
         sub_menu = wx.Menu()
-        create_menu_item(sub_menu, MyScreenShot.ID_MENU_OPEN_AUTO, '1: Auto save (now)', self.on_menu_open_folder)
-        create_menu_item(sub_menu, MyScreenShot.ID_MENU_OPEN_PERIODIC, '2: Periodic', self.on_menu_open_folder)
-        menu.AppendSubMenu(sub_menu, 'Open folder')
+        create_menu_item(sub_menu, rdata.ID_MENU_OPEN_AUTO, '1: Auto save (now)', self.on_menu_open_folder)
+        create_menu_item(sub_menu, rdata.ID_MENU_OPEN_PERIODIC, '2: Periodic', self.on_menu_open_folder)
+        item = menu.AppendSubMenu(sub_menu, 'Open folder')
+        # item.SetBitmap(wx.Bitmap(os.path.join(_RESRC_PATH, 'menu_icon_Open_folder.png')))
+        item.SetBitmap(wx.Bitmap(self._icon_img[rdata.ID_ICON_OPEN_FOLDER].ConvertToBitmap()))
         menu.AppendSeparator()
         # Periodic caputure settings
-        create_menu_item(menu, MyScreenShot.ID_MENU_PERIODIC, 'Periodic capture settings...', self.on_menu_periodic_settings)
+        item = create_menu_item(menu, rdata.ID_MENU_PERIODIC, 'Periodic capture settings...', self.on_menu_periodic_settings)
+        # item.SetBitmap(wx.Bitmap(os.path.join(_RESRC_PATH, 'menu_icon_Periodic_capture_settings.png')))
+        item.SetBitmap(wx.Bitmap(self._icon_img[rdata.ID_ICON_PERIODIC].ConvertToBitmap()))
         menu.AppendSeparator()
         # Caputure
         sub_menu1 = wx.Menu()
         sub_menu2 = wx.Menu()
-        create_menu_item(sub_menu1, MyScreenShot.ID_MENU_SCREEN0_CB, f'1: Screen 0', self.on_menu_clipboard)
-        create_menu_item(sub_menu2, MyScreenShot.ID_MENU_SCREEN0, f'1: Screen 0', self.on_menu_imagefile)
+        create_menu_item(sub_menu1, rdata.ID_MENU_SCREEN0_CB, f'1: Screen 0', self.on_menu_clipboard)
+        create_menu_item(sub_menu2, rdata.ID_MENU_SCREEN0, f'1: Screen 0', self.on_menu_imagefile)
         if self.dis_count > 1:
             for n in range(0, self.dis_count):
-                create_menu_item(sub_menu1, MyScreenShot.ID_MENU_SCREEN1_CB + n, f'{n + 2}: Screen {n + 1}', self.on_menu_clipboard)
-                create_menu_item(sub_menu2, MyScreenShot.ID_MENU_SCREEN1 + n, f'{n + 2}: Screen {n + 1}', self.on_menu_imagefile)
-        create_menu_item(sub_menu1, MyScreenShot.ID_MENU_ACTIVE_CB, f'{self.dis_count + 1}: Active window', self.on_menu_clipboard)
-        create_menu_item(sub_menu2, MyScreenShot.ID_MENU_ACTIVE, f'{self.dis_count + 1}: Active window', self.on_menu_imagefile)
-        menu.AppendSubMenu(sub_menu1, 'Copy to clipboard')
-        menu.AppendSubMenu(sub_menu2, 'Save to PNG file')
+                create_menu_item(sub_menu1, rdata.ID_MENU_SCREEN1_CB + n, f'{n + 2}: Screen {n + 1}', self.on_menu_clipboard)
+                create_menu_item(sub_menu2, rdata.ID_MENU_SCREEN1 + n, f'{n + 2}: Screen {n + 1}', self.on_menu_imagefile)
+        create_menu_item(sub_menu1, rdata.ID_MENU_ACTIVE_CB, f'{self.dis_count + 1}: Active window', self.on_menu_clipboard)
+        create_menu_item(sub_menu2, rdata.ID_MENU_ACTIVE, f'{self.dis_count + 1}: Active window', self.on_menu_imagefile)
+        item = menu.AppendSubMenu(sub_menu1, 'Copy to clipboard')
+        # item.SetBitmap(wx.Bitmap(os.path.join(_RESRC_PATH, 'menu_icon_Copy_to_clipboard.png')))
+        item.SetBitmap(wx.Bitmap(self._icon_img[rdata.ID_ICON_COPY_TO_CB].ConvertToBitmap()))
+        item = menu.AppendSubMenu(sub_menu2, 'Save to PNG file')
+        # item.SetBitmap(wx.Bitmap(os.path.join(_RESRC_PATH, 'menu_icon_Save_to_PNG.png')))
+        item.SetBitmap(wx.Bitmap(self._icon_img[rdata.ID_ICON_SAVE_TO_PNG].ConvertToBitmap()))
         menu.AppendSeparator()
         # Exit
-        create_menu_item(menu, MyScreenShot.ID_MENU_EXIT, 'Exit', self.on_menu_exit)
+        item = create_menu_item(menu, rdata.ID_MENU_EXIT, 'Exit', self.on_menu_exit)
+        # item.SetBitmap(wx.Bitmap(os.path.join(_RESRC_PATH, 'menu_icon_Exit.png')))
+        item.SetBitmap(wx.Bitmap(self._icon_img[rdata.ID_ICON_EXIT].ConvertToBitmap()))
 
         return menu
 
@@ -187,10 +176,11 @@ class MyScreenShot(TaskBarIcon):
         # 動作環境情報取得
         self._platform_info = platform_info()
         # Load Application ICON
-        self._app_icons = wx.IconBundle(os.path.join(_RESRC_PATH, _TRAY_ICON), wx.BITMAP_TYPE_ICO)
+        #self._app_icons = wx.IconBundle(os.path.join(_RESRC_PATH, _TRAY_ICON), wx.BITMAP_TYPE_ICO)
+        self._app_icons = wx.IconBundle(rdata.data_stream(rdata.ID_ICON_APP), wx.BITMAP_TYPE_ICO)
         self.SetIcon(self._app_icons.GetIcon(wx.Size(16, 16)), _TRAY_TOOLTIP)
         # 設定値の初期設定と設定値の読み込み
-        cwd = os.getcwd()
+        # cwd = os.getcwd()
         self.config = configparser.ConfigParser()
         self.config.add_section('basic')
         self.config.add_section('periodic')
@@ -203,11 +193,11 @@ class MyScreenShot(TaskBarIcon):
         self.config.set('basic', 'start_number', str(0))
         self.config.set('basic', 'save_folder_index', str(0))
         self.save_folder_count = 1
-        self.config.set('basic', 'folder0', r'C:\Users\u1601\Pictures')
+        self.config.set('basic', 'folder0', 'ピクチャ')
         for n in range(1, _MAX_SAVE_FOLDERS):
             self.config.set('basic', f'folder{n}', '')
         self.config.set('periodic', 'mode', str(False))
-        self.config.set('periodic', 'save_folder', r'C:\Users\u1601\Pictures')
+        self.config.set('periodic', 'save_folder', 'ピクチャ')
         self.config.set('periodic', 'interval', str(3))
         self.config.set('periodic', 'target', str(-1))  # -1:Active window, 0:All screen, 1~:Screen1~
         self.config.set('periodic', 'numbering', str(0))# 0:yyyymmdd-hhmmss, 1:Depends on the auto-save mode setting
@@ -221,6 +211,11 @@ class MyScreenShot(TaskBarIcon):
         self.load_config()
         # ディスプレイ情報の初期化と読み込み
         self.get_display_info()
+        # リソースデータの展開（MENU_ICON）
+        self._icon_img = {}
+        for k in MyScreenShot.MENU_ICON_LIST:
+            img_stream = rdata.data_stream(k)
+            self._icon_img[k] = wx.Image(img_stream, wx.BITMAP_TYPE_ANY)
 
     def load_config(self):
         """設定値読み込み処理
@@ -392,7 +387,7 @@ class MyScreenShot(TaskBarIcon):
         index2 = index1
         id = event.GetId()
         for n in range(0, self.save_folder_count):
-            if id == (MyScreenShot.ID_MENU_FOLDER0 + n):
+            if id == (rdata.ID_MENU_FOLDER0 + n):
                 index2 = n
                 self.config.set('basic', 'save_folder_index', str(n))
         print(f'on_menu_select_save_folder (id={id}), index={index1}=>{index2}')
@@ -443,7 +438,7 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             none
         """
-        print('on_menu_exit')
+        # print('on_menu_exit')
         wx.CallAfter(self.Destroy)
         self.frame.Close()
 
