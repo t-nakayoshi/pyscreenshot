@@ -1,0 +1,23 @@
+■ディスプレイ１（プライマリー）が左、ディスプレイ２が右
+
+>>> import mss
+>>> with mss.mss() as sct:
+...     for num, monitor in enumerate(sct.monitors[1:], 1):
+...         print(f"num={num}, moni={monitor}")
+...
+num=1, moni={'left': 0, 'top': 0, 'width': 1920, 'height': 1080}
+num=2, moni={'left': 1920, 'top': 0, 'width': 1600, 'height': 1200}
+>>> 
+
+
+■ディスプレイ２が左、ディスプレイ１（プライマリー）が右
+>>> with mss.mss() as sct:
+...     for num, monitor in enumerate(sct.monitors[1:], 1):
+...         print(f"num={num}, moni={monitor}")
+...
+num=1, moni={'left': 0, 'top': 0, 'width': 1920, 'height': 1080}
+num=2, moni={'left': -1600, 'top': 0, 'width': 1600, 'height': 1200}
+>>> 
+
+※ sct.monitors[0]はフルスクリーン（ディスプレイ１＋ディスプレイ２）
+
