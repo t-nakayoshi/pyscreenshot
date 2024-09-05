@@ -8,10 +8,10 @@
     IsParentAction      argparse向け、ファイルパスの親ディレクトリをチェックする（存在しない場合エラーとする）
 
 * function
-    platform_info       実行環境のOS名，バージョン（リリース）、Pythonのバージョン情報を取得する
+    platform_info       実行環境のOS名、バージョン（リリース）、Pythonのバージョン情報を取得する
     get_running_path    実行時ディレクトリとコンソールの有無を取得する
-    scan_directory  指定ディレクト内のファイル一覧を取得する（拡張子のフィルタリングあり）
-    is_abort        中断問い合わせ
+    scan_directory      指定ディレクト内のファイル一覧を取得する（拡張子のフィルタリングあり）
+    is_abort            中断問い合わせ
 
 ToDo:
     *
@@ -28,7 +28,7 @@ import sys
 
 
 def platform_info() -> tuple:
-    """実行環境のOS名，バージョン（リリース）、Pythonのバージョン情報を取得する
+    """実行環境のOS名、バージョン（リリース）、Pythonのバージョン情報を取得する
     Args:
         none
 
