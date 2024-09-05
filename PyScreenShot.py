@@ -9,15 +9,19 @@
 import argparse
 from enum import IntEnum, auto
 import configparser
+import io
 import os
+import mss
+from PIL import Image
 from screeninfo import get_monitors
 import sys
+import win32clipboard
 
 import wx
 from wx.adv import TaskBarIcon, EVT_TASKBAR_LEFT_DCLICK, Sound, AboutBox, AboutDialogInfo
 
 from myutils import get_running_path, platform_info, scan_directory, atof, natural_keys
-from res import app_icon, menu_image
+from res import app_icon, menu_image, sound
 
 __version__ = '1.0.0'
 __author__ = 't-nakayoshi (Takayoshi Tagawa)'
@@ -35,6 +39,8 @@ _HELP_FILE = 'manual.html'
 
 _TRAY_TOOLTIP = _app_name_ + ' App'
 #_TRAY_ICON = 'ScreenShot.ico'
+_APP_ICONS = None
+
 
 _MAX_MONITERS = 4
 _MAX_SAVE_FOLDERS = 16
@@ -98,6 +104,15 @@ def create_menu_item(menu: wx.Menu, id: int = -1, label: str = '', func = None, 
     menu.Append(item)
 
     return item
+
+
+def copy_clipboard(data):
+    """クリップボードにビットマップデータをコピーする
+    """
+    win32clipboard.OpenClipboard()
+    win32clipboard.EmptyClipboard()
+    win32clipboard.SetClipboardData(win32clipboard.CF_DIB, data)
+    win32clipboard.CloseClipboard()
 
 
 class MenuIcon(IntEnum):
@@ -165,7 +180,10 @@ class MyScreenShot(TaskBarIcon):
         item.SetBitmap(wx.Bitmap(self._icon_img.GetBitmap(MenuIcon.SETTINGS.value)))
         sub_menu = wx.Menu()
         sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_MCURSOR, 'マウスカーソルキャプチャを有効', self.on_menu_toggle_mouse_capture, kind = wx.ITEM_CHECK)
-        sub_item.Check(self.config.getboolean('other', 'mouse_cursor', fallback = False))
+        if self._platform_info[0] == 'Windows':
+            sub_item.Enable(False)  # Windowsでは現状マウスカーソルがキャプチャ出来ないので「無効」にしておく
+        else:
+            sub_item.Check(self.config.getboolean('other', 'mouse_cursor', fallback = False))
         sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_DELAYED, '遅延キャプチャを有効', self.on_menu_toggle_delayed_capture, kind = wx.ITEM_CHECK)
         sub_item.Check(self.config.getboolean('other', 'delayed_capture', fallback = False))
         menu.AppendSubMenu(sub_menu, 'クイック設定')
@@ -231,23 +249,21 @@ class MyScreenShot(TaskBarIcon):
         # 動作環境情報取得
         self._platform_info = platform_info()
         # Load Application ICON
-        # self._app_icons = wx.IconBundle(os.path.join(_RESRC_PATH, _TRAY_ICON), wx.BITMAP_TYPE_ICO)
-        # self._app_icons = wx.IconBundle(rdata.data_stream(rdata.ID_ICON_APP), wx.BITMAP_TYPE_ICO)
         self._app_icons = wx.IconBundle(app_icon.get_app_icon_stream(), wx.BITMAP_TYPE_ICO)
         self.SetIcon(self._app_icons.GetIcon(wx.Size(16, 16)), _TRAY_TOOLTIP)
         # 設定値の初期設定と設定ファイルの読み込み
-        # cwd = os.getcwd()
         self.load_config()
         # ディスプレイ情報の初期化と読み込み
         self.get_display_info()
-        # リソースデータの展開（MENU_ICON）
-        # self._icon_img = {}
-        # for k in MyScreenShot.MENU_ICON_LIST:
-        #     img_stream = rdata.data_stream(k)
-        #     self._icon_img[k] = wx.Image(img_stream, wx.BITMAP_TYPE_ANY)
+        # メニューアイコン画像の展開
         self._icon_img = wx.ImageList(24, 24)
         for name in menu_image.index:
             self._icon_img.Add(menu_image.catalog[name].GetBitmap())
+        # BEEP音
+        self._beep = Sound()
+        self._beep.CreateFromData(sound.get_snd_beep_bytearray())
+        self._success = Sound()
+        self._success.CreateFromData(sound.get_snd_success_bytearray())
 
     def load_config(self):
         """設定値読み込み処理
@@ -391,12 +407,13 @@ class MyScreenShot(TaskBarIcon):
     def on_menu_toggle_mouse_capture(self, event):
         """Mouse captureメニューイベントハンドラ
         * マウスカーソルのキャプチャーを有効/無効にする。
+          ※現在の所、Windowsではキャプチャー出来ない
         Args:
             event (wx.EVENT): EVENTオブジェクト
         Returns:
             none
         """
-        flag = not self.config.getboolean('other', 'mouse_cursor', fallback = True)
+        flag = not self.config.getboolean('other', 'mouse_cursor', fallback = False)
         self.config.set('other', 'mouse_cursor', str(flag))
         print(f"on_menu_toggle_mouse_capture ({flag})")
 
@@ -454,6 +471,29 @@ class MyScreenShot(TaskBarIcon):
             none
         """
         id = event.GetId()
+        sct_img = None
+        with mss.mss() as sct:
+            match id:
+                case MyScreenShot.ID_MENU_ACTIVE_CB:
+                    pass
+                case _:
+                    moni_no = id - MyScreenShot.ID_MENU_SCREEN0_CB
+                    if moni_no >= 0:
+                        sct_img = sct.grab(sct.monitors[moni_no])
+
+                    if moni_no == 0:
+                        print('capture "Desktop"')
+                    else:
+                        print(f'capture "Display-{moni_no}"')
+
+        if sct_img is not None:
+            img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
+            output = io.BytesIO()
+            img.convert('RGB').save(output, 'BMP')
+            data = output.getvalue()[14:]
+            output.close()
+            copy_clipboard(data)
+
         print(f'on_menu_clipboard ({id})')
 
     def on_menu_imagefile(self, event):
