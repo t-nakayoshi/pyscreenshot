@@ -23,7 +23,13 @@ def convert_base64(filename: str) -> str:
         return ''
 
 
+def convert_bytearray(base64str: str):
+    """BASE64エンコード文字列をbytearrayに変換する
+    """
+    return bytearray(decompress(b64decode(base64str)))
+
+
 def convert_stream(base64str: str):
     """BASE64エンコード文字列をstreamに変換する
     """
-    return BytesIO(bytearray(decompress(b64decode(base64str))))
+    return BytesIO(convert_bytearray(base64str))
