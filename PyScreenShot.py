@@ -9,13 +9,17 @@
 import argparse
 from enum import IntEnum, auto
 import configparser
+from functools import partial
 import io
-import os
 import mss
+import os
 from PIL import Image
+import queue
 from screeninfo import get_monitors
 import sys
+from typing import Union
 import win32clipboard
+import win32gui
 
 import wx
 from wx.adv import TaskBarIcon, EVT_TASKBAR_LEFT_DCLICK, Sound, AboutBox, AboutDialogInfo
@@ -39,11 +43,9 @@ _HELP_FILE = 'manual.html'
 
 _TRAY_TOOLTIP = _app_name_ + ' App'
 #_TRAY_ICON = 'ScreenShot.ico'
-_APP_ICONS = None
 
-
-_MAX_MONITERS = 4
 _MAX_SAVE_FOLDERS = 16
+_BASE_DELAY_TIME = 400  # (ms)
 
 _CONFIG_DEFAULT = {
     'basic': {
@@ -106,7 +108,56 @@ def create_menu_item(menu: wx.Menu, id: int = -1, label: str = '', func = None, 
     return item
 
 
-def copy_clipboard(data):
+def enum_window_callback(hwnd:int, lparam:int, window_titles:list[str]):
+    GW_OWNER = 4
+    if win32gui.IsWindowEnabled(hwnd) == 0:
+        return
+
+    if win32gui.IsWindowVisible(hwnd) == 0:
+        return
+
+    if (window_text := win32gui.GetWindowText(hwnd)) == '':
+        return
+
+    # if (owner := win32gui.GetWindow(hwnd, GW_OWNER)) != 0:
+    #     return
+
+    # if (class_name := win32gui.GetClassName(hwnd)) in ['CabinetWClass']:
+    #     return
+
+    if window_text not in window_titles:
+        window_titles.append(window_text)
+
+
+def get_active_window() -> Union[tuple, None]:
+    """アクティブウィンドウの座標（RECT）を取得する
+    * 取得したRECT情報とWindowタイトルを返す
+    （座標はmssのキャプチャー範囲に変換する）
+    """
+    window_titles: list[str] = []
+    win32gui.EnumWindows(partial(enum_window_callback, window_titles=window_titles), 0)
+    # for title in window_titles:
+    #     print(title)
+    # print('====')
+    if len(window_titles) == 0:
+        return None
+
+    # hwnd  = win32gui.GetForegroundWindow()
+    # title = win32gui.GetWindowText(hwnd)
+    window_title = window_titles[0]
+    if (hwnd := win32gui.FindWindow(None, window_title)) == -1:
+        return None
+
+    win32gui.SetForegroundWindow(hwnd)
+    left, top, right, bottom = win32gui.GetWindowRect(hwnd)
+    width  = abs(right - left)
+    height = abs(bottom - top)
+    area = {'left': left, 'top': top, 'width': width, 'height': height}
+
+    return (window_title, area)
+
+
+def copy_bitmap_to_clipboard(data):
     """クリップボードにビットマップデータをコピーする
     """
     win32clipboard.OpenClipboard()
@@ -157,6 +208,8 @@ class MyScreenShot(TaskBarIcon):
         self.frame = frame
         super(MyScreenShot, self).__init__()
         self.Bind(EVT_TASKBAR_LEFT_DCLICK, self.on_menu_settings)
+
+        self.ss_queue = queue.Queue()
         # 初期処理
         self.initialize()
 
@@ -166,6 +219,8 @@ class MyScreenShot(TaskBarIcon):
         * 現バージョンでは生成したメニューが破棄されて再利用できない。
         """
         # print("CreatePopupMenu")
+        self.dis_count = len(get_monitors())    # ディスプレイ数を取得する
+        # メニューの生成
         menu = wx.Menu()
         # Help
         sub_menu = wx.Menu()
@@ -253,8 +308,6 @@ class MyScreenShot(TaskBarIcon):
         self.SetIcon(self._app_icons.GetIcon(wx.Size(16, 16)), _TRAY_TOOLTIP)
         # 設定値の初期設定と設定ファイルの読み込み
         self.load_config()
-        # ディスプレイ情報の初期化と読み込み
-        self.get_display_info()
         # メニューアイコン画像の展開
         self._icon_img = wx.ImageList(24, 24)
         for name in menu_image.index:
@@ -311,56 +364,48 @@ class MyScreenShot(TaskBarIcon):
         except OSError as e:
             wx.MessageBox(f'Configration file save failed.\n ({e})', 'ERROR', wx.ICON_ERROR)
 
-    def get_display_info(self):
-        """ディスプレイ情報取得処理
-        * ディスプレイ情報（数、サイズ、座標等）を取得する。
-        Args:
-            none
-        Returns:
-            none
-        Note:
+    def do_capture(self):
+        """キャプチャー実行
         """
-        # 初期化
-        self.dis_count = 0      # ディスプレイの枚数
-        self.windowx_cd = []    # 最終的に使う数
-        self.windowy_cd = []    # 最終的に使う数
-        self.windowx_cd = []    # 最終的に使う数
-        self.windowy_cd = []    # 最終的に使う数
-        self.windowx_size = []  #ディスプレイの解像度(サイズ)
-        self.windowy_size = []  #ディスプレイの解像度(サイズ)
+        req:dict = self.ss_queue.get()
+        moni_no:int = req['moni_no']
+        clipboard:bool = req['clipboard']
+        filename:str = req['filename']
+        # print(f"do_capture moni_no={moni_no}, clipboard={clipboard}, filename={filename}")
 
-        temp_windowx_cd = []    # 仮のディスプレイの左上の座標 X
-        temp_windowy_cd = []    # 仮のディスプレイの左上の座標 Y
-        min_x_cd = 10000000     # (初期値は適当)
-        min_y_cd = 10000000     # (初期値は適当)
+        sct_img = None
+        msg = ''
+        with mss.mss() as sct:
+            match moni_no:
+                case 90:
+                    if (info := get_active_window()) == None:
+                        return
 
-        # ディスプレイ数を取得する
-        monitors = get_monitors()
-        self.dis_count = len(monitors)
-        # for d in get_monitors():
-        #     self.dis_count = self.dis_count + 1
+                    window_title, area_coord = info
+                    sct_img = sct.grab(area_coord)
+                    msg = f'"Active window - {window_title}" area={area_coord}'
 
-        Range = range(0, self.dis_count)
-        # ディスプレイ情報を取得する
-        for d in Range:
-            # monitor = get_monitors()[i]
-            monitor = monitors[d]
-            temp_windowx_cd.append(monitor.x)
-            temp_windowy_cd.append(monitor.y)
-            self.windowx_size.append(monitor.width)
-            self.windowy_size.append(monitor.height)
+                case _:
+                    if moni_no < 0 and moni_no >= len(sct.monitors):
+                        return
 
-        # 座標を比較し、切り抜きに使う数値へ変更する
-        for i in Range:
-            if temp_windowx_cd[i] < min_x_cd:
-                min_x_cd = temp_windowx_cd[i]
+                    sct_img = sct.grab(sct.monitors[moni_no])
+                    if moni_no == 0:
+                        msg = '"Desktop"'
+                    else:
+                        msg = f'"Display-{moni_no}"'
 
-            if temp_windowy_cd[i] < min_y_cd:
-                min_y_cd = temp_windowy_cd[i]
-
-        for j in Range:
-            self.windowx_cd.append(-1 * min_x_cd + temp_windowx_cd[j])
-            self.windowy_cd.append(-1 * min_y_cd + temp_windowy_cd[j])
+        if sct_img is not None:
+            if clipboard:
+                img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
+                output = io.BytesIO()
+                img.convert('RGB').save(output, 'BMP')
+                data = output.getvalue()[14:]
+                output.close()
+                copy_bitmap_to_clipboard(data)
+                print(f'capture {msg} & copy clipboard')
+            elif not clipboard and len(filename) > 0:
+                pass
 
     def on_menu_show_help(self, event):
         """HELPメニューイベントハンドラ
@@ -470,31 +515,21 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             none
         """
+        global _BASE_DELAY_TIME
         id = event.GetId()
-        sct_img = None
-        with mss.mss() as sct:
-            match id:
-                case MyScreenShot.ID_MENU_ACTIVE_CB:
-                    pass
-                case _:
-                    moni_no = id - MyScreenShot.ID_MENU_SCREEN0_CB
-                    if moni_no >= 0:
-                        sct_img = sct.grab(sct.monitors[moni_no])
+        moni_no = -1
+        if id == MyScreenShot.ID_MENU_ACTIVE_CB:
+            moni_no = 90
+        else:
+            moni_no = id - MyScreenShot.ID_MENU_SCREEN0_CB
 
-                    if moni_no == 0:
-                        print('capture "Desktop"')
-                    else:
-                        print(f'capture "Display-{moni_no}"')
-
-        if sct_img is not None:
-            img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
-            output = io.BytesIO()
-            img.convert('RGB').save(output, 'BMP')
-            data = output.getvalue()[14:]
-            output.close()
-            copy_clipboard(data)
-
+        self.ss_queue.put({'moni_no': moni_no, 'clipboard': True, 'filename': ''})
         print(f'on_menu_clipboard ({id})')
+        delay_ms = _BASE_DELAY_TIME
+        if self.config.getboolean('other', 'delayed_capture', fallback = False):
+            delay_ms = self.config.getint('other', 'delayed_time', fallback = 1) * 1000
+        # キャプチャー実行
+        wx.CallLater(delay_ms, self.do_capture)
 
     def on_menu_imagefile(self, event):
         """Save to PNG fileメニューイベントハンドラ
@@ -504,8 +539,24 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             none
         """
+        global _BASE_DELAY_TIME
         id = event.GetId()
+        moni_no = -1
+        if id == MyScreenShot.ID_MENU_ACTIVE:
+            moni_no = 90
+        else:
+            moni_no = id - MyScreenShot.ID_MENU_SCREEN0
+
+        # 保存ファイル名生成
+        filename = ''
+
+        self.ss_queue.put({'moni_no': moni_no, 'clipboard': True, 'filename': ''})
         print(f'on_menu_imagefile ({id})')
+        delay_ms = _BASE_DELAY_TIME
+        if self.config.getboolean('other', 'delayed_capture', fallback = False):
+            delay_ms = self.config.getint('other', 'delayed_time', fallback = 1) * 1000
+        # キャプチャー実行
+        wx.CallLater(delay_ms, self.do_capture)
 
     def on_menu_exit(self, event):
         """Exitメニューイベントハンドラ
