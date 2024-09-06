@@ -15,6 +15,7 @@ import mss
 import os
 from PIL import Image
 import queue
+import mss.tools
 from screeninfo import get_monitors
 import sys
 from typing import Union
@@ -396,16 +397,30 @@ class MyScreenShot(TaskBarIcon):
                         msg = f'"Display-{moni_no}"'
 
         if sct_img is not None:
+            img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
+            # トリミング
+            if self.config.getboolean('triming', 'triming', fallback=False):
+                top    = self.config.getint('triming', 'top', fallback=0)
+                bottom = self.config.getint('triming', 'top', fallback=0)
+                left   = self.config.getint('triming', 'top', fallback=0)
+                right  = self.config.getint('triming', 'top', fallback=0)
+                width, height = img.size
+                box = (left, top, width - right if width > right else width, height - bottom if height > bottom else height)
+                img.crop(box)
+
             if clipboard:
-                img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
+                # クリップボードへコピー
                 output = io.BytesIO()
                 img.convert('RGB').save(output, 'BMP')
                 data = output.getvalue()[14:]
                 output.close()
                 copy_bitmap_to_clipboard(data)
                 print(f'capture {msg} & copy clipboard')
-            elif not clipboard and len(filename) > 0:
-                pass
+            else:
+                # ファイルへ保存
+                if len(filename) > 0:
+                    img.save(filename)
+
 
     def on_menu_show_help(self, event):
         """HELPメニューイベントハンドラ
