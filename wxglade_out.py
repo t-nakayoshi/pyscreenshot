@@ -14,6 +14,50 @@ import wx
 
 
 
+
+class MyFrame(wx.Frame):
+    def __init__(self, *args, **kwds):
+        # begin wxGlade: MyFrame.__init__
+        kwds["style"] = kwds.get("style", 0) | wx.CAPTION | wx.CLIP_CHILDREN | wx.CLOSE_BOX | wx.SYSTEM_MENU
+        wx.Frame.__init__(self, *args, **kwds)
+        self.SetSize((200, 200))
+        self.SetTitle("frame")
+
+        self.panel_1 = wx.Panel(self, wx.ID_ANY)
+
+        sizer_1 = wx.BoxSizer(wx.VERTICAL)
+
+        sizer_2 = wx.BoxSizer(wx.VERTICAL)
+        sizer_1.Add(sizer_2, 1, wx.EXPAND, 0)
+
+        self.button_settingdlg = wx.Button(self.panel_1, wx.ID_ANY, u"環境設定...")
+        sizer_2.Add(self.button_settingdlg, 1, wx.ALL | wx.EXPAND, 8)
+
+        self.button_peridicdlg = wx.Button(self.panel_1, wx.ID_ANY, u"定期実行設定...")
+        sizer_2.Add(self.button_peridicdlg, 1, wx.ALL | wx.EXPAND, 8)
+
+        self.panel_1.SetSizer(sizer_1)
+
+        self.Layout()
+        self.Centre()
+
+        self.button_settingdlg.Bind(wx.EVT_BUTTON, self.on_open_settings_dlg)
+        self.button_peridicdlg.Bind(wx.EVT_BUTTON, self.on_open_peridic_setteing_dlg)
+        # end wxGlade
+
+    def on_open_settings_dlg(self, event):  # wxGlade: MyFrame.<event_handler>
+        print("Event handler 'on_open_settings_dlg' not implemented!")
+        with SettingsDialog(None, wx.ID_ANY, "") as dlg:
+            dlg.ShowModal()
+        event.Skip()
+
+    def on_open_peridic_setteing_dlg(self, event):  # wxGlade: MyFrame.<event_handler>
+        print("Event handler 'on_open_peridic_setteing_dlg' not implemented!")
+        with PeridicDialog(None, wx.ID_ANY, "") as dlg:
+            dlg.ShowModal()
+        event.Skip()
+
+# end of class MyFrame
 class PeridicDialog(wx.Dialog):
     def __init__(self, *args, **kwds):
         # begin wxGlade: PeridicDialog.__init__
@@ -315,10 +359,13 @@ class SettingsDialog(wx.Dialog):
 
 class MyApp(wx.App):
     def OnInit(self):
-        self.settingsdlg = SettingsDialog(None, wx.ID_ANY, "")
-        self.SetTopWindow(self.settingsdlg)
-        self.settingsdlg.ShowModal()
-        self.settingsdlg.Destroy()
+        # self.settingsdlg = SettingsDialog(None, wx.ID_ANY, "")
+        # self.SetTopWindow(self.settingsdlg)
+        # self.settingsdlg.ShowModal()
+        # self.settingsdlg.Destroy()
+        self.frame = MyFrame(None, wx.ID_ANY, "")
+        self.SetTopWindow(self.frame)
+        self.frame.Show()
         return True
 
 # end of class MyApp
