@@ -57,8 +57,7 @@ _CONFIG_DEFAULT = {
         'prefix_string': 'SS',
         'sequence_digits': '6',
         'start_number': '0',
-        'save_folder_index': '0',
-        'folder1': 'ピクチャ'
+        'save_folder_index': '-1',
     },
     'delayed_capture': {
         'delayed_capture': 'False',
@@ -79,9 +78,10 @@ _CONFIG_DEFAULT = {
     'periodic': {
         'save_folder': 'ピクチャ',
         'interval': '3',
+        'modifier': '0',
+        'exit_key': 'F11',
         'target': '-1',
-        'numbering': '0',
-        'exit_key': 'F11'
+        'numbering': '0'
     }
 }
 
@@ -110,7 +110,7 @@ def create_menu_item(menu: wx.Menu, id: int = -1, label: str = '', func = None, 
 
 
 def enum_window_callback(hwnd:int, lparam:int, window_titles:list[str]):
-    GW_OWNER = 4
+    # GW_OWNER = 4
     if win32gui.IsWindowEnabled(hwnd) == 0:
         return
 
@@ -425,7 +425,33 @@ class MyScreenShot(TaskBarIcon):
         self.frame = frame
         super(MyScreenShot, self).__init__()
         self.Bind(EVT_TASKBAR_LEFT_DCLICK, self.on_menu_settings)
-
+        # プロパティ
+        #--- basic
+        self._auto_save:bool = True
+        self._save_folders:list[str] = []
+        self._folder_index: int = -1
+        self._prefix: int = 0
+        self._prefix_string: str = ''
+        self._sequence_digits: int = 6
+        self._sequence_start: int = 0
+        self._capture_mcursor: bool = False
+        self._sound_on_capture: bool = False
+        #--- other
+        self._delayed_capture: bool = False
+        self._delayed_time: int = 5
+        self._hotkey_clipboard: int = 0
+        self._hotkey_imagefile: int = 1
+        self._hotkey_activewin: int = 8
+        self._trimming: bool = False
+        self._trimming_size: list[int] = []
+        #--- periodic
+        self._periodic_save_folder: str = ''
+        self._periodic_interval: int = 3
+        self._periodic_exit_modifier: int = 0
+        self._periodic_exit_fkey: int = 10
+        self._periodic_target: int = 0
+        self._periodic_numbering: int = 0
+        #
         self.ss_queue = queue.Queue()
         # 初期処理
         self.initialize()
@@ -534,6 +560,30 @@ class MyScreenShot(TaskBarIcon):
         self._success = Sound()
         self._success.CreateFromData(sound.get_snd_success_bytearray())
 
+    def set_property(self):
+        """設定値をプロパティに展開する
+        """
+        # 自動保存
+        self._auto_save = self.config.getboolean('basic','auto_save', fallback=True)
+        # 自動保存フォルダ
+        self._folder_index = self.config.getint('basic', 'save_folder_index', fallback=-1)
+        for n in range(_MAX_SAVE_FOLDERS):
+            option_name: str = 'folder' + str(n + 1)
+            if not self.config.has_option('basic', option_name):
+                break
+            option: str = self.config.get('basic', option_name)
+            self._save_folders.append(option)
+        if len(self._save_folders) > 0 and self._folder_index < 0:
+            self._folder_index = 0
+            self.config.set('basic', 'save_folder_index', str(self._folder_index))
+        # 接頭語
+        self._prefix = self.config.getint('basic', 'prefix', fallback=1)
+        self._prefix_string = self.config.get('basic', 'prefix_string', fallback='SS')
+        self._sequence_digits = self.config.getint('basic', 'sequence_digits', fallback=6)
+        self._sequence_start = self.config.getint('basic', 'sequence_start', fallback=0)
+        self._capture_mcursor = self.config.getboolean('basic', 'mouse_cursor', fallback=False)
+        self._sound_on_capture = self.config.getboolean('basic', 'sound_on_capture', fallback=False)
+
     def load_config(self):
         """設定値読み込み処理
         * 各種設定値を初期設定後、設定ファイルから読み込む。
@@ -548,7 +598,7 @@ class MyScreenShot(TaskBarIcon):
         global _CONFIG_FILE
         self.config = configparser.ConfigParser()
         self.config.read_dict(_CONFIG_DEFAULT)
-        self.save_folder_count = 1
+        self.save_folder_count = 0
 
         if os.path.exists(_CONFIG_FILE):
             try:
@@ -561,6 +611,8 @@ class MyScreenShot(TaskBarIcon):
         else:
             wx.MessageBox('Configration file not found.\nCreate default configuration file.', 'Attension', wx.ICON_EXCLAMATION)
             self.save_config()
+
+        self.set_property()
 
     def save_config(self):
         """設定値保存処理

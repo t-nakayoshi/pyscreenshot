@@ -90,8 +90,8 @@ class PeridicDialog(wx.Dialog):
         label_2 = wx.StaticText(self, wx.ID_ANY, u"間隔(秒): ")
         sizer_5.Add(label_2, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 2)
 
-        self.spin_ctrl_periodic_time = wx.SpinCtrl(self, wx.ID_ANY, "3", min=0, max=3600)
-        sizer_5.Add(self.spin_ctrl_periodic_time, 0, wx.ALIGN_CENTER_VERTICAL | wx.BOTTOM | wx.TOP, 4)
+        self.spin_ctrl_periodic_interval = wx.SpinCtrl(self, wx.ID_ANY, "3", min=0, max=3600)
+        sizer_5.Add(self.spin_ctrl_periodic_interval, 0, wx.ALIGN_CENTER_VERTICAL | wx.BOTTOM | wx.TOP, 4)
 
         label_3 = wx.StaticText(self, wx.ID_ANY, u"終了キー: ")
         sizer_5.Add(label_3, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 16)
@@ -99,17 +99,15 @@ class PeridicDialog(wx.Dialog):
         sizer_9 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_5.Add(sizer_9, 1, wx.EXPAND, 0)
 
-        self.checkbox_periodic_exit_shift = wx.CheckBox(self, wx.ID_ANY, "Shift")
-        sizer_9.Add(self.checkbox_periodic_exit_shift, 0, wx.ALIGN_CENTER_VERTICAL, 0)
-
-        label_4 = wx.StaticText(self, wx.ID_ANY, "+")
+        label_4 = wx.StaticText(self, wx.ID_ANY, u"修飾キー ")
         sizer_9.Add(label_4, 0, wx.ALIGN_CENTER_VERTICAL, 0)
 
-        self.checkbox_periodic_exit_alt = wx.CheckBox(self, wx.ID_ANY, "Alt")
-        sizer_9.Add(self.checkbox_periodic_exit_alt, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 4)
+        self.choice_periodic_exit_modifire = wx.Choice(self, wx.ID_ANY, choices=["(none)", "Shift", "Alt", "Shift+Alt"])
+        self.choice_periodic_exit_modifire.SetSelection(0)
+        sizer_9.Add(self.choice_periodic_exit_modifire, 0, wx.ALIGN_CENTER_VERTICAL, 0)
 
         label_5 = wx.StaticText(self, wx.ID_ANY, "+")
-        sizer_9.Add(label_5, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+        sizer_9.Add(label_5, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 4)
 
         self.choice_periodic_exit_fkey = wx.Choice(self, wx.ID_ANY, choices=["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"])
         self.choice_periodic_exit_fkey.SetSelection(10)
@@ -286,14 +284,14 @@ class SettingsDialog(wx.Dialog):
         sizer_12 = wx.StaticBoxSizer(wx.StaticBox(self.notebook_1_pane_2, wx.ID_ANY, u"遅延キャプチャ: "), wx.HORIZONTAL)
         sizer_9.Add(sizer_12, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 4)
 
-        self.checkbox_delayed = wx.CheckBox(sizer_12.GetStaticBox(), wx.ID_ANY, u"遅延キャプチャ", style=wx.CHK_2STATE)
-        sizer_12.Add(self.checkbox_delayed, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 4)
+        self.checkbox_delayed = wx.CheckBox(sizer_12.GetStaticBox(), wx.ID_ANY, u"有効", style=wx.CHK_2STATE)
+        sizer_12.Add(self.checkbox_delayed, 0, wx.ALIGN_CENTER_VERTICAL | wx.BOTTOM | wx.LEFT | wx.TOP, 8)
 
         self.spin_ctrl_delay_time = wx.SpinCtrl(sizer_12.GetStaticBox(), wx.ID_ANY, "5", min=1, max=600)
-        sizer_12.Add(self.spin_ctrl_delay_time, 0, wx.ALIGN_CENTER_VERTICAL | wx.BOTTOM | wx.LEFT | wx.RIGHT, 4)
+        sizer_12.Add(self.spin_ctrl_delay_time, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, 4)
 
         label_10 = wx.StaticText(sizer_12.GetStaticBox(), wx.ID_ANY, u"秒後")
-        sizer_12.Add(label_10, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, 4)
+        sizer_12.Add(label_10, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 4)
 
         sizer_13 = wx.StaticBoxSizer(wx.StaticBox(self.notebook_1_pane_2, wx.ID_ANY, u"ホット・キー: "), wx.HORIZONTAL)
         sizer_9.Add(sizer_13, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 4)
@@ -325,31 +323,31 @@ class SettingsDialog(wx.Dialog):
         sizer_14.Add(sizer_16, 0, wx.EXPAND | wx.TOP, 2)
 
         self.checkbox_triming = wx.CheckBox(self.notebook_1_pane_2, wx.ID_ANY, u"有効", style=wx.CHK_2STATE)
-        sizer_16.Add(self.checkbox_triming, 0, wx.EXPAND, 0)
+        sizer_16.Add(self.checkbox_triming, 0, wx.ALIGN_CENTER_VERTICAL | wx.BOTTOM | wx.RIGHT | wx.TOP, 8)
 
         label_15 = wx.StaticText(self.notebook_1_pane_2, wx.ID_ANY, u"上: ")
         sizer_16.Add(label_15, 0, wx.ALIGN_CENTER_VERTICAL, 0)
 
-        self.spin_ctrl_triming_top_copy = wx.SpinCtrl(self.notebook_1_pane_2, wx.ID_ANY, "0", min=0, max=100)
-        sizer_16.Add(self.spin_ctrl_triming_top_copy, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
+        self.spin_ctrl_triming_top = wx.SpinCtrl(self.notebook_1_pane_2, wx.ID_ANY, "0", min=0, max=100)
+        sizer_16.Add(self.spin_ctrl_triming_top, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
 
         label_16 = wx.StaticText(self.notebook_1_pane_2, wx.ID_ANY, u"下: ")
         sizer_16.Add(label_16, 0, wx.ALIGN_CENTER_VERTICAL, 0)
 
-        self.spin_ctrl_triming_bottom_copy = wx.SpinCtrl(self.notebook_1_pane_2, wx.ID_ANY, "0", min=0, max=100)
-        sizer_16.Add(self.spin_ctrl_triming_bottom_copy, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
+        self.spin_ctrl_triming_bottom = wx.SpinCtrl(self.notebook_1_pane_2, wx.ID_ANY, "0", min=0, max=100)
+        sizer_16.Add(self.spin_ctrl_triming_bottom, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
 
         label_17 = wx.StaticText(self.notebook_1_pane_2, wx.ID_ANY, u"左: ")
         sizer_16.Add(label_17, 0, wx.ALIGN_CENTER_VERTICAL, 0)
 
-        self.spin_ctrl_triming_left_copy = wx.SpinCtrl(self.notebook_1_pane_2, wx.ID_ANY, "0", min=0, max=100)
-        sizer_16.Add(self.spin_ctrl_triming_left_copy, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
+        self.spin_ctrl_triming_left = wx.SpinCtrl(self.notebook_1_pane_2, wx.ID_ANY, "0", min=0, max=100)
+        sizer_16.Add(self.spin_ctrl_triming_left, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
 
         label_18 = wx.StaticText(self.notebook_1_pane_2, wx.ID_ANY, u"右: ")
         sizer_16.Add(label_18, 0, wx.ALIGN_CENTER_VERTICAL, 0)
 
-        self.spin_ctrl_triming_right_copy = wx.SpinCtrl(self.notebook_1_pane_2, wx.ID_ANY, "0", min=0, max=100)
-        sizer_16.Add(self.spin_ctrl_triming_right_copy, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
+        self.spin_ctrl_triming_right = wx.SpinCtrl(self.notebook_1_pane_2, wx.ID_ANY, "0", min=0, max=100)
+        sizer_16.Add(self.spin_ctrl_triming_right, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
 
         sizer_9.Add((20, 20), 1, wx.EXPAND, 0)
 
