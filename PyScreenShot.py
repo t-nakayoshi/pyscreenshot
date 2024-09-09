@@ -270,8 +270,8 @@ class SettingsDialog(wx.Dialog):
         self.checkbox_mcursor = wx.CheckBox(self.notebook_1_pane_1, wx.ID_ANY, u"マウスカーソルをキャプチャする")
         sizer_3.Add(self.checkbox_mcursor, 0, wx.ALL, 4)
 
-        self.checkbox_beep_on_capture = wx.CheckBox(self.notebook_1_pane_1, wx.ID_ANY, u"キャプチャ終了時に音を鳴らす")
-        sizer_3.Add(self.checkbox_beep_on_capture, 0, wx.ALL, 4)
+        self.checkbox_sound_on_capture = wx.CheckBox(self.notebook_1_pane_1, wx.ID_ANY, u"キャプチャ終了時に音を鳴らす")
+        sizer_3.Add(self.checkbox_sound_on_capture, 0, wx.ALL, 4)
 
         self.notebook_1_pane_2 = wx.Panel(self.notebook_1, wx.ID_ANY)
         self.notebook_1.AddPage(self.notebook_1_pane_2, u"その他の設定")
@@ -426,6 +426,7 @@ class MyScreenShot(TaskBarIcon):
         super(MyScreenShot, self).__init__()
         self.Bind(EVT_TASKBAR_LEFT_DCLICK, self.on_menu_settings)
         # プロパティ
+        self.prop: dict = {}
         #--- basic
         self._auto_save:bool = True
         self._save_folders:list[str] = []

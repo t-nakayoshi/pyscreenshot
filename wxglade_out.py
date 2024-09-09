@@ -139,7 +139,7 @@ class PeridicDialog(wx.Dialog):
 
         grid_sizer_1.Add((20, 23), 0, wx.EXPAND, 0)
 
-        self.radio_box_numbering = wx.RadioBox(self, wx.ID_ANY, u"ナンバリング: ", choices=["YYYYMMDD-HHMMSS", u"自動保存の設定に従う"], majorDimension=1, style=wx.RA_SPECIFY_COLS)
+        self.radio_box_numbering = wx.RadioBox(self, wx.ID_ANY, u"ナンバリング: ", choices=[u"自動保存の設定に従う", "YYYYMMDD_HHMMSS"], majorDimension=1, style=wx.RA_SPECIFY_COLS)
         self.radio_box_numbering.SetSelection(0)
         sizer_6.Add(self.radio_box_numbering, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 4)
 
@@ -216,7 +216,7 @@ class SettingsDialog(wx.Dialog):
         label_1 = wx.StaticText(self.notebook_1_pane_1, wx.ID_ANY, u"保存先: ")
         sizer_6.Add(label_1, 0, 0, 0)
 
-        self.list_box_auto_save_folders = wx.ListBox(self.notebook_1_pane_1, wx.ID_ANY, choices=[])
+        self.list_box_auto_save_folders = wx.ListBox(self.notebook_1_pane_1, wx.ID_ANY, choices=[], style=wx.LB_NEEDED_SB | wx.LB_SINGLE)
         sizer_6.Add(self.list_box_auto_save_folders, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 4)
 
         sizer_7 = wx.BoxSizer(wx.HORIZONTAL)
@@ -244,8 +244,15 @@ class SettingsDialog(wx.Dialog):
 
         sizer_7.Add((8, 20), 0, wx.EXPAND, 0)
 
+        sizer_15 = wx.StaticBoxSizer(wx.StaticBox(self.notebook_1_pane_1, wx.ID_ANY, u"ナンバリング: "), wx.VERTICAL)
+        sizer_5.Add(sizer_15, 0, wx.EXPAND, 0)
+
+        self.radio_box_numbering = wx.RadioBox(sizer_15.GetStaticBox(), wx.ID_ANY, "", choices=[u"接頭語+シーケンス番号", "YYYYMMDD_HHMMSS"], majorDimension=1, style=wx.RA_SPECIFY_ROWS)
+        self.radio_box_numbering.SetSelection(0)
+        sizer_15.Add(self.radio_box_numbering, 0, wx.BOTTOM | wx.EXPAND, 4)
+
         sizer_8 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_5.Add(sizer_8, 0, wx.BOTTOM | wx.EXPAND | wx.TOP, 4)
+        sizer_15.Add(sizer_8, 0, wx.BOTTOM | wx.EXPAND | wx.TOP, 4)
 
         label_2 = wx.StaticText(self.notebook_1_pane_1, wx.ID_ANY, u"接頭語: ", style=wx.ALIGN_CENTER_HORIZONTAL)
         sizer_8.Add(label_2, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 4)
@@ -268,21 +275,21 @@ class SettingsDialog(wx.Dialog):
         sizer_8.Add(self.spin_ctrl_sequence_start_no, 0, wx.ALIGN_CENTER_VERTICAL, 0)
 
         self.radio_inquire_save_name = wx.RadioButton(self.notebook_1_pane_1, wx.ID_ANY, u"保存ファイル名を毎回指定する")
-        sizer_5.Add(self.radio_inquire_save_name, 0, wx.ALL | wx.EXPAND, 4)
-
-        self.checkbox_mcursor = wx.CheckBox(self.notebook_1_pane_1, wx.ID_ANY, u"マウスカーソルをキャプチャする")
-        sizer_3.Add(self.checkbox_mcursor, 0, wx.ALL, 4)
-
-        self.checkbox_beep_on_capture = wx.CheckBox(self.notebook_1_pane_1, wx.ID_ANY, u"キャプチャ終了時に音を鳴らす")
-        sizer_3.Add(self.checkbox_beep_on_capture, 0, wx.ALL, 4)
+        sizer_5.Add(self.radio_inquire_save_name, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 4)
 
         self.notebook_1_pane_2 = wx.Panel(self.notebook_1, wx.ID_ANY)
         self.notebook_1.AddPage(self.notebook_1_pane_2, u"その他の設定")
 
         sizer_9 = wx.BoxSizer(wx.VERTICAL)
 
+        self.checkbox_mcursor = wx.CheckBox(self.notebook_1_pane_2, wx.ID_ANY, u"マウスカーソルをキャプチャする")
+        sizer_9.Add(self.checkbox_mcursor, 0, wx.ALL, 4)
+
+        self.checkbox_sound_on_capture = wx.CheckBox(self.notebook_1_pane_2, wx.ID_ANY, u"キャプチャ終了時に音を鳴らす")
+        sizer_9.Add(self.checkbox_sound_on_capture, 0, wx.ALL, 4)
+
         sizer_12 = wx.StaticBoxSizer(wx.StaticBox(self.notebook_1_pane_2, wx.ID_ANY, u"遅延キャプチャ: "), wx.HORIZONTAL)
-        sizer_9.Add(sizer_12, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 4)
+        sizer_9.Add(sizer_12, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 4)
 
         self.checkbox_delayed = wx.CheckBox(sizer_12.GetStaticBox(), wx.ID_ANY, u"有効", style=wx.CHK_2STATE)
         sizer_12.Add(self.checkbox_delayed, 0, wx.ALIGN_CENTER_VERTICAL | wx.BOTTOM | wx.LEFT | wx.TOP, 8)
@@ -294,7 +301,7 @@ class SettingsDialog(wx.Dialog):
         sizer_12.Add(label_10, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 4)
 
         sizer_13 = wx.StaticBoxSizer(wx.StaticBox(self.notebook_1_pane_2, wx.ID_ANY, u"ホット・キー: "), wx.HORIZONTAL)
-        sizer_9.Add(sizer_13, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 4)
+        sizer_9.Add(sizer_13, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 4)
 
         sizer_10 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_13.Add(sizer_10, 0, wx.EXPAND, 0)
@@ -317,7 +324,7 @@ class SettingsDialog(wx.Dialog):
         sizer_11.Add(self.choice_hotkey_active_window, 0, wx.EXPAND, 0)
 
         sizer_14 = wx.StaticBoxSizer(wx.StaticBox(self.notebook_1_pane_2, wx.ID_ANY, u"トリミング: "), wx.VERTICAL)
-        sizer_9.Add(sizer_14, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 4)
+        sizer_9.Add(sizer_14, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 4)
 
         sizer_16 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_14.Add(sizer_16, 0, wx.EXPAND | wx.TOP, 2)
