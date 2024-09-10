@@ -430,22 +430,108 @@ class SettingsDialog(wx.Dialog):
     def on_btn_hotkey_bmp_ctrl_alt(self, event):  # wxGlade: SettingsDialog.<event_handler>
         self.radio_btn_hotkey_png_ctrl_shift.SetValue(True)
         event.Skip()
+
     def on_btn_hotkey_bmp_ctrl_shift(self, event):  # wxGlade: SettingsDialog.<event_handler>
         self.radio_btn_hotkey_png_ctrl_alt.SetValue(True)
         event.Skip()
+
     def on_btn_hotkey_png_ctrl_alt(self, event):  # wxGlade: SettingsDialog.<event_handler>
         self.radio_btn_hotkey_bmp_ctrl_shift.SetValue(True)
         event.Skip()
+
     def on_btn_hotkey_png_ctrl_shift(self, event):  # wxGlade: SettingsDialog.<event_handler>
         self.radio_btn_hotkey_bmp_ctrl_alt.SetValue(True)
         event.Skip()
     """"""
     def set_prop(self, prop: dict):
+        """設定値をコントロールに反映する
         """
-        """
+        #--- 基本設定
+        # 自動/手動
+        if prop['auto_save']:
+            self.radio_btn_auto_save.SetValue(True)
+        else:
+            self.radio_btn_inquire_allways.SetValue(True)
+        # 自動保存フォルダ
+        for folder in prop['save_folders']:
+            self.list_box_auto_save_folders.Append(folder)
+        self.list_box_auto_save_folders.SetSelection(prop['save_folder_index'])
+        # ナンバリング
+        if prop['numbering'] == 0:
+            self.radio_btn_numbering_datetime.SetValue(True)
+        else:
+            self.radio_btn_nubering_prefix_sequence.SetValue(True)
+        # 接頭語/シーケンス桁数/開始番号
+        self.text_ctrl_prefix.SetValue(prop['prefix'])
+        self.spin_ctrl_sequence_digits.SetValue(prop['sequence_digits'])
+        self.spin_ctrl_sequence_begin.SetValue(prop['sequence_begin'])
+        #--- その他の設定
+        # マスカーソルをキャプチャする/キャプチャ終了時に音を鳴らす
+        self.checkbox_capture_mcursor.SetValue(prop['capture_mcursor'])
+        self.checkbox_sound_on_capture.SetValue(prop['sound_on_capture'])
+        # 遅延キャプチャ
+        self.checkbox_delayed_capture.SetValue(prop['delayed_capture'])
+        self.spin_ctrl_delayed_time.SetValue(prop['delayed_time'])
+        # トリミング
+        self.checkbox_trimming.SetValue(prop['trimming'])
+        self.spin_ctrl_trimming_top.SetValue(prop['trimming_size'][0])
+        self.spin_ctrl_trimming_bottom.SetValue(prop['trimming_size'][1])
+        self.spin_ctrl_trimming_left.SetValue(prop['trimming_size'][2])
+        self.spin_ctrl_trimming_right.SetValue(prop['trimming_size'][3])
+        # ホット・キー
+        if prop['hotkey_clipboard'] == 0:
+            self.radio_btn_hotkey_bmp_ctrl_alt.SetValue(True)
+            self.radio_btn_hotkey_png_ctrl_shift.SetValue(True)
+        else:
+            self.radio_btn_hotkey_bmp_ctrl_shift.SetValue(True)
+            self.radio_btn_hotkey_png_ctrl_alt.SetValue(True)
+        # ターゲット
+        self.choice_hotkey_active_window.Select(prop['hotkey_activewin'])
+
     def get_prop(self, prop: dict):
+        """設定値をプロパティに反映する
         """
-        """
+        #--- 基本設定
+        # 自動/手動
+        prop['auto_save'] = self.radio_btn_auto_save.GetValue()
+        # 自動保存フォルダ
+        prop['save_folders'].clear()
+        for folder in self.list_box_auto_save_folders.Items:
+            prop['save_folders'].append(folder)
+        prop['save_folder_index'] = self.list_box_auto_save_folders.GetSelection()
+        # ナンバリング
+        if self.radio_btn_numbering_datetime.GetValue():
+            prop['numbering'] = 0
+        else:
+            prop['numbering'] = 1
+        # 接頭語/シーケンス桁数/開始番号
+        prop['prefix'] = self.text_ctrl_prefix.GetValue()
+        prop['sequence_digits'] = self.spin_ctrl_sequence_digits.GetValue()
+        prop['sequence_begin']  = self.spin_ctrl_sequence_begin.GetValue()
+        #--- その他の設定
+        # マスカーソルをキャプチャする/キャプチャ終了時に音を鳴らす
+        prop['capture_mcursor']  = self.checkbox_capture_mcursor.GetValue()
+        prop['sound_on_capture'] = self.checkbox_sound_on_capture.GetValue()
+        # 遅延キャプチャ
+        prop['delayed_capture'] = self.checkbox_delayed_capture.GetValue()
+        prop['delayed_time']    = self.spin_ctrl_delayed_time.GetValue()
+        # トリミング
+        prop['trimming'] = self.checkbox_trimming.GetValue()
+        prop['trimming_size'] = [
+            self.spin_ctrl_trimming_top.GetValue(),
+            self.spin_ctrl_trimming_bottom.GetValue(),
+            self.spin_ctrl_trimming_left.GetValue(),
+            self.spin_ctrl_trimming_right.GetValue()
+        ]
+        # ホット・キー
+        if self.radio_btn_hotkey_bmp_ctrl_alt.GetValue():
+            prop['hotkey_clipboard'] = 0
+            prop['hotkey_imagefile'] = 1
+        else:
+            prop['hotkey_clipboard'] = 1
+            prop['hotkey_imagefile'] = 0
+        # ターゲット
+        prop['hotkey_activewin'] = self.choice_hotkey_active_window.GetSelection()
 # end of class SettingsDialog
 
 class MyApp(wx.App):
