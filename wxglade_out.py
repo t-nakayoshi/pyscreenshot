@@ -205,8 +205,8 @@ class SettingsDialog(wx.Dialog):
         sizer_15 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_4.Add(sizer_15, 1, wx.EXPAND, 0)
 
-        self.check_list_box_auto_save_folders = wx.CheckListBox(self.panel_1, wx.ID_ANY, choices=[])
-        sizer_15.Add(self.check_list_box_auto_save_folders, 1, wx.ALL | wx.EXPAND, 2)
+        self.list_box_auto_save_folders = wx.ListBox(self.panel_1, wx.ID_ANY, choices=[], style=wx.LB_NEEDED_SB | wx.LB_SINGLE)
+        sizer_15.Add(self.list_box_auto_save_folders, 1, wx.ALL | wx.EXPAND, 2)
 
         sizer_5 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_4.Add(sizer_5, 0, wx.ALL | wx.EXPAND, 2)
