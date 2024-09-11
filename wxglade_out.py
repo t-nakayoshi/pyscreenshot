@@ -15,8 +15,6 @@ import wx.lib.agw.multidirdialog as MDD
 # end wxGlade
 
 
-
-
 class MyFrame(wx.Frame):
     def __init__(self, *args, **kwds):
         # begin wxGlade: MyFrame.__init__
@@ -35,8 +33,8 @@ class MyFrame(wx.Frame):
         self.button_settingdlg = wx.Button(self.panel_1, wx.ID_ANY, u"環境設定...")
         sizer_2.Add(self.button_settingdlg, 1, wx.ALL | wx.EXPAND, 8)
 
-        self.button_peridicdlg = wx.Button(self.panel_1, wx.ID_ANY, u"定期実行設定...")
-        sizer_2.Add(self.button_peridicdlg, 1, wx.ALL | wx.EXPAND, 8)
+        self.button_periodicdlg = wx.Button(self.panel_1, wx.ID_ANY, u"定期実行設定...")
+        sizer_2.Add(self.button_periodicdlg, 1, wx.ALL | wx.EXPAND, 8)
 
         self.panel_1.SetSizer(sizer_1)
 
@@ -44,7 +42,7 @@ class MyFrame(wx.Frame):
         self.Centre()
 
         self.button_settingdlg.Bind(wx.EVT_BUTTON, self.on_open_settings_dlg)
-        self.button_peridicdlg.Bind(wx.EVT_BUTTON, self.on_open_peridic_setteing_dlg)
+        self.button_periodicdlg.Bind(wx.EVT_BUTTON, self.on_open_periodic_setteings_dlg)
         # end wxGlade
 
     def on_open_settings_dlg(self, event):  # wxGlade: MyFrame.<event_handler>
@@ -52,128 +50,20 @@ class MyFrame(wx.Frame):
             dlg.ShowModal()
         event.Skip()
 
-    def on_open_peridic_setteing_dlg(self, event):  # wxGlade: MyFrame.<event_handler>
-        with PeridicDialog(None, wx.ID_ANY, "") as dlg:
-            dlg.ShowModal()
+    def on_open_periodic_setteings_dlg(self, event):  # wxGlade: MyFrame.<event_handler>
+        with PeriodicDialog(None, wx.ID_ANY, "") as dlg:
+            id = dlg.ShowModal()
+            if id == wx.ID_OK:
+                print(f'periodic_id=OK({id})')
+            elif id == wx.ID_CANCEL:
+                print(f'periodic_id=CANCEL({id})')
+            elif id == wx.ID_STOP:
+                print(f'periodic_id=STOP({id})')
+            else:
+                print(f'periodic_id={id}')
         event.Skip()
 
 # end of class MyFrame
-
-class PeridicDialog(wx.Dialog):
-    def __init__(self, *args, **kwds):
-        # begin wxGlade: PeridicDialog.__init__
-        kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_DIALOG_STYLE
-        wx.Dialog.__init__(self, *args, **kwds)
-        self.SetSize((400, 240))
-        self.SetTitle(u"定期実行設定")
-
-        sizer_1 = wx.BoxSizer(wx.VERTICAL)
-
-        sizer_3 = wx.BoxSizer(wx.VERTICAL)
-        sizer_1.Add(sizer_3, 1, wx.ALL | wx.EXPAND, 2)
-
-        sizer_4 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_3.Add(sizer_4, 0, wx.ALL | wx.EXPAND, 4)
-
-        label_1 = wx.StaticText(self, wx.ID_ANY, u"保存先: ")
-        sizer_4.Add(label_1, 0, wx.ALIGN_CENTER_VERTICAL, 0)
-
-        self.text_ctrl_periodic_folder = wx.TextCtrl(self, wx.ID_ANY, "")
-        sizer_4.Add(self.text_ctrl_periodic_folder, 1, wx.ALIGN_CENTER_VERTICAL, 0)
-
-        self.button_periodic_folder_brows = wx.Button(self, wx.ID_ANY, "...")
-        self.button_periodic_folder_brows.SetMinSize((25, 23))
-        sizer_4.Add(self.button_periodic_folder_brows, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 4)
-
-        sizer_5 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_3.Add(sizer_5, 0, wx.ALL | wx.EXPAND, 4)
-
-        label_2 = wx.StaticText(self, wx.ID_ANY, u"間　隔: ")
-        sizer_5.Add(label_2, 0, wx.ALIGN_CENTER_VERTICAL, 4)
-
-        self.spin_ctrl_periodic_interval = wx.SpinCtrl(self, wx.ID_ANY, "1", min=1, max=3600, style=wx.ALIGN_RIGHT | wx.SP_ARROW_KEYS)
-        sizer_5.Add(self.spin_ctrl_periodic_interval, 0, wx.ALIGN_CENTER_VERTICAL | wx.BOTTOM | wx.TOP, 4)
-
-        label_3 = wx.StaticText(self, wx.ID_ANY, u"秒")
-        sizer_5.Add(label_3, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 4)
-
-        label_4 = wx.StaticText(self, wx.ID_ANY, u"終了キー: ")
-        sizer_5.Add(label_4, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 24)
-
-        self.choice_periodic_stopkey_modifire = wx.Choice(self, wx.ID_ANY, choices=["none", "Shift", "Ctrl", "Alt"])
-        self.choice_periodic_stopkey_modifire.SetSelection(0)
-        sizer_5.Add(self.choice_periodic_stopkey_modifire, 0, wx.ALIGN_CENTER_VERTICAL, 0)
-
-        label_6 = wx.StaticText(self, wx.ID_ANY, "+")
-        sizer_5.Add(label_6, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, 4)
-
-        self.choice_periodic_stop_fkey = wx.Choice(self, wx.ID_ANY, choices=["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"])
-        self.choice_periodic_stop_fkey.SetSelection(10)
-        sizer_5.Add(self.choice_periodic_stop_fkey, 0, wx.ALIGN_CENTER_VERTICAL, 0)
-
-        sizer_6 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_3.Add(sizer_6, 1, wx.ALL | wx.EXPAND, 4)
-
-        sizer_7 = wx.StaticBoxSizer(wx.StaticBox(self, wx.ID_ANY, u"対象"), wx.VERTICAL)
-        sizer_6.Add(sizer_7, 0, wx.EXPAND, 0)
-
-        self.choice_periodic_capture_target = wx.Choice(sizer_7.GetStaticBox(), wx.ID_ANY, choices=[u"デスクトップ", u"ディスプレイ 1", u"アクティブウィンドウ"])
-        self.choice_periodic_capture_target.SetSelection(0)
-        sizer_7.Add(self.choice_periodic_capture_target, 0, wx.ALL, 4)
-
-        sizer_8 = wx.StaticBoxSizer(wx.StaticBox(self, wx.ID_ANY, u"ナンバリング"), wx.VERTICAL)
-        sizer_6.Add(sizer_8, 0, wx.EXPAND | wx.LEFT, 4)
-
-        self.radio_btn_periodic_numbering_datetime = wx.RadioButton(sizer_8.GetStaticBox(), wx.ID_ANY, u"日時 (yyyymmdd_hhmmss)")
-        sizer_8.Add(self.radio_btn_periodic_numbering_datetime, 0, wx.ALL, 4)
-
-        self.radio_btn_periodic_numbering_autosave = wx.RadioButton(sizer_8.GetStaticBox(), wx.ID_ANY, u"自動保存の設定に従う")
-        sizer_8.Add(self.radio_btn_periodic_numbering_autosave, 0, wx.ALL, 4)
-
-        sizer_2 = wx.StdDialogButtonSizer()
-        sizer_1.Add(sizer_2, 0, wx.ALIGN_RIGHT | wx.ALL, 4)
-
-        self.button_periodic_start = wx.Button(self, wx.ID_ANY, u"開始")
-        self.button_periodic_start.SetDefault()
-        sizer_2.Add(self.button_periodic_start, 0, 0, 0)
-
-        self.button_periodic_stop = wx.Button(self, wx.ID_ANY, u"終了")
-        sizer_2.Add(self.button_periodic_stop, 0, 0, 0)
-
-        self.button_periodic_CANCEL = wx.Button(self, wx.ID_CANCEL, "")
-        self.button_periodic_CANCEL.SetDefault()
-        sizer_2.AddButton(self.button_periodic_CANCEL)
-
-        sizer_2.Realize()
-
-        self.SetSizer(sizer_1)
-
-        self.SetAffirmativeId(self.button_periodic_start.GetId())
-        self.SetEscapeId(self.button_periodic_CANCEL.GetId())
-
-        self.Layout()
-        self.Centre()
-
-        self.button_periodic_start.Bind(wx.EVT_BUTTON, self.on_periodic_capture_start)
-        self.button_periodic_stop.Bind(wx.EVT_BUTTON, self.on_periodic_capture_stop)
-        # end wxGlade
-
-    def on_save_folder_browse(self, event):  # wxGlade: PeridicDialog.<event_handler>
-        print("Event handler 'on_save_folder_browse' not implemented!")
-        event.Skip()
-    def on_periodic_start(self, event):  # wxGlade: PeridicDialog.<event_handler>
-        print("Event handler 'on_periodic_start' not implemented!")
-        event.Skip()
-    def on_periodic_stop(self, event):  # wxGlade: PeridicDialog.<event_handler>
-        print("Event handler 'on_periodic_stop' not implemented!")
-        event.Skip()
-    def on_periodic_capture_start(self, event):  # wxGlade: PeridicDialog.<event_handler>
-        print("Event handler 'on_periodic_capture_start' not implemented!")
-        event.Skip()
-    def on_periodic_capture_stop(self, event):  # wxGlade: PeridicDialog.<event_handler>
-        print("Event handler 'on_periodic_capture_stop' not implemented!")
-        event.Skip()
-# end of class PeridicDialog
 
 class SettingsDialog(wx.Dialog):
     def __init__(self, *args, **kwds):
@@ -432,9 +322,9 @@ class SettingsDialog(wx.Dialog):
             if dlg.ShowModal() != wx.ID_OK:
                 return
             paths = dlg.GetPaths()
-            for dir in paths:
-                self.list_box_auto_save_folders.Append(dir)
-                print(f'Add {dir}')
+            for folder in paths:
+                self.list_box_auto_save_folders.Append(folder)
+                print(f'Add {folder}')
         event.Skip()
 
     def on_save_folder_del(self, event):  # wxGlade: SettingsDialog.<event_handler>
@@ -576,6 +466,173 @@ class SettingsDialog(wx.Dialog):
         prop['hotkey_activewin'] = self.choice_hotkey_active_window.GetSelection()
 
 # end of class SettingsDialog
+
+class PeriodicDialog(wx.Dialog):
+    def __init__(self, *args, **kwds):
+        # begin wxGlade: PeriodicDialog.__init__
+        kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_DIALOG_STYLE
+        wx.Dialog.__init__(self, *args, **kwds)
+        self.SetSize((400, 240))
+        self.SetTitle(u"定期実行設定")
+
+        sizer_1 = wx.BoxSizer(wx.VERTICAL)
+
+        sizer_3 = wx.BoxSizer(wx.VERTICAL)
+        sizer_1.Add(sizer_3, 1, wx.ALL | wx.EXPAND, 2)
+
+        sizer_4 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_3.Add(sizer_4, 0, wx.ALL | wx.EXPAND, 4)
+
+        label_1 = wx.StaticText(self, wx.ID_ANY, u"保存先: ")
+        sizer_4.Add(label_1, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+
+        self.text_ctrl_periodic_folder = wx.TextCtrl(self, wx.ID_ANY, "")
+        sizer_4.Add(self.text_ctrl_periodic_folder, 1, wx.ALIGN_CENTER_VERTICAL, 0)
+
+        self.button_periodic_folder_brows = wx.Button(self, wx.ID_ANY, "...")
+        self.button_periodic_folder_brows.SetMinSize((25, 23))
+        sizer_4.Add(self.button_periodic_folder_brows, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 4)
+
+        sizer_5 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_3.Add(sizer_5, 0, wx.ALL | wx.EXPAND, 4)
+
+        label_2 = wx.StaticText(self, wx.ID_ANY, u"間　隔: ")
+        sizer_5.Add(label_2, 0, wx.ALIGN_CENTER_VERTICAL, 4)
+
+        self.spin_ctrl_periodic_interval = wx.SpinCtrl(self, wx.ID_ANY, "1", min=1, max=3600, style=wx.ALIGN_RIGHT | wx.SP_ARROW_KEYS)
+        sizer_5.Add(self.spin_ctrl_periodic_interval, 0, wx.ALIGN_CENTER_VERTICAL | wx.BOTTOM | wx.TOP, 4)
+
+        label_3 = wx.StaticText(self, wx.ID_ANY, u"秒")
+        sizer_5.Add(label_3, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 4)
+
+        label_4 = wx.StaticText(self, wx.ID_ANY, u"終了キー: ")
+        sizer_5.Add(label_4, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 24)
+
+        self.choice_periodic_stopkey_modifire = wx.Choice(self, wx.ID_ANY, choices=["none", "Shift", "Ctrl", "Alt"])
+        self.choice_periodic_stopkey_modifire.SetSelection(0)
+        sizer_5.Add(self.choice_periodic_stopkey_modifire, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+
+        label_6 = wx.StaticText(self, wx.ID_ANY, "+")
+        sizer_5.Add(label_6, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, 4)
+
+        self.choice_periodic_stop_fkey = wx.Choice(self, wx.ID_ANY, choices=["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"])
+        self.choice_periodic_stop_fkey.SetSelection(10)
+        sizer_5.Add(self.choice_periodic_stop_fkey, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+
+        sizer_6 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_3.Add(sizer_6, 1, wx.ALL | wx.EXPAND, 4)
+
+        sizer_7 = wx.StaticBoxSizer(wx.StaticBox(self, wx.ID_ANY, u"対象"), wx.VERTICAL)
+        sizer_6.Add(sizer_7, 0, wx.EXPAND, 0)
+
+        self.choice_periodic_capture_target = wx.Choice(sizer_7.GetStaticBox(), wx.ID_ANY, choices=[u"デスクトップ", u"アクティブウィンドウ"])
+        self.choice_periodic_capture_target.SetSelection(0)
+        sizer_7.Add(self.choice_periodic_capture_target, 0, wx.ALL, 4)
+
+        sizer_8 = wx.StaticBoxSizer(wx.StaticBox(self, wx.ID_ANY, u"ナンバリング"), wx.VERTICAL)
+        sizer_6.Add(sizer_8, 0, wx.EXPAND | wx.LEFT, 4)
+
+        self.radio_btn_periodic_numbering_datetime = wx.RadioButton(sizer_8.GetStaticBox(), wx.ID_ANY, u"日時 (yyyymmdd_hhmmss)")
+        sizer_8.Add(self.radio_btn_periodic_numbering_datetime, 0, wx.ALL, 4)
+
+        self.radio_btn_periodic_numbering_autosave = wx.RadioButton(sizer_8.GetStaticBox(), wx.ID_ANY, u"自動保存の設定に従う")
+        sizer_8.Add(self.radio_btn_periodic_numbering_autosave, 0, wx.ALL, 4)
+
+        sizer_9 = wx.BoxSizer(wx.VERTICAL)
+        sizer_6.Add(sizer_9, 1, wx.EXPAND, 0)
+
+        self.button_periodic_start = wx.Button(self, wx.ID_OK, u"開始")
+        sizer_9.Add(self.button_periodic_start, 1, wx.ALL | wx.EXPAND, 4)
+
+        self.button_periodic_stop = wx.Button(self, wx.ID_STOP, u"終了")
+        sizer_9.Add(self.button_periodic_stop, 0, wx.ALL | wx.EXPAND, 4)
+
+        sizer_2 = wx.StdDialogButtonSizer()
+        sizer_1.Add(sizer_2, 0, wx.ALIGN_RIGHT | wx.ALL, 4)
+
+        self.button_CANCEL = wx.Button(self, wx.ID_CANCEL, "")
+        sizer_2.AddButton(self.button_CANCEL)
+
+        sizer_2.Realize()
+
+        self.SetSizer(sizer_1)
+
+        self.SetAffirmativeId(self.button_periodic_start.GetId())
+        self.SetEscapeId(self.button_CANCEL.GetId())
+
+        self.Layout()
+        self.Centre()
+
+        self.button_periodic_stop.Bind(wx.EVT_BUTTON, self.on_periodic_capture_stop)
+        # end wxGlade
+
+    def on_save_folder_browse(self, event):  # wxGlade: PeriodicDialog.<event_handler>
+        """保存フォルダの選択
+        """
+        defaultPath = os.getcwd()
+        agwstyle = MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST
+        with MDD.MultiDirDialog(None, title="フォルダの選択", defaultPath=defaultPath, agwStyle=agwstyle) as dlg:
+            if dlg.ShowModal() != wx.ID_OK:
+                return
+            paths = dlg.GetPaths()
+            for folder in paths:
+                self.text_ctrl_periodic_folder.SetValue(folder)
+                print(f'Set {folder}')
+        event.Skip()
+
+    def on_periodic_capture_stop(self, event):  # wxGlade: PeriodicDialog.<event_handler>
+        print("Event handler 'on_periodic_capture_stop'")
+        self.EndModal(event.GetId())
+        event.Skip()
+
+    def set_prop(self, prop: dict):
+        """設定値をコントロールに反映する
+        """
+        # 保存フォルダ
+        self.text_ctrl_periodic_folder.SetValue(prop['periodic_save_folder'])
+        # 間隔
+        self.spin_ctrl_periodic_interval.SetValue(prop['periodic_interval'])
+        # 停止キー（修飾キー）
+        self.choice_periodic_stopkey_modifire.Select(prop['periodic_stop_modifier'])
+        self.choice_periodic_stop_fkey.Select(prop['periodic_stop_fkey'])
+        # ターゲット
+        for i in range(prop['display']):
+            item = f'ディスプレイ {i + 1}'
+            self.choice_periodic_capture_target.Insert(item, self.choice_periodic_capture_target.GetCount() - 1)
+        if prop['periodic_target'] == -1:
+            self.choice_periodic_capture_target.Select(self.choice_periodic_capture_target.GetCount() - 1)
+        else:
+            self.choice_periodic_capture_target.Select(prop['periodic_target'])
+        # ナンバリング
+        if prop['periodic_numbering'] == 0:
+            self.radio_btn_periodic_numbering_datetime.SetValue(True)
+        else:
+            self.radio_btn_periodic_numbering_autosave.SetValue(True)
+
+    def get_prop(self, prop: dict):
+        """設定値をプロパティに反映する
+        """
+        # 保存フォルダ
+        prop['periodic_save_folder'] = self.text_ctrl_periodic_folder.GetValue()
+        # 間隔
+        prop['periodic_interval'] = self.spin_ctrl_periodic_interval.GetValue()
+        # 停止キー（修飾キー）
+        prop['periodic_stop_modifier'] = self.choice_periodic_stopkey_modifire.GetSelection()
+        prop['periodic_stop_fkey']     = self.choice_periodic_stop_fkey.GetSelection()
+        # ターゲット
+        index = self.choice_periodic_capture_target.Selection()
+        if index == (self.choice_periodic_capture_target.GetCount() - 1):
+            prop['periodic_target'] = -1
+        else:
+            prop['periodic_target'] = index
+        # ナンバリング
+        if self.radio_btn_periodic_numbering_datetime.GetValue():
+            prop['periodic_numbering'] = 0
+        else:
+            prop['periodic_numbering'] = 1
+
+# end of class PeriodicDialog
+
 
 class MyApp(wx.App):
     def OnInit(self):

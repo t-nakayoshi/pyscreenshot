@@ -586,6 +586,175 @@ class SettingsDialog(wx.Dialog):
 # end of class SettingsDialog
 
 
+class PeriodicDialog(wx.Dialog):
+    """定期実行設定ダイアログ（wxGladeで、設計&生成）
+    """
+    def __init__(self, *args, **kwds):
+        # begin wxGlade: PeriodicDialog.__init__
+        kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_DIALOG_STYLE
+        wx.Dialog.__init__(self, *args, **kwds)
+        self.SetSize((400, 240))
+        self.SetTitle(u"定期実行設定")
+
+        sizer_1 = wx.BoxSizer(wx.VERTICAL)
+
+        sizer_3 = wx.BoxSizer(wx.VERTICAL)
+        sizer_1.Add(sizer_3, 1, wx.ALL | wx.EXPAND, 2)
+
+        sizer_4 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_3.Add(sizer_4, 0, wx.ALL | wx.EXPAND, 4)
+
+        label_1 = wx.StaticText(self, wx.ID_ANY, u"保存先: ")
+        sizer_4.Add(label_1, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+
+        self.text_ctrl_periodic_folder = wx.TextCtrl(self, wx.ID_ANY, "")
+        sizer_4.Add(self.text_ctrl_periodic_folder, 1, wx.ALIGN_CENTER_VERTICAL, 0)
+
+        self.button_periodic_folder_brows = wx.Button(self, wx.ID_ANY, "...")
+        self.button_periodic_folder_brows.SetMinSize((25, 23))
+        sizer_4.Add(self.button_periodic_folder_brows, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 4)
+
+        sizer_5 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_3.Add(sizer_5, 0, wx.ALL | wx.EXPAND, 4)
+
+        label_2 = wx.StaticText(self, wx.ID_ANY, u"間　隔: ")
+        sizer_5.Add(label_2, 0, wx.ALIGN_CENTER_VERTICAL, 4)
+
+        self.spin_ctrl_periodic_interval = wx.SpinCtrl(self, wx.ID_ANY, "1", min=1, max=3600, style=wx.ALIGN_RIGHT | wx.SP_ARROW_KEYS)
+        sizer_5.Add(self.spin_ctrl_periodic_interval, 0, wx.ALIGN_CENTER_VERTICAL | wx.BOTTOM | wx.TOP, 4)
+
+        label_3 = wx.StaticText(self, wx.ID_ANY, u"秒")
+        sizer_5.Add(label_3, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 4)
+
+        label_4 = wx.StaticText(self, wx.ID_ANY, u"終了キー: ")
+        sizer_5.Add(label_4, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 24)
+
+        self.choice_periodic_stopkey_modifire = wx.Choice(self, wx.ID_ANY, choices=["none", "Shift", "Ctrl", "Alt"])
+        self.choice_periodic_stopkey_modifire.SetSelection(0)
+        sizer_5.Add(self.choice_periodic_stopkey_modifire, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+
+        label_6 = wx.StaticText(self, wx.ID_ANY, "+")
+        sizer_5.Add(label_6, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, 4)
+
+        self.choice_periodic_stop_fkey = wx.Choice(self, wx.ID_ANY, choices=["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"])
+        self.choice_periodic_stop_fkey.SetSelection(10)
+        sizer_5.Add(self.choice_periodic_stop_fkey, 0, wx.ALIGN_CENTER_VERTICAL, 0)
+
+        sizer_6 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_3.Add(sizer_6, 1, wx.ALL | wx.EXPAND, 4)
+
+        sizer_7 = wx.StaticBoxSizer(wx.StaticBox(self, wx.ID_ANY, u"対象"), wx.VERTICAL)
+        sizer_6.Add(sizer_7, 0, wx.EXPAND, 0)
+
+        self.choice_periodic_capture_target = wx.Choice(sizer_7.GetStaticBox(), wx.ID_ANY, choices=[u"デスクトップ", u"アクティブウィンドウ"])
+        self.choice_periodic_capture_target.SetSelection(0)
+        sizer_7.Add(self.choice_periodic_capture_target, 0, wx.ALL, 4)
+
+        sizer_8 = wx.StaticBoxSizer(wx.StaticBox(self, wx.ID_ANY, u"ナンバリング"), wx.VERTICAL)
+        sizer_6.Add(sizer_8, 0, wx.EXPAND | wx.LEFT, 4)
+
+        self.radio_btn_periodic_numbering_datetime = wx.RadioButton(sizer_8.GetStaticBox(), wx.ID_ANY, u"日時 (yyyymmdd_hhmmss)")
+        sizer_8.Add(self.radio_btn_periodic_numbering_datetime, 0, wx.ALL, 4)
+
+        self.radio_btn_periodic_numbering_autosave = wx.RadioButton(sizer_8.GetStaticBox(), wx.ID_ANY, u"自動保存の設定に従う")
+        sizer_8.Add(self.radio_btn_periodic_numbering_autosave, 0, wx.ALL, 4)
+
+        sizer_9 = wx.BoxSizer(wx.VERTICAL)
+        sizer_6.Add(sizer_9, 1, wx.EXPAND, 0)
+
+        self.button_periodic_start = wx.Button(self, wx.ID_OK, u"開始")
+        sizer_9.Add(self.button_periodic_start, 1, wx.ALL | wx.EXPAND, 4)
+
+        self.button_periodic_stop = wx.Button(self, wx.ID_STOP, u"終了")
+        sizer_9.Add(self.button_periodic_stop, 0, wx.ALL | wx.EXPAND, 4)
+
+        sizer_2 = wx.StdDialogButtonSizer()
+        sizer_1.Add(sizer_2, 0, wx.ALIGN_RIGHT | wx.ALL, 4)
+
+        self.button_CANCEL = wx.Button(self, wx.ID_CANCEL, "")
+        sizer_2.AddButton(self.button_CANCEL)
+
+        sizer_2.Realize()
+
+        self.SetSizer(sizer_1)
+
+        self.SetAffirmativeId(self.button_periodic_start.GetId())
+        self.SetEscapeId(self.button_CANCEL.GetId())
+
+        self.Layout()
+        self.Centre()
+
+        self.button_periodic_stop.Bind(wx.EVT_BUTTON, self.on_periodic_capture_stop)
+        # end wxGlade
+
+    def on_save_folder_browse(self, event):  # wxGlade: PeriodicDialog.<event_handler>
+        """保存フォルダの選択
+        """
+        defaultPath = os.getcwd()
+        agwstyle = MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST
+        with MDD.MultiDirDialog(None, title="フォルダの選択", defaultPath=defaultPath, agwStyle=agwstyle) as dlg:
+            if dlg.ShowModal() != wx.ID_OK:
+                return
+            paths = dlg.GetPaths()
+            for folder in paths:
+                self.text_ctrl_periodic_folder.SetValue(folder)
+                print(f'Set {folder}')
+        event.Skip()
+
+    def on_periodic_capture_stop(self, event):  # wxGlade: PeriodicDialog.<event_handler>
+        print("Event handler 'on_periodic_capture_stop'")
+        self.EndModal(event.GetId())
+        event.Skip()
+
+    def set_prop(self, prop: dict):
+        """設定値をコントロールに反映する
+        """
+        # 保存フォルダ
+        self.text_ctrl_periodic_folder.SetValue(prop['periodic_save_folder'])
+        # 間隔
+        self.spin_ctrl_periodic_interval.SetValue(prop['periodic_interval'])
+        # 停止キー（修飾キー）
+        self.choice_periodic_stopkey_modifire.Select(prop['periodic_stop_modifier'])
+        self.choice_periodic_stop_fkey.Select(prop['periodic_stop_fkey'])
+        # ターゲット
+        for i in range(prop['display']):
+            item = f'ディスプレイ {i + 1}'
+            self.choice_periodic_capture_target.Insert(item, self.choice_periodic_capture_target.GetCount() - 1)
+        if prop['periodic_target'] == -1:
+            self.choice_periodic_capture_target.Select(self.choice_periodic_capture_target.GetCount() - 1)
+        else:
+            self.choice_periodic_capture_target.Select(prop['periodic_target'])
+        # ナンバリング
+        if prop['periodic_numbering'] == 0:
+            self.radio_btn_periodic_numbering_datetime.SetValue(True)
+        else:
+            self.radio_btn_periodic_numbering_autosave.SetValue(True)
+
+    def get_prop(self, prop: dict):
+        """設定値をプロパティに反映する
+        """
+        # 保存フォルダ
+        prop['periodic_save_folder'] = self.text_ctrl_periodic_folder.GetValue()
+        # 間隔
+        prop['periodic_interval'] = self.spin_ctrl_periodic_interval.GetValue()
+        # 停止キー（修飾キー）
+        prop['periodic_stop_modifier'] = self.choice_periodic_stopkey_modifire.GetSelection()
+        prop['periodic_stop_fkey']     = self.choice_periodic_stop_fkey.GetSelection()
+        # ターゲット
+        index = self.choice_periodic_capture_target.Selection()
+        if index == (self.choice_periodic_capture_target.GetCount() - 1):
+            prop['periodic_target'] = -1
+        else:
+            prop['periodic_target'] = index
+        # ナンバリング
+        if self.radio_btn_periodic_numbering_datetime.GetValue():
+            prop['periodic_numbering'] = 0
+        else:
+            prop['periodic_numbering'] = 1
+
+# end of class PeriodicDialog
+
+
 class MyScreenShot(TaskBarIcon):
     """Menu IDs"""
     # Help
@@ -621,6 +790,7 @@ class MyScreenShot(TaskBarIcon):
         self.Bind(EVT_TASKBAR_LEFT_DCLICK, self.on_menu_settings)
         # プロパティ
         self.prop: dict = {
+            'display': 1,
             'auto_save': True,
             'save_folders': [],
             'save_folder_index': -1,
@@ -654,7 +824,6 @@ class MyScreenShot(TaskBarIcon):
         * 現バージョンでは生成したメニューが破棄されて再利用できない。
         """
         # print("CreatePopupMenu")
-        self.dis_count = len(get_monitors())    # ディスプレイ数を取得する
         # メニューの生成
         menu = wx.Menu()
         # Help
@@ -710,12 +879,11 @@ class MyScreenShot(TaskBarIcon):
         sub_menu2 = wx.Menu()
         create_menu_item(sub_menu1, MyScreenShot.ID_MENU_SCREEN0_CB, f'0: デスクトップ', self.on_menu_clipboard)
         create_menu_item(sub_menu2, MyScreenShot.ID_MENU_SCREEN0, f'0: デスクトップ', self.on_menu_imagefile)
-        if self.dis_count > 1:
-            for n in range(0, self.dis_count):
-                create_menu_item(sub_menu1, MyScreenShot.ID_MENU_SCREEN1_CB + n, f'{n + 1}: ディスプレイ {n + 1}', self.on_menu_clipboard)
-                create_menu_item(sub_menu2, MyScreenShot.ID_MENU_SCREEN1 + n, f'{n + 1}: ディスプレイ {n + 1}', self.on_menu_imagefile)
-        create_menu_item(sub_menu1, MyScreenShot.ID_MENU_ACTIVE_CB, f'{self.dis_count + 1}: アクティブウィンドウ', self.on_menu_clipboard)
-        create_menu_item(sub_menu2, MyScreenShot.ID_MENU_ACTIVE, f'{self.dis_count + 1}: アクティブウィンドウ', self.on_menu_imagefile)
+        for n in range(self.prop['display']):
+            create_menu_item(sub_menu1, MyScreenShot.ID_MENU_SCREEN1_CB + n, f'{n + 1}: ディスプレイ {n + 1}', self.on_menu_clipboard)
+            create_menu_item(sub_menu2, MyScreenShot.ID_MENU_SCREEN1 + n, f'{n + 1}: ディスプレイ {n + 1}', self.on_menu_imagefile)
+        create_menu_item(sub_menu1, MyScreenShot.ID_MENU_ACTIVE_CB, f'{self.prop['display'] + 1}: アクティブウィンドウ', self.on_menu_clipboard)
+        create_menu_item(sub_menu2, MyScreenShot.ID_MENU_ACTIVE, f'{self.prop['display'] + 1}: アクティブウィンドウ', self.on_menu_imagefile)
         item = menu.AppendSubMenu(sub_menu1, 'クリップボードへコピー')
         item.SetBitmap(wx.Bitmap(self._icon_img.GetBitmap(MenuIcon.COPY_TO_CB.value)))
         item = menu.AppendSubMenu(sub_menu2, 'PNG保存')
@@ -755,8 +923,10 @@ class MyScreenShot(TaskBarIcon):
     def config_to_property(self):
         """設定値をプロパティに展開する
         """
+        # ディスプレイ数
+        self.prop['display'] = len(get_monitors())
         # 自動保存
-        self.prop['auto_save']  = self.config.getboolean('basic','auto_save', fallback=True)
+        self.prop['auto_save'] = self.config.getboolean('basic','auto_save', fallback=True)
         # 自動保存フォルダ
         self.prop['save_folder_index'] = self.config.getint('basic', 'save_folder_index', fallback=-1)
         for n in range(_MAX_SAVE_FOLDERS):
@@ -980,7 +1150,7 @@ class MyScreenShot(TaskBarIcon):
 
     def on_menu_settings(self, event):
         """Settingメニューイベントハンドラ
-        * アプリケーションの設定ダイヤログを表示する。
+        * 環境の設定ダイヤログを表示する。
         Args:
             event (wx.EVENT): EVENTオブジェクト
         Returns:
@@ -1057,9 +1227,20 @@ class MyScreenShot(TaskBarIcon):
         print(f'on_menu_open_folder ({id})')
 
     def on_menu_periodic_settings(self, event):
+        """Periodic settingsメニューイベントハンドラ
+        * 定期実行設定ダイヤログを表示する。
+        Args:
+            event (wx.EVENT): EVENTオブジェクト
+        Returns:
+            none
         """
-        """
-        print("on_menu_periodic_settings")
+        with PeriodicDialog(self.frame, wx.ID_ANY, "") as dlg:
+            # 設定値をダイアログ側へ渡す
+            dlg.set_prop(self.prop)
+            if dlg.ShowModal() == wx.ID_OK:
+                print("on_menu_periodic_settings closed 'Start(OK)'")
+                dlg.get_prop(self.prop)
+                print(self.prop)
 
     def on_menu_clipboard(self, event):
         """Copy to clipboardメニューイベントハンドラ
