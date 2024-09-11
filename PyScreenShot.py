@@ -24,6 +24,7 @@ import win32gui
 
 import wx
 from wx.adv import TaskBarIcon, EVT_TASKBAR_LEFT_DCLICK, Sound, AboutBox, AboutDialogInfo
+import wx.lib.agw.multidirdialog as MDD
 
 from myutils import get_running_path, platform_info, scan_directory, atof, natural_keys
 from res import app_icon, menu_image, sound
@@ -185,6 +186,10 @@ class SettingsDialog(wx.Dialog):
     """
     def __init__(self, *args, **kwds):
         # begin wxGlade: SettingsDialog.__init__
+        self.BTN_ID_ADD  = 1001
+        self.BTN_ID_DEL  = 1002
+        self.BTN_ID_UP   = 1003
+        self.BTN_ID_DOWN = 1004
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_DIALOG_STYLE
         wx.Dialog.__init__(self, *args, **kwds)
         self.SetSize((400, 400))
@@ -220,18 +225,18 @@ class SettingsDialog(wx.Dialog):
         sizer_5 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_4.Add(sizer_5, 0, wx.ALL | wx.EXPAND, 2)
 
-        self.button_add_folder = wx.Button(self.panel_1, wx.ID_ANY, u"追加")
+        self.button_add_folder = wx.Button(self.panel_1, self.BTN_ID_ADD, u"追加")
         sizer_5.Add(self.button_add_folder, 0, 0, 0)
 
-        self.button_del_folder = wx.Button(self.panel_1, wx.ID_ANY, u"削除")
+        self.button_del_folder = wx.Button(self.panel_1, self.BTN_ID_DEL, u"削除")
         sizer_5.Add(self.button_del_folder, 0, 0, 0)
 
         sizer_5.Add((20, 20), 1, wx.ALIGN_CENTER_VERTICAL, 0)
 
-        self.button_up_folder = wx.Button(self.panel_1, wx.ID_ANY, u"△")
+        self.button_up_folder = wx.Button(self.panel_1, self.BTN_ID_UP, u"△")
         sizer_5.Add(self.button_up_folder, 0, 0, 0)
 
-        self.button_down_folder = wx.Button(self.panel_1, wx.ID_ANY, u"▽")
+        self.button_down_folder = wx.Button(self.panel_1, self.BTN_ID_DOWN, u"▽")
         sizer_5.Add(self.button_down_folder, 0, 0, 0)
 
         self.panel_2 = wx.Panel(self.notebook_1_pane_1, wx.ID_ANY)
@@ -416,6 +421,10 @@ class SettingsDialog(wx.Dialog):
         self.Layout()
         self.Centre()
 
+        self.button_add_folder.Bind(wx.EVT_BUTTON, self.on_save_folder_add)
+        self.button_del_folder.Bind(wx.EVT_BUTTON, self.on_save_folder_del)
+        self.button_up_folder.Bind(wx.EVT_BUTTON, self.on_save_folder_move)
+        self.button_down_folder.Bind(wx.EVT_BUTTON, self.on_save_folder_move)
         self.radio_btn_hotkey_bmp_ctrl_alt.Bind(wx.EVT_RADIOBUTTON, self.on_btn_hotkey_bmp_ctrl_alt)
         self.radio_btn_hotkey_bmp_ctrl_shift.Bind(wx.EVT_RADIOBUTTON, self.on_btn_hotkey_bmp_ctrl_shift)
         self.radio_btn_hotkey_png_ctrl_alt.Bind(wx.EVT_RADIOBUTTON, self.on_btn_hotkey_png_ctrl_alt)
@@ -423,16 +432,48 @@ class SettingsDialog(wx.Dialog):
         # end wxGlade
 
     def on_save_folder_add(self, event):  # wxGlade: SettingsDialog.<event_handler>
-        print("Event handler 'on_save_folder_add' not implemented!")
+        """自動保存フォルダの追加
+        """
+        defaultPath = os.getcwd()
+        agwstyle = MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST
+        with MDD.MultiDirDialog(None, title="フォルダの追加", defaultPath=defaultPath, agwStyle=agwstyle) as dlg:
+            if dlg.ShowModal() != wx.ID_OK:
+                return
+            # 選択されたフォルダをListBoxに追加する
+            paths = dlg.GetPaths()
+            for folder in paths:
+                self.list_box_auto_save_folders.Append(folder)
         event.Skip()
+
     def on_save_folder_del(self, event):  # wxGlade: SettingsDialog.<event_handler>
-        print("Event handler 'on_save_folder_del' not implemented!")
+        """自動保存フォルダの削除
+        """
+        index = self.list_box_auto_save_folders.GetSelection()
+        if index != wx.NOT_FOUND:
+            self.list_box_auto_save_folders.Delete(index)
         event.Skip()
-    def on_save_folder_up(self, event):  # wxGlade: SettingsDialog.<event_handler>
-        print("Event handler 'on_save_folder_up' not implemented!")
-        event.Skip()
-    def on_save_folder_down(self, event):  # wxGlade: SettingsDialog.<event_handler>
-        print("Event handler 'on_save_folder_down' not implemented!")
+
+    def on_save_folder_move(self, event):  # wxGlade: SettingsDialog.<event_handler>
+        """自動保存フォルダの移動（上下）
+        """
+        index = self.list_box_auto_save_folders.GetSelection()
+        id = event.GetId()
+
+        move = 0
+        limit = False
+        if id == self.BTN_ID_UP:
+            move = -1
+            limit = True if index > 0 else False
+        else:
+            move = 1
+            limit = True if index < (self.list_box_auto_save_folders.GetCount() - 1) else False
+
+        if index != wx.NOT_FOUND and limit:
+            folder = self.list_box_auto_save_folders.GetString(index)
+            print(f'folder={index}:{folder}')
+            self.list_box_auto_save_folders.Delete(index)
+            self.list_box_auto_save_folders.Insert(folder, index + move)
+            self.list_box_auto_save_folders.SetSelection(index + move)
         event.Skip()
 
     """ HotKey: 修飾キーの切り替え制御 """
@@ -451,7 +492,7 @@ class SettingsDialog(wx.Dialog):
     def on_btn_hotkey_png_ctrl_shift(self, event):  # wxGlade: SettingsDialog.<event_handler>
         self.radio_btn_hotkey_bmp_ctrl_alt.SetValue(True)
         event.Skip()
-    """"""
+
     def set_prop(self, prop: dict):
         """設定値をコントロールに反映する
         """
@@ -541,6 +582,7 @@ class SettingsDialog(wx.Dialog):
             prop['hotkey_imagefile'] = 0
         # ターゲット
         prop['hotkey_activewin'] = self.choice_hotkey_active_window.GetSelection()
+
 # end of class SettingsDialog
 
 
