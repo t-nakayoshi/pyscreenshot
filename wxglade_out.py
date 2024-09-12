@@ -164,21 +164,22 @@ class SettingsDialog(wx.Dialog):
         sizer_18 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_9.Add(sizer_18, 1, wx.EXPAND, 0)
 
-        self.checkbox_capture_mcursor = wx.CheckBox(self.notebook_1_pane_2, wx.ID_ANY, u"マウスカーソルをキャプチャする")
+        self.checkbox_capture_mcursor = wx.CheckBox(self.notebook_1_pane_2, wx.ID_ANY, u"マウスカーソルをキャプチャーする")
+        self.checkbox_capture_mcursor.Enable(False)
         sizer_18.Add(self.checkbox_capture_mcursor, 1, wx.ALL | wx.EXPAND, 4)
 
         sizer_19 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_9.Add(sizer_19, 1, wx.EXPAND, 0)
 
-        self.checkbox_sound_on_capture = wx.CheckBox(self.notebook_1_pane_2, wx.ID_ANY, u"キャプチャ終了時に音を鳴らす")
+        self.checkbox_sound_on_capture = wx.CheckBox(self.notebook_1_pane_2, wx.ID_ANY, u"キャプチャー終了時に音を鳴らす")
         sizer_19.Add(self.checkbox_sound_on_capture, 1, wx.ALL | wx.EXPAND, 4)
 
         sizer_8 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_9.Add(sizer_8, 1, wx.EXPAND, 0)
 
-        self.checkbox_delayed_capture = wx.CheckBox(self.notebook_1_pane_2, wx.ID_ANY, u"遅延キャプチャ")
+        self.checkbox_delayed_capture = wx.CheckBox(self.notebook_1_pane_2, wx.ID_ANY, u"遅延キャプチャー")
         self.checkbox_delayed_capture.SetMinSize((89, 15))
-        sizer_8.Add(self.checkbox_delayed_capture, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 4)
+        sizer_8.Add(self.checkbox_delayed_capture, 0, wx.ALL | wx.EXPAND, 4)
 
         sizer_10 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_8.Add(sizer_10, 0, wx.EXPAND, 0)
@@ -195,7 +196,7 @@ class SettingsDialog(wx.Dialog):
 
         self.checkbox_trimming = wx.CheckBox(self.notebook_1_pane_2, wx.ID_ANY, u"トリミング")
         self.checkbox_trimming.SetMinSize((68, 15))
-        sizer_11.Add(self.checkbox_trimming, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 4)
+        sizer_11.Add(self.checkbox_trimming, 0, wx.ALL | wx.EXPAND, 4)
 
         sizer_12 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_11.Add(sizer_12, 0, wx.EXPAND, 0)
@@ -234,6 +235,7 @@ class SettingsDialog(wx.Dialog):
         sizer_21.Add(sizer_23, 0, wx.EXPAND, 0)
 
         self.radio_btn_hotkey_bmp_ctrl_alt = wx.RadioButton(sizer_23.GetStaticBox(), wx.ID_ANY, "Ctrl+Alt", style=wx.RB_GROUP)
+        self.radio_btn_hotkey_bmp_ctrl_alt.SetValue(1)
         sizer_23.Add(self.radio_btn_hotkey_bmp_ctrl_alt, 1, 0, 0)
 
         self.radio_btn_hotkey_bmp_ctrl_shift = wx.RadioButton(sizer_23.GetStaticBox(), wx.ID_ANY, "Ctrl+Shift")
@@ -246,6 +248,7 @@ class SettingsDialog(wx.Dialog):
         sizer_24.Add(self.radio_btn_hotkey_png_ctrl_alt, 1, 0, 0)
 
         self.radio_btn_hotkey_png_ctrl_shift = wx.RadioButton(sizer_24.GetStaticBox(), wx.ID_ANY, "Ctrl+Shift")
+        self.radio_btn_hotkey_png_ctrl_shift.SetValue(1)
         sizer_24.Add(self.radio_btn_hotkey_png_ctrl_shift, 1, 0, 0)
 
         sizer_22 = wx.StaticBoxSizer(wx.StaticBox(self.notebook_1_pane_2, wx.ID_ANY, u"ターゲット"), wx.VERTICAL)
@@ -499,7 +502,7 @@ class PeriodicDialog(wx.Dialog):
         label_2 = wx.StaticText(self, wx.ID_ANY, u"間　隔: ")
         sizer_5.Add(label_2, 0, wx.ALIGN_CENTER_VERTICAL, 4)
 
-        self.spin_ctrl_periodic_interval = wx.SpinCtrl(self, wx.ID_ANY, "1", min=1, max=3600, style=wx.ALIGN_RIGHT | wx.SP_ARROW_KEYS)
+        self.spin_ctrl_periodic_interval = wx.SpinCtrl(self, wx.ID_ANY, "3", min=1, max=3600, style=wx.ALIGN_RIGHT | wx.SP_ARROW_KEYS)
         sizer_5.Add(self.spin_ctrl_periodic_interval, 0, wx.ALIGN_CENTER_VERTICAL | wx.BOTTOM | wx.TOP, 4)
 
         label_3 = wx.StaticText(self, wx.ID_ANY, u"秒")
@@ -532,7 +535,8 @@ class PeriodicDialog(wx.Dialog):
         sizer_8 = wx.StaticBoxSizer(wx.StaticBox(self, wx.ID_ANY, u"ナンバリング"), wx.VERTICAL)
         sizer_6.Add(sizer_8, 0, wx.EXPAND | wx.LEFT, 4)
 
-        self.radio_btn_periodic_numbering_datetime = wx.RadioButton(sizer_8.GetStaticBox(), wx.ID_ANY, u"日時 (yyyymmdd_hhmmss)")
+        self.radio_btn_periodic_numbering_datetime = wx.RadioButton(sizer_8.GetStaticBox(), wx.ID_ANY, u"日時 (yyyymmdd_hhmmss)", style=wx.RB_GROUP)
+        self.radio_btn_periodic_numbering_datetime.SetValue(1)
         sizer_8.Add(self.radio_btn_periodic_numbering_datetime, 0, wx.ALL, 4)
 
         self.radio_btn_periodic_numbering_autosave = wx.RadioButton(sizer_8.GetStaticBox(), wx.ID_ANY, u"自動保存の設定に従う")
@@ -542,9 +546,11 @@ class PeriodicDialog(wx.Dialog):
         sizer_6.Add(sizer_9, 1, wx.EXPAND, 0)
 
         self.button_periodic_start = wx.Button(self, wx.ID_OK, u"開始")
+        self.button_periodic_start.Enable(False)
         sizer_9.Add(self.button_periodic_start, 1, wx.ALL | wx.EXPAND, 4)
 
         self.button_periodic_stop = wx.Button(self, wx.ID_STOP, u"終了")
+        self.button_periodic_stop.Enable(False)
         sizer_9.Add(self.button_periodic_stop, 0, wx.ALL | wx.EXPAND, 4)
 
         sizer_2 = wx.StdDialogButtonSizer()
@@ -588,6 +594,9 @@ class PeriodicDialog(wx.Dialog):
     def set_prop(self, prop: dict):
         """設定値をコントロールに反映する
         """
+        # 実行状態によるボタンの有効/無効設定
+        self.button_periodic_start.Enable(not prop['periodic_capture'])
+        self.button_periodic_stop.Enable(prop['periodic_capture'])
         # 保存フォルダ
         self.text_ctrl_periodic_folder.SetValue(prop['periodic_save_folder'])
         # 間隔

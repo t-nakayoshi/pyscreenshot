@@ -11,6 +11,7 @@ from enum import IntEnum, auto
 import configparser
 from functools import partial
 import io
+import keyboard
 import mss
 import os
 from PIL import Image
@@ -282,19 +283,20 @@ class SettingsDialog(wx.Dialog):
         sizer_18 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_9.Add(sizer_18, 1, wx.EXPAND, 0)
 
-        self.checkbox_capture_mcursor = wx.CheckBox(self.notebook_1_pane_2, wx.ID_ANY, u"マウスカーソルをキャプチャする")
+        self.checkbox_capture_mcursor = wx.CheckBox(self.notebook_1_pane_2, wx.ID_ANY, u"マウスカーソルをキャプチャーする")
+        self.checkbox_capture_mcursor.Enable(False)
         sizer_18.Add(self.checkbox_capture_mcursor, 1, wx.ALL | wx.EXPAND, 4)
 
         sizer_19 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_9.Add(sizer_19, 1, wx.EXPAND, 0)
 
-        self.checkbox_sound_on_capture = wx.CheckBox(self.notebook_1_pane_2, wx.ID_ANY, u"キャプチャ終了時に音を鳴らす")
+        self.checkbox_sound_on_capture = wx.CheckBox(self.notebook_1_pane_2, wx.ID_ANY, u"キャプチャー終了時に音を鳴らす")
         sizer_19.Add(self.checkbox_sound_on_capture, 1, wx.ALL | wx.EXPAND, 4)
 
         sizer_8 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_9.Add(sizer_8, 1, wx.EXPAND, 0)
 
-        self.checkbox_delayed_capture = wx.CheckBox(self.notebook_1_pane_2, wx.ID_ANY, u"遅延キャプチャ")
+        self.checkbox_delayed_capture = wx.CheckBox(self.notebook_1_pane_2, wx.ID_ANY, u"遅延キャプチャー")
         self.checkbox_delayed_capture.SetMinSize((89, 15))
         sizer_8.Add(self.checkbox_delayed_capture, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 4)
 
@@ -352,6 +354,7 @@ class SettingsDialog(wx.Dialog):
         sizer_21.Add(sizer_23, 0, wx.EXPAND, 0)
 
         self.radio_btn_hotkey_bmp_ctrl_alt = wx.RadioButton(sizer_23.GetStaticBox(), wx.ID_ANY, "Ctrl+Alt", style=wx.RB_GROUP)
+        self.radio_btn_hotkey_bmp_ctrl_alt.SetValue(1)
         sizer_23.Add(self.radio_btn_hotkey_bmp_ctrl_alt, 1, 0, 0)
 
         self.radio_btn_hotkey_bmp_ctrl_shift = wx.RadioButton(sizer_23.GetStaticBox(), wx.ID_ANY, "Ctrl+Shift")
@@ -364,6 +367,7 @@ class SettingsDialog(wx.Dialog):
         sizer_24.Add(self.radio_btn_hotkey_png_ctrl_alt, 1, 0, 0)
 
         self.radio_btn_hotkey_png_ctrl_shift = wx.RadioButton(sizer_24.GetStaticBox(), wx.ID_ANY, "Ctrl+Shift")
+        self.radio_btn_hotkey_png_ctrl_shift.SetValue(1)
         sizer_24.Add(self.radio_btn_hotkey_png_ctrl_shift, 1, 0, 0)
 
         sizer_22 = wx.StaticBoxSizer(wx.StaticBox(self.notebook_1_pane_2, wx.ID_ANY, u"ターゲット"), wx.VERTICAL)
@@ -516,10 +520,10 @@ class SettingsDialog(wx.Dialog):
         self.spin_ctrl_sequence_digits.SetValue(prop['sequence_digits'])
         self.spin_ctrl_sequence_begin.SetValue(prop['sequence_begin'])
         #--- その他の設定
-        # マスカーソルをキャプチャする/キャプチャ終了時に音を鳴らす
+        # マスカーソルをキャプチャーする/キャプチャー終了時に音を鳴らす
         self.checkbox_capture_mcursor.SetValue(prop['capture_mcursor'])
         self.checkbox_sound_on_capture.SetValue(prop['sound_on_capture'])
-        # 遅延キャプチャ
+        # 遅延キャプチャー
         self.checkbox_delayed_capture.SetValue(prop['delayed_capture'])
         self.spin_ctrl_delayed_time.SetValue(prop['delayed_time'])
         # トリミング
@@ -559,10 +563,10 @@ class SettingsDialog(wx.Dialog):
         prop['sequence_digits'] = self.spin_ctrl_sequence_digits.GetValue()
         prop['sequence_begin']  = self.spin_ctrl_sequence_begin.GetValue()
         #--- その他の設定
-        # マスカーソルをキャプチャする/キャプチャ終了時に音を鳴らす
+        # マスカーソルをキャプチャーする/キャプチャー終了時に音を鳴らす
         prop['capture_mcursor']  = self.checkbox_capture_mcursor.GetValue()
         prop['sound_on_capture'] = self.checkbox_sound_on_capture.GetValue()
-        # 遅延キャプチャ
+        # 遅延キャプチャー
         prop['delayed_capture'] = self.checkbox_delayed_capture.GetValue()
         prop['delayed_time']    = self.spin_ctrl_delayed_time.GetValue()
         # トリミング
@@ -654,6 +658,7 @@ class PeriodicDialog(wx.Dialog):
         sizer_6.Add(sizer_8, 0, wx.EXPAND | wx.LEFT, 4)
 
         self.radio_btn_periodic_numbering_datetime = wx.RadioButton(sizer_8.GetStaticBox(), wx.ID_ANY, u"日時 (yyyymmdd_hhmmss)")
+        self.radio_btn_periodic_numbering_datetime.SetValue(1)
         sizer_8.Add(self.radio_btn_periodic_numbering_datetime, 0, wx.ALL, 4)
 
         self.radio_btn_periodic_numbering_autosave = wx.RadioButton(sizer_8.GetStaticBox(), wx.ID_ANY, u"自動保存の設定に従う")
@@ -663,9 +668,11 @@ class PeriodicDialog(wx.Dialog):
         sizer_6.Add(sizer_9, 1, wx.EXPAND, 0)
 
         self.button_periodic_start = wx.Button(self, wx.ID_OK, u"開始")
+        self.button_periodic_start.Enable(False)
         sizer_9.Add(self.button_periodic_start, 1, wx.ALL | wx.EXPAND, 4)
 
         self.button_periodic_stop = wx.Button(self, wx.ID_STOP, u"終了")
+        self.button_periodic_stop.Enable(False)
         sizer_9.Add(self.button_periodic_stop, 0, wx.ALL | wx.EXPAND, 4)
 
         sizer_2 = wx.StdDialogButtonSizer()
@@ -733,6 +740,9 @@ class PeriodicDialog(wx.Dialog):
     def get_prop(self, prop: dict):
         """設定値をプロパティに反映する
         """
+        # 実行状態によるボタンの有効/無効設定
+        self.button_periodic_start.Enable(not prop['periodic_capture'])
+        self.button_periodic_stop.Enable(prop['periodic_capture'])
         # 保存フォルダ
         prop['periodic_save_folder'] = self.text_ctrl_periodic_folder.GetValue()
         # 間隔
@@ -763,8 +773,8 @@ class MyScreenShot(TaskBarIcon):
     # 環境設定
     ID_MENU_SETTINGS = 101
     # クイック設定
-    ID_MENU_MCURSOR  = 102      # マウスカーソルキャプチャを有効
-    ID_MENU_DELAYED  = 103      # 遅延キャプチャを有効
+    ID_MENU_MCURSOR  = 102      # マウスカーソルキャプチャーを有効
+    ID_MENU_DELAYED  = 103      # 遅延キャプチャーを有効
     ID_MENU_TRIMMING = 104      # トリミングを有効
     #--- 保存先フォルダ(Base)
     ID_MENU_FOLDER1 = 201
@@ -783,6 +793,12 @@ class MyScreenShot(TaskBarIcon):
     ID_MENU_ACTIVE  = 690       # アクティブウィンドウ
     # 終了
     ID_MENU_EXIT = 991
+    """ Hotkey Modifiers """
+    HK_MOD_SHIFT      = 'Shift'
+    HK_MOD_CTRL       = 'Ctrl'
+    HK_MOD_ALT        = 'Alt'
+    HK_MOD_CTRL_ALT   = f'{HK_MOD_CTRL} + {HK_MOD_ALT}'
+    HK_MOD_CTRL_SHIFT = f'{HK_MOD_CTRL} + {HK_MOD_SHIFT}'
 
     def __init__(self, frame):
         self.frame = frame
@@ -805,8 +821,9 @@ class MyScreenShot(TaskBarIcon):
             'trimming': False,
             'trimming_size': [0,0,0,0],
             'hotkey_clipboard': 0,
-            'hotkey_imagefile': 0,
-            'hotkey_activewin': 0,
+            'hotkey_imagefile': 1,
+            'hotkey_activewin': 8,
+            'periodic_capture': False,
             'periodic_save_folder': '',
             'periodic_interval': 0,
             'periodic_stop_modifier': 0,
@@ -814,6 +831,7 @@ class MyScreenShot(TaskBarIcon):
             'periodic_target': 0,
             'periodic_numbering': 0
         }
+        self.capture_hotkey = [MyScreenShot.HK_MOD_CTRL_ALT, MyScreenShot.HK_MOD_CTRL_SHIFT]
         self.ss_queue = queue.Queue()
         # 初期処理
         self.initialize()
@@ -823,7 +841,9 @@ class MyScreenShot(TaskBarIcon):
         * タスクトレイアイコンを右クリックした際に、Popupメニューを生成して表示する
         * 現バージョンでは生成したメニューが破棄されて再利用できない。
         """
-        # print("CreatePopupMenu")
+        # ディスプレイ数
+        self.prop['display'] = len(get_monitors())
+        display_count = self.prop['display']
         # メニューの生成
         menu = wx.Menu()
         # Help
@@ -838,9 +858,9 @@ class MyScreenShot(TaskBarIcon):
         item = create_menu_item(menu, MyScreenShot.ID_MENU_SETTINGS, '環境設定...', self.on_menu_settings)
         item.SetBitmap(wx.Bitmap(self._icon_img.GetBitmap(MenuIcon.SETTINGS.value)))
         sub_menu = wx.Menu()
-        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_MCURSOR, 'マウスカーソルキャプチャを有効', self.on_menu_toggle_mouse_capture, kind = wx.ITEM_CHECK)
-        sub_item.Enable(False)  # Windowsでは現状マウスカーソルがキャプチャ出来ないので「無効」にしておく
-        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_DELAYED, '遅延キャプチャを有効', self.on_menu_toggle_delayed_capture, kind = wx.ITEM_CHECK)
+        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_MCURSOR, 'マウスカーソルキャプチャーを有効', self.on_menu_toggle_mouse_capture, kind = wx.ITEM_CHECK)
+        sub_item.Enable(False)  # Windowsでは現状マウスカーソルがキャプチャー出来ないので「無効」にしておく
+        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_DELAYED, '遅延キャプチャーを有効', self.on_menu_toggle_delayed_capture, kind = wx.ITEM_CHECK)
         sub_item.Check(self.config.getboolean('other', 'delayed_capture', fallback = False))
         sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_TRIMMING, 'トリミングを有効', self.on_menu_toggle_trimming, kind = wx.ITEM_CHECK)
         sub_item.Check(self.config.getboolean('trimming', 'trimming', fallback = False))
@@ -877,13 +897,13 @@ class MyScreenShot(TaskBarIcon):
         # Caputure
         sub_menu1 = wx.Menu()
         sub_menu2 = wx.Menu()
-        create_menu_item(sub_menu1, MyScreenShot.ID_MENU_SCREEN0_CB, f'0: デスクトップ', self.on_menu_clipboard)
-        create_menu_item(sub_menu2, MyScreenShot.ID_MENU_SCREEN0, f'0: デスクトップ', self.on_menu_imagefile)
-        for n in range(self.prop['display']):
-            create_menu_item(sub_menu1, MyScreenShot.ID_MENU_SCREEN1_CB + n, f'{n + 1}: ディスプレイ {n + 1}', self.on_menu_clipboard)
-            create_menu_item(sub_menu2, MyScreenShot.ID_MENU_SCREEN1 + n, f'{n + 1}: ディスプレイ {n + 1}', self.on_menu_imagefile)
-        create_menu_item(sub_menu1, MyScreenShot.ID_MENU_ACTIVE_CB, f'{self.prop['display'] + 1}: アクティブウィンドウ', self.on_menu_clipboard)
-        create_menu_item(sub_menu2, MyScreenShot.ID_MENU_ACTIVE, f'{self.prop['display'] + 1}: アクティブウィンドウ', self.on_menu_imagefile)
+        create_menu_item(sub_menu1, MyScreenShot.ID_MENU_SCREEN0_CB, f'0: デスクトップ\t{self.hotkey_clipboard}+0', self.on_menu_clipboard)
+        create_menu_item(sub_menu2, MyScreenShot.ID_MENU_SCREEN0, f'0: デスクトップ\t{self.hotkey_imagefile}+0', self.on_menu_imagefile)
+        for n in range(display_count):
+            create_menu_item(sub_menu1, MyScreenShot.ID_MENU_SCREEN1_CB + n, f'{n + 1}: ディスプレイ {n + 1}\t{self.hotkey_clipboard}+{n + 1}', self.on_menu_clipboard)
+            create_menu_item(sub_menu2, MyScreenShot.ID_MENU_SCREEN1 + n, f'{n + 1}: ディスプレイ {n + 1}\t{self.hotkey_imagefile}+{n + 1}', self.on_menu_imagefile)
+        create_menu_item(sub_menu1, MyScreenShot.ID_MENU_ACTIVE_CB, f'{display_count + 1}: アクティブウィンドウ\t{self.hotkey_clipboard}+{self.hotkey_activewin}', self.on_menu_clipboard)
+        create_menu_item(sub_menu2, MyScreenShot.ID_MENU_ACTIVE, f'{display_count + 1}: アクティブウィンドウ\t{self.hotkey_imagefile}+{self.hotkey_activewin}', self.on_menu_imagefile)
         item = menu.AppendSubMenu(sub_menu1, 'クリップボードへコピー')
         item.SetBitmap(wx.Bitmap(self._icon_img.GetBitmap(MenuIcon.COPY_TO_CB.value)))
         item = menu.AppendSubMenu(sub_menu2, 'PNG保存')
@@ -919,6 +939,34 @@ class MyScreenShot(TaskBarIcon):
         self._beep.CreateFromData(sound.get_snd_beep_bytearray())
         self._success = Sound()
         self._success.CreateFromData(sound.get_snd_success_bytearray())
+        # キャプチャーHotkeyアクセレーター（0:デスクトップ、1～:ディスプレイ、last:アクティブウィンドウ）
+        self.hotkey_clipboard = []
+        self.hotkey_imagefile = []
+        # キャプチャーHotkeyアクセレーター展開 & Hotkey設定
+        self.set_capture_hotkey(first=True)
+
+    def set_capture_hotkey(self, first: bool=False):
+        """キャプチャーHotkeyのメニューアクセレーターを展開する & Hotkey設定
+        """
+        if not first:
+            # 現在のHotkeyを削除
+            for hotkey in self.hotkey_clipboard:
+                keyboard.remove_hotkey(hotkey)
+            for hotkey in self.hotkey_imagefile:
+                keyboard.remove_hotkey(hotkey)
+
+        # 新しいアクセレーターを展開
+        hk_clipbd = self.capture_hotkey[self.prop['hotkey_clipboard']]
+        hk_imagef = self.capture_hotkey[self.prop['hotkey_imagefile']]
+        self.hotkey_clipboard = [f'{hk_clipbd}+0']
+        self.hotkey_imagefile = [f'{hk_imagef}+0']
+        for n in range(self.prop['display']):
+            self.hotkey_clipboard.append(f'{hk_clipbd}+{n + 1}')
+            self.hotkey_imagefile.append(f'{hk_imagef}+{n + 1}')
+        self.hotkey_clipboard.append(f'{hk_clipbd}+F{self.prop['hotkey_activewin'] + 1}')
+        self.hotkey_imagefile.append(f'{hk_clipbd}+F{self.prop['hotkey_activewin'] + 1}')
+        for hotkey in self.hotkey_clipboard:
+            pass
 
     def config_to_property(self):
         """設定値をプロパティに展開する
@@ -963,7 +1011,9 @@ class MyScreenShot(TaskBarIcon):
         # ホット・キー
         self.prop['hotkey_clipboard'] = self.config.getint('hotkey', 'clipboard', fallback=0)
         self.prop['hotkey_imagefile'] = self.config.getint('hotkey', 'imagefile', fallback=1)
-        self.prop['hotkey_activewin'] = self.config.getint('hotkey', 'activewin', fallback=1)
+        self.prop['hotkey_activewin'] = self.config.getint('hotkey', 'activewin', fallback=8)
+        # キャプチャーHotkeyアクセレーター展開
+        self.set_capture_hotkey()
         # 定期実行
         self.prop['periodic_save_folder']   = self.config.get('periodic', 'save_folder', fallback='')
         self.prop['periodic_interval']      = self.config.getint('periodic', 'interval', fallback=3)
@@ -1162,7 +1212,9 @@ class MyScreenShot(TaskBarIcon):
             if dlg.ShowModal() == wx.ID_OK:
                 print("on_menu_settings closed 'OK'")
                 dlg.get_prop(self.prop)
-                print(self.prop)
+                # print(self.prop)
+                # キャプチャーHotkeyアクセレーター展開
+                self.set_capture_hotkey()
 
     def on_menu_toggle_mouse_capture(self, event):
         """Mouse captureメニューイベントハンドラ
@@ -1237,10 +1289,18 @@ class MyScreenShot(TaskBarIcon):
         with PeriodicDialog(self.frame, wx.ID_ANY, "") as dlg:
             # 設定値をダイアログ側へ渡す
             dlg.set_prop(self.prop)
-            if dlg.ShowModal() == wx.ID_OK:
+            id = dlg.ShowModal()
+            if id == wx.ID_OK:
                 print("on_menu_periodic_settings closed 'Start(OK)'")
                 dlg.get_prop(self.prop)
-                print(self.prop)
+                self.prop['periodic_capture'] = True
+                # print(self.prop)
+                # キャプチャーHotkeyアクセレーター展開
+                self.hotkey_clipboard = self.capture_hotkey[self.prop['hotkey_clipboard']]
+                self.hotkey_imagefile = self.capture_hotkey[self.prop['hotkey_imagefile']]
+                self.hotkey_activewin = f'F{self.prop['hotkey_activewin'] + 1}'
+            elif id == wx.ID_STOP:
+                self.prop['periodic_capture'] = False
 
     def on_menu_clipboard(self, event):
         """Copy to clipboardメニューイベントハンドラ
@@ -1301,7 +1361,9 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             none
         """
-        # print('on_menu_exit')
+        print('on_menu_exit')
+        self.save_config()
+
         wx.CallAfter(self.Destroy)
         self.frame.Close()
 
