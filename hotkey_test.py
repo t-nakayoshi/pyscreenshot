@@ -1,7 +1,7 @@
 import keyboard
 
 # ホットキーの設定
-hotkey = 'ctrl + shift + l'
+hotkey = 'ctrl+shift+l'
 
 # ホットキーが押された時の動作
 def on_action():

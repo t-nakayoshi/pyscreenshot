@@ -797,8 +797,9 @@ class MyScreenShot(TaskBarIcon):
     HK_MOD_SHIFT      = 'Shift'
     HK_MOD_CTRL       = 'Ctrl'
     HK_MOD_ALT        = 'Alt'
-    HK_MOD_CTRL_ALT   = f'{HK_MOD_CTRL} + {HK_MOD_ALT}'
-    HK_MOD_CTRL_SHIFT = f'{HK_MOD_CTRL} + {HK_MOD_SHIFT}'
+    HK_MOD_CTRL_ALT   = f'{HK_MOD_CTRL}+{HK_MOD_ALT}'
+    HK_MOD_CTRL_SHIFT = f'{HK_MOD_CTRL}+{HK_MOD_SHIFT}'
+    HK_MOD_SHIFT_ALT  = f'{HK_MOD_SHIFT}+{HK_MOD_ALT}'
 
     def __init__(self, frame):
         self.frame = frame
@@ -832,6 +833,9 @@ class MyScreenShot(TaskBarIcon):
             'periodic_numbering': 0
         }
         self.capture_hotkey = [MyScreenShot.HK_MOD_CTRL_ALT, MyScreenShot.HK_MOD_CTRL_SHIFT]
+        # キャプチャーHotkeyアクセレーターリスト（0:デスクトップ、1～:ディスプレイ、last:アクティブウィンドウ）
+        self.hotkey_clipboard = []
+        self.hotkey_imagefile = []
         self.ss_queue = queue.Queue()
         # 初期処理
         self.initialize()
@@ -939,9 +943,6 @@ class MyScreenShot(TaskBarIcon):
         self._beep.CreateFromData(sound.get_snd_beep_bytearray())
         self._success = Sound()
         self._success.CreateFromData(sound.get_snd_success_bytearray())
-        # キャプチャーHotkeyアクセレーター（0:デスクトップ、1～:ディスプレイ、last:アクティブウィンドウ）
-        self.hotkey_clipboard = []
-        self.hotkey_imagefile = []
         # キャプチャーHotkeyアクセレーター展開 & Hotkey設定
         self.set_capture_hotkey(first=True)
 
@@ -958,15 +959,30 @@ class MyScreenShot(TaskBarIcon):
         # 新しいアクセレーターを展開
         hk_clipbd = self.capture_hotkey[self.prop['hotkey_clipboard']]
         hk_imagef = self.capture_hotkey[self.prop['hotkey_imagefile']]
+        # デスクトップ[0]
         self.hotkey_clipboard = [f'{hk_clipbd}+0']
         self.hotkey_imagefile = [f'{hk_imagef}+0']
+        # ディスプレイ[1～]
         for n in range(self.prop['display']):
             self.hotkey_clipboard.append(f'{hk_clipbd}+{n + 1}')
             self.hotkey_imagefile.append(f'{hk_imagef}+{n + 1}')
+        # アクティブウィンドウ
         self.hotkey_clipboard.append(f'{hk_clipbd}+F{self.prop['hotkey_activewin'] + 1}')
         self.hotkey_imagefile.append(f'{hk_clipbd}+F{self.prop['hotkey_activewin'] + 1}')
-        for hotkey in self.hotkey_clipboard:
-            pass
+        # Hotkeyの登録
+        keyboard.add_hotkey(self.hotkey_clipboard[0],
+                            lambda: wx.CallAfter(self.on_menu_clipboard, wx.Event(MyScreenShot.ID_MENU_SCREEN0_CB)))
+        keyboard.add_hotkey(self.hotkey_imagefile[0],
+                            lambda: wx.CallAfter(self.on_menu_imagefile, wx.Event(MyScreenShot.ID_MENU_SCREEN0)))
+        for n in range(self.prop['display']):
+            keyboard.add_hotkey(self.hotkey_clipboard[n],
+                                lambda: wx.CallAfter(self.on_menu_clipboard, wx.Event(MyScreenShot.ID_MENU_SCREEN0_CB + n)))
+            keyboard.add_hotkey(self.hotkey_imagefile[n],
+                                lambda: wx.CallAfter(self.on_menu_clipboard, wx.Event(MyScreenShot.ID_MENU_SCREEN0 + n)))
+        keyboard.add_hotkey(self.hotkey_clipboard[self.prop['display'] + 1],
+                            lambda: wx.CallAfter(self.on_menu_clipboard, wx.Event(MyScreenShot.ID_MENU_ACTIVE_CB)))
+        keyboard.add_hotkey(self.hotkey_imagefile[self.prop['display'] + 1],
+                            lambda: wx.CallAfter(self.on_menu_imagefile, wx.Event(MyScreenShot.ID_MENU_ACTIVE)))
 
     def config_to_property(self):
         """設定値をプロパティに展開する
@@ -1012,8 +1028,6 @@ class MyScreenShot(TaskBarIcon):
         self.prop['hotkey_clipboard'] = self.config.getint('hotkey', 'clipboard', fallback=0)
         self.prop['hotkey_imagefile'] = self.config.getint('hotkey', 'imagefile', fallback=1)
         self.prop['hotkey_activewin'] = self.config.getint('hotkey', 'activewin', fallback=8)
-        # キャプチャーHotkeyアクセレーター展開
-        self.set_capture_hotkey()
         # 定期実行
         self.prop['periodic_save_folder']   = self.config.get('periodic', 'save_folder', fallback='')
         self.prop['periodic_interval']      = self.config.getint('periodic', 'interval', fallback=3)
@@ -1301,6 +1315,11 @@ class MyScreenShot(TaskBarIcon):
                 self.hotkey_activewin = f'F{self.prop['hotkey_activewin'] + 1}'
             elif id == wx.ID_STOP:
                 self.prop['periodic_capture'] = False
+
+    def capture_callback(self, menu_id, moni_no: int, clipboard: bool, filname: str):
+        """
+        """
+        wx.CallAfter(self.on_menu_clipboard, wx.Event(menu_id))
 
     def on_menu_clipboard(self, event):
         """Copy to clipboardメニューイベントハンドラ
