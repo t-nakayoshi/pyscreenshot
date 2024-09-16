@@ -18,7 +18,7 @@ import mss.tools
 import os
 from PIL import Image
 import queue
-import re
+# import re
 from screeninfo import get_monitors
 import sys
 from typing import Union
@@ -700,7 +700,14 @@ class MyScreenShot(TaskBarIcon):
             none
         """
         id = event.GetId()
-        _debug_print(f'on_menu_open_folder ({id})')
+        if id == MyScreenShot.ID_MENU_OPEN_AUTO:
+            folder = self.prop['save_folders'][self.prop['save_folder_index']]
+        else:
+            folder = self.prop['periodic_save_folder']
+
+        if os.path.exists(folder):
+            os.startfile(folder)
+            _debug_print(f'on_menu_open_folder ({id}, {folder})')
 
     def on_menu_periodic_settings(self, event):
         """Periodic settingsメニューイベントハンドラ
