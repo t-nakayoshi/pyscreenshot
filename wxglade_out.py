@@ -5,6 +5,8 @@
 #
 
 import os
+import sys
+
 import wx
 import wx.lib.agw.multidirdialog as MDD
 
@@ -13,6 +15,15 @@ import wx.lib.agw.multidirdialog as MDD
 
 # begin wxGlade: extracode
 # end wxGlade
+
+_NO_CONSOLE = False
+_debug_mode = True
+
+def _debug_print(message: str):
+    global debug_mode
+
+    if not _NO_CONSOLE and _debug_mode:
+        sys.stdout.write(f'[debug]:{message}\n')
 
 
 class MyFrame(wx.Frame):
@@ -110,7 +121,7 @@ class SettingsDialog(wx.Dialog):
         self.button_add_folder = wx.Button(self.panel_1, self.BTN_ID_ADD, u"追加")
         sizer_5.Add(self.button_add_folder, 0, 0, 0)
 
-        self.button_del_folder = wx.Button(self.panel_1, self.BTN_ID_ADD, u"削除")
+        self.button_del_folder = wx.Button(self.panel_1, self.BTN_ID_DEL, u"削除")
         sizer_5.Add(self.button_del_folder, 0, 0, 0)
 
         sizer_5.Add((20, 20), 1, wx.ALIGN_CENTER_VERTICAL, 0)
@@ -545,7 +556,7 @@ class PeriodicDialog(wx.Dialog):
         sizer_9 = wx.BoxSizer(wx.VERTICAL)
         sizer_6.Add(sizer_9, 1, wx.EXPAND, 0)
 
-        self.button_periodic_start = wx.Button(self, wx.ID_OK, u"開始")
+        self.button_periodic_start = wx.Button(self, wx.ID_EXECUTE, u"開始")
         self.button_periodic_start.Enable(False)
         sizer_9.Add(self.button_periodic_start, 1, wx.ALL | wx.EXPAND, 4)
 
@@ -556,6 +567,10 @@ class PeriodicDialog(wx.Dialog):
         sizer_2 = wx.StdDialogButtonSizer()
         sizer_1.Add(sizer_2, 0, wx.ALIGN_RIGHT | wx.ALL, 4)
 
+        self.button_OK = wx.Button(self, wx.ID_OK, "")
+        self.button_OK.SetDefault()
+        sizer_2.AddButton(self.button_OK)
+
         self.button_CANCEL = wx.Button(self, wx.ID_CANCEL, "")
         sizer_2.AddButton(self.button_CANCEL)
 
@@ -563,14 +578,15 @@ class PeriodicDialog(wx.Dialog):
 
         self.SetSizer(sizer_1)
 
-        self.SetAffirmativeId(self.button_periodic_start.GetId())
+        self.SetAffirmativeId(self.button_OK.GetId())
         self.SetEscapeId(self.button_CANCEL.GetId())
 
         self.Layout()
         self.Centre()
 
         self.button_periodic_folder_brows.Bind(wx.EVT_BUTTON, self.on_save_folder_browse)
-        self.button_periodic_stop.Bind(wx.EVT_BUTTON, self.on_periodic_capture_stop)
+        self.button_periodic_start.Bind(wx.EVT_BUTTON, self.on_periodic_capture_ctrl)
+        self.button_periodic_stop.Bind(wx.EVT_BUTTON, self.on_periodic_capture_ctrl)
         # end wxGlade
 
     def on_save_folder_browse(self, event):  # wxGlade: PeriodicDialog.<event_handler>
@@ -589,8 +605,8 @@ class PeriodicDialog(wx.Dialog):
                 print(f'Set {folder}')
         event.Skip()
 
-    def on_periodic_capture_stop(self, event):  # wxGlade: PeriodicDialog.<event_handler>
-        print("Event handler 'on_periodic_capture_stop'")
+    def on_periodic_capture_ctrl(self, event):  # wxGlade: PeriodicDialog.<event_handler>
+        print("Event handler 'on_periodic_capture_ctrl' not implemented!")
         self.EndModal(event.GetId())
         event.Skip()
 

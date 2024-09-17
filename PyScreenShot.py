@@ -725,15 +725,18 @@ class MyScreenShot(TaskBarIcon):
             # 設定値をダイアログ側へ渡す
             dlg.set_prop(self.prop)
             id = dlg.ShowModal()
-            if id == wx.ID_OK:
-                _debug_print("on_menu_periodic_settings closed 'Start(OK)'")
+            if id == wx.ID_EXECUTE:
+                _debug_print("on_menu_periodic_settings closed 'Start'")
                 dlg.get_prop(self.prop)
                 self.prop['periodic_capture'] = True
-                # _debug_print(self.prop)
-                # 設定キーアクセラレーター展開
-
+                # ToDo: 開始処理
             elif id == wx.ID_STOP:
+                _debug_print("on_menu_periodic_settings closed 'Stop'")
                 self.prop['periodic_capture'] = False
+                # ToDo: 停止処理
+            elif id == wx.ID_OK:
+                dlg.get_prop(self.prop)
+                # _debug_print(self.prop)
 
     def copy_to_clipboard(self, id: int):
         """
@@ -896,7 +899,7 @@ class SettingsDialog(wx.Dialog):
         sizer_15 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_4.Add(sizer_15, 1, wx.EXPAND, 0)
 
-        self.list_box_auto_save_folders = wx.ListBox(self.panel_1, wx.ID_ANY, choices=[])
+        self.list_box_auto_save_folders = wx.ListBox(self.panel_1, wx.ID_ANY, choices=[], style=wx.LB_NEEDED_SB | wx.LB_SINGLE)
         sizer_15.Add(self.list_box_auto_save_folders, 1, wx.ALL | wx.EXPAND, 2)
 
         sizer_5 = wx.BoxSizer(wx.HORIZONTAL)
@@ -974,7 +977,7 @@ class SettingsDialog(wx.Dialog):
 
         self.checkbox_delayed_capture = wx.CheckBox(self.notebook_1_pane_2, wx.ID_ANY, u"遅延キャプチャー")
         self.checkbox_delayed_capture.SetMinSize((89, 15))
-        sizer_8.Add(self.checkbox_delayed_capture, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 4)
+        sizer_8.Add(self.checkbox_delayed_capture, 0, wx.ALL | wx.EXPAND, 4)
 
         sizer_10 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_8.Add(sizer_10, 0, wx.EXPAND, 0)
@@ -991,7 +994,7 @@ class SettingsDialog(wx.Dialog):
 
         self.checkbox_trimming = wx.CheckBox(self.notebook_1_pane_2, wx.ID_ANY, u"トリミング")
         self.checkbox_trimming.SetMinSize((68, 15))
-        sizer_11.Add(self.checkbox_trimming, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 4)
+        sizer_11.Add(self.checkbox_trimming, 0, wx.ALL | wx.EXPAND, 4)
 
         sizer_12 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_11.Add(sizer_12, 0, wx.EXPAND, 0)
@@ -1216,7 +1219,7 @@ class SettingsDialog(wx.Dialog):
             self.radio_btn_hotkey_bmp_ctrl_shift.SetValue(True)
             self.radio_btn_hotkey_png_ctrl_alt.SetValue(True)
         # ターゲット
-        self.choice_hotkey_active_window.Select(prop['hotkey_activewin'])
+        self.choice_hotkey_active_window.SetSelection(prop['hotkey_activewin'])
 
     def get_prop(self, prop: dict):
         """設定値をプロパティに反映する
@@ -1300,7 +1303,7 @@ class PeriodicDialog(wx.Dialog):
         label_2 = wx.StaticText(self, wx.ID_ANY, u"間　隔: ")
         sizer_5.Add(label_2, 0, wx.ALIGN_CENTER_VERTICAL, 4)
 
-        self.spin_ctrl_periodic_interval = wx.SpinCtrl(self, wx.ID_ANY, "1", min=1, max=3600, style=wx.ALIGN_RIGHT | wx.SP_ARROW_KEYS)
+        self.spin_ctrl_periodic_interval = wx.SpinCtrl(self, wx.ID_ANY, "3", min=1, max=3600, style=wx.ALIGN_RIGHT | wx.SP_ARROW_KEYS)
         sizer_5.Add(self.spin_ctrl_periodic_interval, 0, wx.ALIGN_CENTER_VERTICAL | wx.BOTTOM | wx.TOP, 4)
 
         label_3 = wx.StaticText(self, wx.ID_ANY, u"秒")
@@ -1333,7 +1336,7 @@ class PeriodicDialog(wx.Dialog):
         sizer_8 = wx.StaticBoxSizer(wx.StaticBox(self, wx.ID_ANY, u"ナンバリング"), wx.VERTICAL)
         sizer_6.Add(sizer_8, 0, wx.EXPAND | wx.LEFT, 4)
 
-        self.radio_btn_periodic_numbering_datetime = wx.RadioButton(sizer_8.GetStaticBox(), wx.ID_ANY, u"日時 (yyyymmdd_hhmmss)")
+        self.radio_btn_periodic_numbering_datetime = wx.RadioButton(sizer_8.GetStaticBox(), wx.ID_ANY, u"日時 (yyyymmdd_hhmmss)", style=wx.RB_GROUP)
         self.radio_btn_periodic_numbering_datetime.SetValue(1)
         sizer_8.Add(self.radio_btn_periodic_numbering_datetime, 0, wx.ALL, 4)
 
@@ -1343,7 +1346,7 @@ class PeriodicDialog(wx.Dialog):
         sizer_9 = wx.BoxSizer(wx.VERTICAL)
         sizer_6.Add(sizer_9, 1, wx.EXPAND, 0)
 
-        self.button_periodic_start = wx.Button(self, wx.ID_OK, u"開始")
+        self.button_periodic_start = wx.Button(self, wx.ID_EXECUTE, u"開始")
         self.button_periodic_start.Enable(False)
         sizer_9.Add(self.button_periodic_start, 1, wx.ALL | wx.EXPAND, 4)
 
@@ -1354,6 +1357,10 @@ class PeriodicDialog(wx.Dialog):
         sizer_2 = wx.StdDialogButtonSizer()
         sizer_1.Add(sizer_2, 0, wx.ALIGN_RIGHT | wx.ALL, 4)
 
+        self.button_OK = wx.Button(self, wx.ID_OK, "")
+        self.button_OK.SetDefault()
+        sizer_2.AddButton(self.button_OK)
+
         self.button_CANCEL = wx.Button(self, wx.ID_CANCEL, "")
         sizer_2.AddButton(self.button_CANCEL)
 
@@ -1361,14 +1368,15 @@ class PeriodicDialog(wx.Dialog):
 
         self.SetSizer(sizer_1)
 
-        self.SetAffirmativeId(self.button_periodic_start.GetId())
+        self.SetAffirmativeId(self.button_OK.GetId())
         self.SetEscapeId(self.button_CANCEL.GetId())
 
         self.Layout()
         self.Centre()
 
         self.button_periodic_folder_brows.Bind(wx.EVT_BUTTON, self.on_save_folder_browse)
-        self.button_periodic_stop.Bind(wx.EVT_BUTTON, self.on_periodic_capture_stop)
+        self.button_periodic_start.Bind(wx.EVT_BUTTON, self.on_periodic_capture_ctrl)
+        self.button_periodic_stop.Bind(wx.EVT_BUTTON, self.on_periodic_capture_ctrl)
         # end wxGlade
 
     def on_save_folder_browse(self, event):  # wxGlade: PeriodicDialog.<event_handler>
@@ -1387,29 +1395,32 @@ class PeriodicDialog(wx.Dialog):
                 _debug_print(f'Set {folder}')
         event.Skip()
 
-    def on_periodic_capture_stop(self, event):  # wxGlade: PeriodicDialog.<event_handler>
-        _debug_print("Event handler 'on_periodic_capture_stop'")
+    def on_periodic_capture_ctrl(self, event):  # wxGlade: PeriodicDialog.<event_handler>
+        _debug_print(f"Event handler 'on_periodic_capture_ctrl' id={event.GetId()}")
         self.EndModal(event.GetId())
         event.Skip()
 
     def set_prop(self, prop: dict):
         """設定値をコントロールに反映する
         """
+        # 実行状態によるボタンの有効/無効設定
+        self.button_periodic_start.Enable(not prop['periodic_capture'])
+        self.button_periodic_stop.Enable(prop['periodic_capture'])
         # 保存フォルダ
         self.text_ctrl_periodic_folder.SetValue(prop['periodic_save_folder'])
         # 間隔
         self.spin_ctrl_periodic_interval.SetValue(prop['periodic_interval'])
         # 停止キー（修飾キー）
-        self.choice_periodic_stopkey_modifire.Select(prop['periodic_stop_modifier'])
-        self.choice_periodic_stop_fkey.Select(prop['periodic_stop_fkey'])
+        self.choice_periodic_stopkey_modifire.SetSelection(prop['periodic_stop_modifier'])
+        self.choice_periodic_stop_fkey.SetSelection(prop['periodic_stop_fkey'])
         # ターゲット
         for i in range(prop['display']):
             item = f'ディスプレイ {i + 1}'
             self.choice_periodic_capture_target.Insert(item, self.choice_periodic_capture_target.GetCount() - 1)
         if prop['periodic_target'] == -1:
-            self.choice_periodic_capture_target.Select(self.choice_periodic_capture_target.GetCount() - 1)
+            self.choice_periodic_capture_target.SetSelection(self.choice_periodic_capture_target.GetCount() - 1)
         else:
-            self.choice_periodic_capture_target.Select(prop['periodic_target'])
+            self.choice_periodic_capture_target.SetSelection(prop['periodic_target'])
         # ナンバリング
         if prop['periodic_numbering'] == 0:
             self.radio_btn_periodic_numbering_datetime.SetValue(True)
@@ -1430,7 +1441,7 @@ class PeriodicDialog(wx.Dialog):
         prop['periodic_stop_modifier'] = self.choice_periodic_stopkey_modifire.GetSelection()
         prop['periodic_stop_fkey']     = self.choice_periodic_stop_fkey.GetSelection()
         # ターゲット
-        index = self.choice_periodic_capture_target.Selection()
+        index = self.choice_periodic_capture_target.GetSelection()
         if index == (self.choice_periodic_capture_target.GetCount() - 1):
             prop['periodic_target'] = -1
         else:
