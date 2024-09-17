@@ -202,6 +202,7 @@ class MyScreenShot(TaskBarIcon):
             'periodic_capture': False,
             'periodic_save_folder': '',
             'periodic_interval': 0,
+            'periodic_interval_ms': 0,
             'periodic_stop_modifier': 0,
             'periodic_stop_fkey': 0,
             'periodic_target': 0,
@@ -383,6 +384,7 @@ class MyScreenShot(TaskBarIcon):
         # 定期実行
         self.prop['periodic_save_folder']   = self.config.get('periodic', 'save_folder', fallback='')
         self.prop['periodic_interval']      = self.config.getint('periodic', 'interval', fallback=3)
+        self.prop['periodic_interval_ms']   = self.prop['periodic_interval'] * 1000
         self.prop['periodic_stop_modifier'] = self.config.getint('periodic', 'stop_modifier', fallback=0)
         self.prop['periodic_stop_fkey']     = self.config.getint('periodic', 'stop_fkey', fallback=10)
         self.prop['periodic_target']        = self.config.getint('periodic', 'target', fallback=0)
@@ -723,13 +725,16 @@ class MyScreenShot(TaskBarIcon):
                     _debug_print('Sequencial file not found.')
                     filename = f'{prefix}{begin:0>{digits}}.png'
                 else:
-                    _debug_print(f'Sequencial file found.\n{files}')
+                    _debug_print(f'Last Sequencial file is {os.path.basename(files[len(files) - 1])}')
                     basname_wo_ext = os.path.splitext(os.path.basename(files[len(files) - 1]))[0]
-                    last = int(basname_wo_ext[-digits:])
-                    if (last >= begin):
-                        _debug_print(f'Sequencial No. changed. {begin}->{last + 1}')
-                        begin = last + 1
+                    sno = int(basname_wo_ext[-digits:])
+                    if (sno >= begin):
+                        sno += 1
+                        _debug_print(f'Sequencial No. changed. {begin}->{sno}')
+                        begin = sno
                     filename = f'{prefix}{begin:0>{digits}}.png'
+            else:
+                _debug_print(f'No duplicates "{filename}')
 
             self.sequence = begin + 1   # 次回のシーケンス番号
             _debug_print(f'Next sequencial#={self.sequence}')
@@ -744,8 +749,7 @@ class MyScreenShot(TaskBarIcon):
             moni_no = self.prop['periodic_target'] if self.prop['periodic_target'] != -1 else 90
             wx.CallAfter(self.do_capture, moni_no, filename)
 
-            interval_ms = self.prop['periodic_interval'] * 1000
-            wx.CallLater(interval_ms, self.do_periodic)
+            wx.CallLater(self.prop['periodic_interval_ms'], self.do_periodic)
 
     def copy_to_clipboard(self, id: int):
         """
@@ -1389,6 +1393,7 @@ class PeriodicDialog(wx.Dialog):
         prop['periodic_save_folder'] = self.text_ctrl_periodic_folder.GetValue()
         # 間隔
         prop['periodic_interval'] = self.spin_ctrl_periodic_interval.GetValue()
+        prop['periodic_interval_ms'] = prop['periodic_interval'] * 1000
         # 停止キー（修飾キー）
         prop['periodic_stop_modifier'] = self.choice_periodic_stopkey_modifire.GetSelection()
         prop['periodic_stop_fkey']     = self.choice_periodic_stop_fkey.GetSelection()
