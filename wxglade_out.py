@@ -569,13 +569,16 @@ class PeriodicDialog(wx.Dialog):
         self.Layout()
         self.Centre()
 
+        self.button_periodic_folder_brows.Bind(wx.EVT_BUTTON, self.on_save_folder_browse)
         self.button_periodic_stop.Bind(wx.EVT_BUTTON, self.on_periodic_capture_stop)
         # end wxGlade
 
     def on_save_folder_browse(self, event):  # wxGlade: PeriodicDialog.<event_handler>
         """保存フォルダの選択
         """
-        defaultPath = os.getcwd()
+        defaultPath = self.text_ctrl_periodic_folder.GetValue()
+        if len(defaultPath) == 0 or not os.path.exists(defaultPath):
+            defaultPath = os.getcwd()
         agwstyle = MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST
         with MDD.MultiDirDialog(None, title="フォルダの選択", defaultPath=defaultPath, agwStyle=agwstyle) as dlg:
             if dlg.ShowModal() != wx.ID_OK:
