@@ -782,13 +782,12 @@ class MyScreenShot(TaskBarIcon):
             digits = self.prop['sequence_digits']
             begin  = self.prop['sequence_begin']
             ptn = rf'{prefix}\d{{{digits}}}\.[pP][nN][gG]'
-            files = scan_directory(path, ptn)
+            files = scan_directory(path, ptn, False)
             if len(files) == 0:
                 # 存在しない -> プレフィックス＋開始番号
                 _debug_print('Sequencial file not found.')
                 filename = f'{prefix}{begin:0>{digits}}.png'
             else:
-                files.sort(key=natural_keys)
                 _debug_print(f'Sequencial file found.\n{files}')
                 basname_wo_ext = os.path.splitext(os.path.basename(files[len(files) - 1]))[0]
                 last = int(basname_wo_ext[-digits:])

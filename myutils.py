@@ -156,13 +156,14 @@ class IsParentAction(argparse.Action):
         setattr(namespace, self.dest, values)
 
 
-def scan_directory(directory: str, ptn: str='') -> list[str]:
+def scan_directory(directory: str, ptn: str='', recursive: bool=True) -> list[str]:
     """ファイルの抽出
-    指定ディレクトリ内のファイルを再帰的にリストアップする。（昇順）
+    指定ディレクトリ内のファイルをリストアップする。（昇順）
 
     Args:
         directory: ディレクトリ名
         ptn (str) : ファイル名フィルタ（正規表現）
+        recursive (bool): 再帰検索フラグ（True=再帰）
 
     Returns:
         list: ファイル名のリスト
@@ -178,8 +179,8 @@ def scan_directory(directory: str, ptn: str='') -> list[str]:
 
     for f in os.listdir(directory):
         child = os.path.join(directory, f)
-        if os.path.isdir(child):
-            files.append(scan_directory(child, ptn))
+        if os.path.isdir(child) and recursive:
+            files += scan_directory(child, ptn)
         elif os.path.isfile(child):
             if reg is None:
                 files.append(child)
@@ -187,7 +188,10 @@ def scan_directory(directory: str, ptn: str='') -> list[str]:
                 if reg.search(child, re.IGNORECASE):
                     files.append(child)
 
-    return sorted(files)
+    if len(files) != 0:
+        files.sort(key=natural_keys)
+
+    return files
 
 
 def is_abort() -> bool:
