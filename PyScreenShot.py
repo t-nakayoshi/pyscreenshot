@@ -29,7 +29,7 @@ import wx
 from wx.adv import TaskBarIcon, EVT_TASKBAR_LEFT_DCLICK, Sound, AboutBox, AboutDialogInfo
 import wx.lib.agw.multidirdialog as MDD
 
-from myutils import get_running_path, platform_info, scan_directory, atof, natural_keys
+from myutils import get_running_path, platform_info, get_special_directory, scan_directory, atof, natural_keys
 from res import app_icon, menu_image, sound
 
 __version__ = '1.0.0'
@@ -354,9 +354,9 @@ class MyScreenShot(TaskBarIcon):
                 wx.MessageBox(f'Configration file parse failed.\n ({e})', 'ERROR', wx.ICON_ERROR)
         else:
             wx.MessageBox('Configration file not found.\nCreate default configuration file.', 'Attension', wx.ICON_EXCLAMATION)
-            self.save_config()
 
-        self.config_to_property()
+        if self.config_to_property():
+            self.save_config()
 
     def save_config(self):
         """設定値保存処理
@@ -378,15 +378,16 @@ class MyScreenShot(TaskBarIcon):
         except OSError as e:
             wx.MessageBox(f'Configration file save failed.\n ({e})', 'ERROR', wx.ICON_ERROR)
 
-    def config_to_property(self):
+    def config_to_property(self) -> bool:
         """設定値をプロパティに展開する
         """
+        save_req = False
         # 自動保存
         self.prop['auto_save'] = self.config.getboolean('basic','auto_save', fallback=True)
         # 自動保存フォルダ
         self.prop['save_folder_index'] = self.config.getint('basic', 'save_folder_index', fallback=-1)
         for n in range(_MAX_SAVE_FOLDERS):
-            option_name: str = 'folder' + str(n + 1)
+            option_name: str = f'folder{n}'
             if not self.config.has_option('basic', option_name):
                 break
             option: str = self.config.get('basic', option_name)
@@ -395,11 +396,12 @@ class MyScreenShot(TaskBarIcon):
         if len(self.prop['save_folders']) > 0:
             if self.prop['save_folder_index'] < 0 or self.prop['save_folder_index'] >= len(self.prop['save_folders']):
                 self.prop['save_folder_index'] = 0
+                save_req = True
         else:
             # 自動保存フォルダが無いので、'Pictures'を登録する
-            pict_folder = os.path.join(os.path.expanduser('~'), 'Pictures')
-            self.prop['auto_save_folders'].append(pict_folder)
+            self.prop['save_folders'].append(get_special_directory()[2])
             self.prop['save_folder_index'] = 0
+            save_req = True
         # 自動保存時のナンバリング
         self.prop['numbering']        = self.config.getint('basic', 'numbering', fallback=0)
         self.prop['prefix']           = self.config.get('basic', 'prefix', fallback='SS')
@@ -427,6 +429,8 @@ class MyScreenShot(TaskBarIcon):
         self.prop['periodic_stop_fkey']     = self.config.getint('periodic', 'stop_fkey', fallback=10)
         self.prop['periodic_target']        = self.config.getint('periodic', 'target', fallback=0)
         self.prop['periodic_numbering']     = self.config.getint('periodic', 'numbering', fallback=0)
+
+        return save_req
 
     def property_to_config(self):
         """プロパティを設定値に展開する

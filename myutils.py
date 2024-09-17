@@ -43,6 +43,31 @@ def platform_info() -> tuple:
     return platform.system(), platform.release(), platform.python_version()
 
 
+def get_special_directory() -> tuple:
+    """特殊ディレクトリのパスを取得する
+    Args:
+        none
+
+    Returns:
+        特殊ディレクトリパス (tuple): ('<My Documents>', '<My Music>', '<My Pictures>', '<My Videos>', '<Downloads>')
+    """
+    if platform.system() == 'Windows':
+        PWSH7: str = r'C:\Program Files\Powershell\7\pwsh.exe'
+        shell: str = r'pwsh' if os.path.exists(PWSH7) else r'powershell'
+        folders: list = os.popen(rf'{shell} .\myFolders.ps1').read().rstrip('\n').split('\n')
+    else:
+        import glib
+        folders: list = [
+            glib.get_user_special_dir(glib.USER_DIRECTORY_DOCUMENTS),
+            glib.get_user_special_dir(glib.USER_DIRECTORY_MUSIC).
+            glib.get_user_special_dir(glib.USER_DIRECTORY_PICTURES),
+            glib.get_user_special_dir(glib.USER_DIRECTORY_VIDEOS),
+            glib.get_user_special_dir(glib.USER_DIRECTORY_DOWNLOAD)
+        ]
+
+    return tuple(folders)
+
+
 def get_running_path() -> tuple:
     """実行時ディレクトリとコンソールの有無を取得する
     * EXEを展開した一時ディレクトリのPathを返す
