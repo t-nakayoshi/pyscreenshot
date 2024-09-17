@@ -17,7 +17,7 @@ import mss
 import mss.tools
 import os
 from PIL import Image
-import queue
+# import queue
 # import re
 from screeninfo import get_monitors
 import sys
@@ -149,7 +149,7 @@ def get_active_window() -> Union[tuple, None]:
     # hwnd  = win32gui.GetForegroundWindow()
     # title = win32gui.GetWindowText(hwnd)
     window_title = window_titles[0]
-    if (hwnd := win32gui.FindWindow(None, window_title)) == -1:
+    if (hwnd := win32gui.FindWindow(None, window_title)) == 0:
         return None
 
     win32gui.SetForegroundWindow(hwnd)
@@ -252,7 +252,7 @@ class MyScreenShot(TaskBarIcon):
         # キャプチャーHotkeyアクセレーターリスト（0:デスクトップ、1～:ディスプレイ、last:アクティブウィンドウ）
         self.hotkey_clipboard = []
         self.hotkey_imagefile = []
-        self.ss_queue = queue.Queue()
+        # self.ss_queue = queue.Queue()
         # 初期処理
         self.initialize()
 
@@ -540,35 +540,33 @@ class MyScreenShot(TaskBarIcon):
 
         return menu
 
-    def do_capture(self):
+    def do_capture(self, moni_no, filename):
         """キャプチャー実行
         """
-        req:dict = self.ss_queue.get()
-        moni_no:int = req['moni_no']
-        clipboard:bool = req['clipboard']
-        filename:str = req['filename']
-        _debug_print(f"do_capture moni_no={moni_no}, clipboard={clipboard}, filename={filename}")
+        # req:dict = self.ss_queue.get()
+        # moni_no:int = req['moni_no']
+        # clipboard:bool = req['clipboard']
+        # filename:str = req['filename']
+        _debug_print(f"do_capture moni_no={moni_no}, filename={filename}")
         sct_img = None
         msg = ''
         with mss.mss() as sct:
-            match moni_no:
-                case 90:
-                    if (info := get_active_window()) == None:
-                        return
+            if moni_no == 90:   # アクティブウィンドウ
+                if (info := get_active_window()) == None:
+                    return
 
-                    window_title, area_coord = info
-                    sct_img = sct.grab(area_coord)
-                    msg = f'"Active window - {window_title}" area={area_coord}'
+                window_title, area_coord = info
+                sct_img = sct.grab(area_coord)
+                msg = f'"Active window - {window_title}" area={area_coord}'
+            else:
+                if moni_no < 0 and moni_no >= len(sct.monitors):
+                    return
 
-                case _:
-                    if moni_no < 0 and moni_no >= len(sct.monitors):
-                        return
-
-                    sct_img = sct.grab(sct.monitors[moni_no])
-                    if moni_no == 0:
-                        msg = '"Desktop"'
-                    else:
-                        msg = f'"Display-{moni_no}"'
+                sct_img = sct.grab(sct.monitors[moni_no])
+                if moni_no == 0:
+                    msg = '"Desktop"'
+                else:
+                    msg = f'"Display-{moni_no}"'
 
         if sct_img is not None:
             img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
@@ -582,7 +580,7 @@ class MyScreenShot(TaskBarIcon):
                 box = (left, top, width - right if width > right else width, height - bottom if height > bottom else height)
                 img = img.crop(box)
 
-            if clipboard:
+            if len(filename) == 0:
                 # クリップボードへコピー
                 output = io.BytesIO()
                 img.convert('RGB').save(output, 'BMP')
@@ -728,33 +726,39 @@ class MyScreenShot(TaskBarIcon):
             if id == wx.ID_EXECUTE:
                 _debug_print("on_menu_periodic_settings closed 'Start'")
                 dlg.get_prop(self.prop)
-                self.prop['periodic_capture'] = True
                 # ToDo: 開始処理
+                self.prop['periodic_capture'] = True
+                wx.CallAfter(self.do_periodic)
             elif id == wx.ID_STOP:
                 _debug_print("on_menu_periodic_settings closed 'Stop'")
-                self.prop['periodic_capture'] = False
                 # ToDo: 停止処理
+                self.prop['periodic_capture'] = False
             elif id == wx.ID_OK:
                 dlg.get_prop(self.prop)
                 # _debug_print(self.prop)
+
+    def do_periodic(self):
+        """
+        """
+        if self.prop['periodic_capture']:
+            filename = self.create_filename(True)
+            moni_no = self.prop['periodic_target'] if self.prop['periodic_target'] != -1 else 90
+            wx.CallAfter(self.do_capture, moni_no, filename)
+
+            interval_ms = self.prop['periodic_interval'] * 1000
+            wx.CallLater(interval_ms, self.do_periodic)
 
     def copy_to_clipboard(self, id: int):
         """
         """
         global _BASE_DELAY_TIME
         _debug_print(f'copy_to_clipboard ({id})')
-        moni_no: int = -1
-        if id == MyScreenShot.ID_MENU_ACTIVE_CB:
-            moni_no = 90
-        else:
-            moni_no = id - MyScreenShot.ID_MENU_SCREEN0_CB
+        moni_no: int = 90 if id == MyScreenShot.ID_MENU_ACTIVE_CB else (id - MyScreenShot.ID_MENU_SCREEN0_CB)
 
-        self.ss_queue.put({'moni_no': moni_no, 'clipboard': True, 'filename': ''})
-        delay_ms: int = _BASE_DELAY_TIME
-        if self.prop['delayed_capture']:
-            delay_ms = self.prop['delayed_time'] * 1000
+        #self.ss_queue.put({'moni_no': moni_no, 'clipboard': True, 'filename': ''})
+        delay_ms: int = (self.prop['delayed_time'] * 1000) if self.prop['delayed_capture'] else _BASE_DELAY_TIME
         # キャプチャー実行
-        wx.CallLater(delay_ms, self.do_capture)
+        wx.CallLater(delay_ms, self.do_capture, moni_no, '')
 
     def create_filename(self, periodic: bool=False) -> str:
         """PNGファイル名生成処理
@@ -803,23 +807,17 @@ class MyScreenShot(TaskBarIcon):
         """
         global _BASE_DELAY_TIME
         _debug_print(f'save_to_imagefile ({id})')
-        moni_no = -1
-        if id == MyScreenShot.ID_MENU_ACTIVE:
-            moni_no = 90
-        else:
-            moni_no = id - MyScreenShot.ID_MENU_SCREEN0
+        moni_no = 90 if id == MyScreenShot.ID_MENU_ACTIVE else (id - MyScreenShot.ID_MENU_SCREEN0)
 
         # 保存ファイル名生成
         filename = self.create_filename(self.prop['periodic_capture'])
         if len(filename) == 0:
             return
 
-        self.ss_queue.put({'moni_no': moni_no, 'clipboard': False, 'filename': filename})
-        delay_ms = _BASE_DELAY_TIME
-        if self.prop['delayed_capture']:
-            delay_ms = self.prop['delayed_time'] * 1000
+        # self.ss_queue.put({'moni_no': moni_no, 'clipboard': False, 'filename': filename})
+        delay_ms = (self.prop['delayed_time'] * 1000) if self.prop['delayed_capture'] else _BASE_DELAY_TIME
         # キャプチャー実行
-        wx.CallLater(delay_ms, self.do_capture)
+        wx.CallLater(delay_ms, self.do_capture, moni_no, filename)
 
     def on_menu_clipboard(self, event):
         """クリップボードへコピーメニューイベントハンドラ
