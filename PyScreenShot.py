@@ -17,8 +17,6 @@ import mss
 import mss.tools
 import os
 from PIL import Image
-# import queue
-# import re
 from screeninfo import get_monitors
 import sys
 from typing import Union
@@ -29,6 +27,7 @@ import wx
 from wx.adv import TaskBarIcon, EVT_TASKBAR_LEFT_DCLICK, Sound, AboutBox, AboutDialogInfo
 import wx.lib.agw.multidirdialog as MDD
 
+import mydefault as mydef
 from myutils import get_running_path, platform_info, get_special_directory, scan_directory, atof, natural_keys
 from res import app_icon, menu_image, sound
 
@@ -51,52 +50,12 @@ _TRAY_TOOLTIP = _app_name_ + ' App'
 
 _MAX_SAVE_FOLDERS = 16
 _BASE_DELAY_TIME = 400  # (ms)
-
-_CONFIG_DEFAULT = {
-    'basic': {
-        'auto_save': 'True',
-        'numbering': '0',
-        'prefix': 'SS',
-        'sequence_digits': '6',
-        'sequence_begin': '0',
-        'save_folder_index': '-1',
-    },
-    'other': {
-        'mouse_cursor': 'False',
-        'sound_on_capture': 'False'
-    },
-    'delayed_capture': {
-        'delayed_capture': 'False',
-        'delayed_time': '5'
-    },
-    'trimming': {
-        'trimming': 'False',
-        'top': '0',
-        'bottom': '0',
-        'left': '0',
-        'right': '0'
-    },
-    'hotkey': {
-        'clipboard': '0',
-        'imagefile': '1',
-        'activewin': '8'
-    },
-    'periodic': {
-        'save_folder': '',
-        'interval': '3',
-        'stop_modifier': '0',
-        'stop_fkey': '10',
-        'target': '-1',
-        'numbering': '0'
-    }
-}
-
 _NO_CONSOLE = False
+
 _debug_mode = False
-#
+
 def _debug_print(message: str):
     global debug_mode
-
     if not _NO_CONSOLE and _debug_mode:
         sys.stdout.write(f'[debug]:{message}\n')
 
@@ -252,7 +211,7 @@ class MyScreenShot(TaskBarIcon):
         # キャプチャーHotkeyアクセレーターリスト（0:デスクトップ、1～:ディスプレイ、last:アクティブウィンドウ）
         self.hotkey_clipboard = []
         self.hotkey_imagefile = []
-        # self.ss_queue = queue.Queue()
+        self.sequence: int = -1
         # 初期処理
         self.initialize()
 
@@ -339,21 +298,20 @@ class MyScreenShot(TaskBarIcon):
         Note:
             ConfigParserモジュール使用
         """
-        global _CONFIG_DEFAULT
         global _CONFIG_FILE
         self.config = configparser.ConfigParser()
-        self.config.read_dict(_CONFIG_DEFAULT)
+        result = False
+        try:
+            with open(_CONFIG_FILE, 'r', encoding='utf-8') as f:
+                self.config.read_file(f)
+            result = True
+        except OSError as e:
+            wx.MessageBox(f'Configration file load failed.\n ({e})\n Use default settings.', 'ERROR', wx.ICON_ERROR)
+        except configparser.Error as e:
+            wx.MessageBox(f'Configration file parse failed.\n ({e})', 'ERROR', wx.ICON_ERROR)
 
-        if os.path.exists(_CONFIG_FILE):
-            try:
-                with open(_CONFIG_FILE, 'r', encoding='utf-8') as f:
-                    self.config.read_file(f)
-            except OSError as e:
-                wx.MessageBox(f'Configration file load failed.\n ({e})\n Use default settings.', 'ERROR', wx.ICON_ERROR)
-            except configparser.Error as e:
-                wx.MessageBox(f'Configration file parse failed.\n ({e})', 'ERROR', wx.ICON_ERROR)
-        else:
-            wx.MessageBox('Configration file not found.\nCreate default configuration file.', 'Attension', wx.ICON_EXCLAMATION)
+        if not result:
+            self.config.read_dict(mydef._CONFIG_DEFAULT)
 
         if self.config_to_property():
             self.save_config()
@@ -543,10 +501,6 @@ class MyScreenShot(TaskBarIcon):
     def do_capture(self, moni_no, filename):
         """キャプチャー実行
         """
-        # req:dict = self.ss_queue.get()
-        # moni_no:int = req['moni_no']
-        # clipboard:bool = req['clipboard']
-        # filename:str = req['filename']
         _debug_print(f"do_capture moni_no={moni_no}, filename={filename}")
         sct_img = None
         msg = ''
@@ -737,6 +691,51 @@ class MyScreenShot(TaskBarIcon):
                 dlg.get_prop(self.prop)
                 # _debug_print(self.prop)
 
+    def create_filename(self, periodic: bool=False) -> str:
+        """PNGファイル名生成処理
+        * PNGファイル名を生成する
+        """
+        # 選択中の保存フォルダを取得する
+        path = self.prop['periodic_save_folder'] if periodic else self.prop['save_folders'][self.prop['save_folder_index']]
+        if not os.path.exists(path):
+            wx.MessageBox('保存フォルダ "{path}" が見つかりません。', 'ERROR', wx.ICON_ERROR)
+            return ''
+
+        # ナンバリング種別を取得する
+        kind = self.prop['numbering'] if not periodic else (self.prop['periodic_numbering'] if self.prop['periodic_numbering'] == 0 else self.prop['numbering'])
+        # filename = ''
+        if kind == 0:   # 日時
+            filename = datetime.now().strftime('%Y%m%d_%H%M%S') + '.png'
+        else:           # 接頭語＋シーケンス番号
+            # ToDo: 保存フォルダからprefix+sequencial_no(digits)のファイル名の一覧を取得し、次のファイル名を決定する
+            prefix = self.prop['prefix']
+            digits = self.prop['sequence_digits']
+            # begin  = self.prop['sequence_begin']
+            begin  = self.sequence if self.sequence > self.prop['sequence_begin'] else self.prop['sequence_begin']
+            _debug_print(f'sequencial#={begin}')
+            filename = f'{prefix}{begin:0>{digits}}.png'
+            if os.path.exists(os.path.join(path, filename)):
+                # 現在のシーケンス番号のファイルが存在した場合、空きを探す
+                ptn = rf'{prefix}\d{{{digits}}}\.[pP][nN][gG]'
+                files = scan_directory(path, ptn, False)
+                if len(files) == 0:
+                    # 存在しない -> プレフィックス＋開始番号
+                    _debug_print('Sequencial file not found.')
+                    filename = f'{prefix}{begin:0>{digits}}.png'
+                else:
+                    _debug_print(f'Sequencial file found.\n{files}')
+                    basname_wo_ext = os.path.splitext(os.path.basename(files[len(files) - 1]))[0]
+                    last = int(basname_wo_ext[-digits:])
+                    if (last >= begin):
+                        _debug_print(f'Sequencial No. changed. {begin}->{last + 1}')
+                        begin = last + 1
+                    filename = f'{prefix}{begin:0>{digits}}.png'
+
+            self.sequence = begin + 1   # 次回のシーケンス番号
+            _debug_print(f'Next sequencial#={self.sequence}')
+
+        return os.path.join(path, filename)
+
     def do_periodic(self):
         """
         """
@@ -752,69 +751,25 @@ class MyScreenShot(TaskBarIcon):
         """
         """
         global _BASE_DELAY_TIME
-        _debug_print(f'copy_to_clipboard ({id})')
+        # ターゲット取得
         moni_no: int = 90 if id == MyScreenShot.ID_MENU_ACTIVE_CB else (id - MyScreenShot.ID_MENU_SCREEN0_CB)
-
-        #self.ss_queue.put({'moni_no': moni_no, 'clipboard': True, 'filename': ''})
+        # 遅延時間算出
         delay_ms: int = (self.prop['delayed_time'] * 1000) if self.prop['delayed_capture'] else _BASE_DELAY_TIME
         # キャプチャー実行
         wx.CallLater(delay_ms, self.do_capture, moni_no, '')
-
-    def create_filename(self, periodic: bool=False) -> str:
-        """PNGファイル名生成処理
-        * PNGファイル名を生成する
-        """
-        # 選択中の保存フォルダを取得する
-        path = ''
-        if not periodic:
-            path = self.prop['save_folders'][self.prop['save_folder_index']]
-        else:
-            path = self.prop['periodic_save_folder']
-
-        if not os.path.exists(path):
-            wx.MessageBox('保存フォルダ "{path}" が見つかりません。', 'ERROR', wx.ICON_ERROR)
-            return ''
-
-        # ナンバリング種別を取得する
-        kind = self.prop['numbering'] if not periodic else (self.prop['periodic_numbering'] if self.prop['periodic_numbering'] == 0 else self.prop['numbering'])
-        filename = ''
-        if kind == 0:   # date/time
-            filename = datetime.now().strftime('%Y%m%d_%H%M%S') + '.png'
-        else:           # sequencial
-            # ToDo: 保存フォルダからprefix+sequencial_no(digits)のファイル名の一覧を取得し、次のファイル名を決定する
-            prefix = self.prop['prefix']
-            digits = self.prop['sequence_digits']
-            begin  = self.prop['sequence_begin']
-            ptn = rf'{prefix}\d{{{digits}}}\.[pP][nN][gG]'
-            files = scan_directory(path, ptn, False)
-            if len(files) == 0:
-                # 存在しない -> プレフィックス＋開始番号
-                _debug_print('Sequencial file not found.')
-                filename = f'{prefix}{begin:0>{digits}}.png'
-            else:
-                _debug_print(f'Sequencial file found.\n{files}')
-                basname_wo_ext = os.path.splitext(os.path.basename(files[len(files) - 1]))[0]
-                last = int(basname_wo_ext[-digits:])
-                if (last >= begin):
-                    _debug_print(f'Sequencial No. changed. {begin}->{last + 1}')
-                    begin = last + 1
-                filename = f'{prefix}{begin:0>{digits}}.png'
-
-        return os.path.join(path, filename)
 
     def save_to_imagefile(self, id: int):
         """
         """
         global _BASE_DELAY_TIME
         _debug_print(f'save_to_imagefile ({id})')
+        # ターゲット取得
         moni_no = 90 if id == MyScreenShot.ID_MENU_ACTIVE else (id - MyScreenShot.ID_MENU_SCREEN0)
-
         # 保存ファイル名生成
         filename = self.create_filename(self.prop['periodic_capture'])
         if len(filename) == 0:
             return
 
-        # self.ss_queue.put({'moni_no': moni_no, 'clipboard': False, 'filename': filename})
         delay_ms = (self.prop['delayed_time'] * 1000) if self.prop['delayed_capture'] else _BASE_DELAY_TIME
         # キャプチャー実行
         wx.CallLater(delay_ms, self.do_capture, moni_no, filename)
@@ -1456,7 +1411,7 @@ class App(wx.App):
 
     def OnInit(self):
         frame = wx.Frame(None)
-        frame.Centre()  # AboutBoxはプライマリディスプレイの中心に出す
+        frame.Centre()  # AboutBoxをプライマリディスプレイの中心に出すため
         self.SetTopWindow(frame)
         MyScreenShot(frame)
 
@@ -1464,7 +1419,7 @@ class App(wx.App):
         return True
 
 
-def app_init():
+def app_init() -> bool:
     """アプリケーション初期化
     * 設定ファイル、リソースファイルのPATHを取得等
     Args:
@@ -1491,12 +1446,27 @@ def app_init():
     _EXE_PATH = '.' + os.sep if len(_EXE_PATH) == 0 else _EXE_PATH
     # 設定ファイルは実行ファイル（スクリプト）ディレクトリ下
     _CONFIG_FILE = os.path.join(_EXE_PATH, _CONFIG_FILE)
+    if not os.path.exists(_CONFIG_FILE):
+        # 設定ファイルが存在しない場合は、デフォルト設定で作成
+        config = configparser.ConfigParser()
+        config.read_dict(mydef._CONFIG_DEFAULT)
+        try:
+            with open(_CONFIG_FILE, 'w') as fc:
+                config.write(fc)
+
+        except OSError as e:
+            wx.MessageBox(f'Configration file save failed.\n ({e})', 'ERROR', wx.ICON_ERROR)
+            return False
+
     # リソースディレクトリは実行ディレクトリ下
     _RESRC_PATH = os.path.join(base_path, _RESRC_PATH)
+    return True
 
 
 if __name__ == "__main__":
-    app_init()  # 初期化
+    # 初期化
+    if not app_init():
+        sys.exit()
 
     app = App(False)
     app.MainLoop()

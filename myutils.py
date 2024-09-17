@@ -9,6 +9,8 @@
 
 * function
     platform_info       実行環境のOS名、バージョン（リリース）、Pythonのバージョン情報を取得する
+    get_special_directory
+                        特殊ディレクトリのパスを取得する
     get_running_path    実行時ディレクトリとコンソールの有無を取得する
     scan_directory      指定ディレクト内のファイル一覧を取得する（拡張子のフィルタリングあり）
     is_abort            中断問い合わせ
@@ -17,7 +19,7 @@ ToDo:
     *
 
 """
-__version__ = '1.1.0'
+__version__ = '1.2.0'
 __author__ = 't-nakayoshi (Takayoshi Tagawa)'
 
 import argparse
@@ -25,6 +27,16 @@ import os
 import platform
 import re
 import sys
+
+_PS1_FILE = r'.\myFolders.ps1'
+_PS1_SCRIPT = '''
+$shellapp = New-Object -ComObject Shell.Application
+$shellapp.Namespace("shell:Personal").Self.Path
+$shellapp.Namespace("shell:My Music").Self.Path
+$shellapp.Namespace("shell:My Pictures").Self.Path
+$shellapp.Namespace("shell:My Video").Self.Path
+$shellapp.Namespace("shell:Downloads").Self.Path
+'''
 
 
 def platform_info() -> tuple:
@@ -52,6 +64,15 @@ def get_special_directory() -> tuple:
         特殊ディレクトリパス (tuple): ('<My Documents>', '<My Music>', '<My Pictures>', '<My Videos>', '<Downloads>')
     """
     if platform.system() == 'Windows':
+        if not os.path.exists(_PS1_FILE):
+            try:
+                with open(_PS1_FILE, 'wt') as fc:
+                    fc.write(_PS1_SCRIPT)
+
+            except OSError as e:
+                sys.stderr.write(f'[error]:"{_PS1_FILE}" is save failed. ({e})\n')
+                return ('','','','','')
+
         PWSH7: str = r'C:\Program Files\Powershell\7\pwsh.exe'
         shell: str = r'pwsh' if os.path.exists(PWSH7) else r'powershell'
         folders: list = os.popen(rf'{shell} .\myFolders.ps1').read().rstrip('\n').split('\n')
