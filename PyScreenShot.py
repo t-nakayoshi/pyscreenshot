@@ -56,6 +56,7 @@ _BASE_DELAY_TIME = 400  # (ms)
 _NO_CONSOLE = False
 
 _debug_mode = False
+_disable_hotkeys = False
 
 def _debug_print(message: str):
     global debug_mode
@@ -153,8 +154,9 @@ class MyScreenShot(TaskBarIcon):
     ID_MENU_SETTINGS = 101
     # クイック設定
     ID_MENU_MCURSOR  = 102      # マウスカーソルキャプチャーを有効
-    ID_MENU_DELAYED  = 103      # 遅延キャプチャーを有効
-    ID_MENU_TRIMMING = 104      # トリミングを有効
+    ID_MENU_SOUND    = 103      # キャプチャー終了時に音を鳴らす
+    ID_MENU_DELAYED  = 104      # 遅延キャプチャーを有効
+    ID_MENU_TRIMMING = 105      # トリミングを有効
     #--- 保存先フォルダ(Base)
     ID_MENU_FOLDER1 = 201
     # フォルダを開く
@@ -260,6 +262,10 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             none
         """
+        global _disable_hotkeys
+        if _disable_hotkeys:
+            return
+
         if not first:
             # 現在のHotkeyを削除
             for hotkey in self.hotkey_clipboard:
@@ -456,6 +462,7 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             wx.Menuオブジェクト
         """
+        global _disable_hotkeys
         # メニューの生成
         menu = wx.Menu()
         # Help
@@ -470,11 +477,13 @@ class MyScreenShot(TaskBarIcon):
         item = create_menu_item(menu, MyScreenShot.ID_MENU_SETTINGS, '環境設定...', self.on_menu_settings)
         item.SetBitmap(wx.Bitmap(self._icon_img.GetBitmap(MenuIcon.SETTINGS.value)))
         sub_menu = wx.Menu()
-        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_MCURSOR, 'マウスカーソルキャプチャーを有効', self.on_menu_toggle_item, kind = wx.ITEM_CHECK)
+        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_MCURSOR, 'マウスカーソルをキャプチャーする', self.on_menu_toggle_item, kind = wx.ITEM_CHECK)
         sub_item.Enable(False)  # Windowsでは現状マウスカーソルがキャプチャー出来ないので「無効」にしておく
-        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_DELAYED, '遅延キャプチャーを有効', self.on_menu_toggle_item, kind = wx.ITEM_CHECK)
+        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_SOUND, 'キャプチャー終了時に音を鳴らす', self.on_menu_toggle_item, kind = wx.ITEM_CHECK)
+        sub_item.Check(self.prop['sound_on_capture'])
+        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_DELAYED, '遅延キャプチャーをする', self.on_menu_toggle_item, kind = wx.ITEM_CHECK)
         sub_item.Check(self.prop['delayed_capture'])
-        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_TRIMMING, 'トリミングを有効', self.on_menu_toggle_item, kind = wx.ITEM_CHECK)
+        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_TRIMMING, 'トリミングをする', self.on_menu_toggle_item, kind = wx.ITEM_CHECK)
         sub_item.Check(self.prop['trimming'])
         menu.AppendSubMenu(sub_menu, 'クイック設定')
         menu.AppendSeparator()
@@ -501,16 +510,16 @@ class MyScreenShot(TaskBarIcon):
         display_count: int = self.prop['display']   # ディスプレイ数
         sub_menu1 = wx.Menu()
         sub_menu2 = wx.Menu()
-        create_menu_item(sub_menu1, MyScreenShot.ID_MENU_SCREEN0_CB, f'0: デスクトップ\t{self.hotkey_clipboard[0]}', self.on_menu_clipboard)
-        create_menu_item(sub_menu2, MyScreenShot.ID_MENU_SCREEN0, f'0: デスクトップ\t{self.hotkey_imagefile[0]}', self.on_menu_imagefile)
+        create_menu_item(sub_menu1, MyScreenShot.ID_MENU_SCREEN0_CB, f'0: デスクトップ\t{self.hotkey_clipboard[0] if not _disable_hotkeys else ""}', self.on_menu_clipboard)
+        create_menu_item(sub_menu2, MyScreenShot.ID_MENU_SCREEN0, f'0: デスクトップ\t{self.hotkey_imagefile[0] if not _disable_hotkeys else ""}', self.on_menu_imagefile)
         disp: int = 0
         for n in range(display_count):
             disp += 1
-            create_menu_item(sub_menu1, MyScreenShot.ID_MENU_SCREEN1_CB + n, f'{disp}: ディスプレイ {disp}\t{self.hotkey_clipboard[disp]}', self.on_menu_clipboard)
-            create_menu_item(sub_menu2, MyScreenShot.ID_MENU_SCREEN1 + n, f'{disp}: ディスプレイ {disp}\t{self.hotkey_imagefile[disp]}', self.on_menu_imagefile)
+            create_menu_item(sub_menu1, MyScreenShot.ID_MENU_SCREEN1_CB + n, f'{disp}: ディスプレイ {disp}\t{self.hotkey_clipboard[disp] if not _disable_hotkeys else ""}', self.on_menu_clipboard)
+            create_menu_item(sub_menu2, MyScreenShot.ID_MENU_SCREEN1 + n, f'{disp}: ディスプレイ {disp}\t{self.hotkey_imagefile[disp] if not _disable_hotkeys else ""}', self.on_menu_imagefile)
         disp += 1
-        create_menu_item(sub_menu1, MyScreenShot.ID_MENU_ACTIVE_CB, f'{disp}: アクティブウィンドウ\t{self.hotkey_clipboard[disp]}', self.on_menu_clipboard)
-        create_menu_item(sub_menu2, MyScreenShot.ID_MENU_ACTIVE, f'{disp}: アクティブウィンドウ\t{self.hotkey_imagefile[disp]}', self.on_menu_imagefile)
+        create_menu_item(sub_menu1, MyScreenShot.ID_MENU_ACTIVE_CB, f'{disp}: アクティブウィンドウ\t{self.hotkey_clipboard[disp] if not _disable_hotkeys else ""}', self.on_menu_clipboard)
+        create_menu_item(sub_menu2, MyScreenShot.ID_MENU_ACTIVE, f'{disp}: アクティブウィンドウ\t{self.hotkey_imagefile[disp] if not _disable_hotkeys else ""}', self.on_menu_imagefile)
         item = menu.AppendSubMenu(sub_menu1, 'クリップボードへコピー')
         item.SetBitmap(wx.Bitmap(self._icon_img.GetBitmap(MenuIcon.COPY_TO_CB.value)))
         item = menu.AppendSubMenu(sub_menu2, 'PNGファイルへ保存')
@@ -533,36 +542,36 @@ class MyScreenShot(TaskBarIcon):
         moni_no, filename = self.req_queue.get()
         _debug_print(f"do_capture moni_no={moni_no}, filename={filename}")
         sct_img = None
-        msg: str = ''
         with mss.mss() as sct:
             if moni_no == 90:   # アクティブウィンドウ
                 if (info := get_active_window()) == None:
+                    self._beep.Play()
                     return
 
                 window_title, area_coord = info
                 sct_img = sct.grab(area_coord)
-                msg = f'"Active window - {window_title}" area={area_coord}'
             else:
                 if moni_no < 0 and moni_no >= len(sct.monitors):
+                    self._beep.Play()
                     return
 
                 sct_img = sct.grab(sct.monitors[moni_no])
-                if moni_no == 0:
-                    msg = '"Desktop"'
-                else:
-                    msg = f'"Display-{moni_no}"'
 
         if sct_img is not None:
             img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
+            width, height = img.size
+            _debug_print(f'Capture (0, 0)-({width}, {height})')
             # トリミング
             if self.prop['trimming']:
-                top: int    = self.prop['trimming_size'][0]
-                bottom: int = self.prop['trimming_size'][1]
-                left: int   = self.prop['trimming_size'][2]
-                right: int  = self.prop['trimming_size'][3]
-                width, height = img.size
-                box: tuple = (left, top, width - right if width > right else width, height - bottom if height > bottom else height)
-                img = img.crop(box)
+                top: int         = self.prop['trimming_size'][0]
+                temp_bottom: int = self.prop['trimming_size'][1]
+                left: int        = self.prop['trimming_size'][2]
+                temp_right: int  = self.prop['trimming_size'][3]
+                right: int  = width  - temp_right  if width  > temp_right  else width
+                bottom: int = height - temp_bottom if height > temp_bottom else height
+
+                img = img.crop((left, top, right, bottom))
+                _debug_print(f'Trimming ({top}, {left})-({right}, {bottom})')
 
             if len(filename) == 0:
                 # クリップボードへコピー
@@ -571,11 +580,24 @@ class MyScreenShot(TaskBarIcon):
                 data = output.getvalue()[14:]
                 output.close()
                 copy_bitmap_to_clipboard(data)
-                _debug_print(f'capture {msg} & copy clipboard')
             else:
                 # ファイルへ保存
-                _debug_print(f'capture {msg} & save PNG file {filename}')
                 img.save(filename)
+
+            """"""
+            msg: str = ''
+            match moni_no:
+                case 90:
+                    msg = f'"Active window - {window_title}" area={area_coord}'
+                case 0:
+                    msg = '"Desktop"'
+                case _:
+                    msg = f'"Display-{moni_no}"'
+            _debug_print(f'capture {msg} & {"copy clipboard" if len(filename) == 0 else "save PNG file"}')
+            """"""
+
+            if self.prop['sound_on_capture']:
+                self._success.Play()
 
     def on_menu_show_help(self, event):
         """HELPメニューイベントハンドラ
@@ -628,9 +650,10 @@ class MyScreenShot(TaskBarIcon):
 
     def on_menu_toggle_item(self, event):
         """クイック設定メニューイベントハンドラ
-        * マウスカーソルのキャプチャーの有効/無効を切り替える。（現状無効）
-        * 遅延キャプチャーの有効/無効を切り替える。
-        * トリミングの有効/無効を切り替える。
+        * 「マウスカーソルのキャプチャーの有効/無効」を切り替える。（現状無効）
+        * 「キャプチャー終了時に音を鳴らすの有効/無効」を切り替える。
+        * 「遅延キャプチャーの有効/無効」を切り替える。
+        * 「トリミングの有効/無効」を切り替える。
         Args:
             event (wx.EVENT): EVENTオブジェクト
         Returns:
@@ -639,6 +662,8 @@ class MyScreenShot(TaskBarIcon):
         match event.GetId():
             case MyScreenShot.ID_MENU_MCURSOR:  # マウスカーソルキャプチャー
                 self.prop['capture_mcursor'] = not self.prop['capture_mcursor']
+            case MyScreenShot.ID_MENU_SOUND:    # キャプチャー終了時に音を鳴らす
+                self.prop['sound_on_capture'] = not self.prop['sound_on_capture']
             case MyScreenShot.ID_MENU_DELAYED:  # 遅延キャプチャー
                 self.prop['delayed_capture'] = not self.prop['delayed_capture']
             case MyScreenShot.ID_MENU_TRIMMING: # トリミング
@@ -1465,6 +1490,7 @@ def app_init() -> bool:
         none
     """
     global _debug_mode
+    global _disable_hotkeys
     global _CONFIG_FILE
     global _EXE_PATH
     global _RESRC_PATH
@@ -1473,9 +1499,11 @@ def app_init() -> bool:
     # コマンドラインパラメータ解析（デバッグオプションのみ）
     parser = argparse.ArgumentParser(description='My ScreenSHot Tool.')
     parser.add_argument('--debug', action='store_true', help='Debug mode.')
+    parser.add_argument('--disable-hotkeys', action='store_true', help='Disable Hot Keys.')
     # 解析結果
     args = parser.parse_args()
     _debug_mode = args.debug
+    _disable_hotkeys = args.disable_hotkeys
 
     # 実行ファイル展開PATHを取得
     base_path, _NO_CONSOLE = get_running_path()
