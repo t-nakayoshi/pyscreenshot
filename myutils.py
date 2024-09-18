@@ -29,7 +29,7 @@ import re
 import sys
 
 _PS1_FILE = r'.\myFolders.ps1'
-_PS1_SCRIPT = '''
+_PS1_SCRIPT = '''#
 $shellapp = New-Object -ComObject Shell.Application
 $shellapp.Namespace("shell:Personal").Self.Path
 $shellapp.Namespace("shell:My Music").Self.Path
@@ -75,7 +75,7 @@ def get_special_directory() -> tuple:
 
         PWSH7: str = r'C:\Program Files\Powershell\7\pwsh.exe'
         shell: str = r'pwsh' if os.path.exists(PWSH7) else r'powershell'
-        folders: list = os.popen(rf'{shell} .\myFolders.ps1').read().rstrip('\n').split('\n')
+        folders: list = os.popen(rf'{shell} {_PS1_FILE}').read().rstrip('\n').split('\n')
     else:
         import glib
         folders: list = [

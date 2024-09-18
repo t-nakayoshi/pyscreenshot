@@ -1,3 +1,4 @@
+#
 $shellapp = New-Object -ComObject Shell.Application
 $shellapp.Namespace("shell:Personal").Self.Path
 $shellapp.Namespace("shell:My Music").Self.Path
