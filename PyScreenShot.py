@@ -17,6 +17,7 @@ import mss
 import mss.tools
 import os
 from PIL import Image
+import queue
 from screeninfo import get_monitors
 import sys
 from typing import Union
@@ -27,8 +28,8 @@ import wx
 from wx.adv import TaskBarIcon, EVT_TASKBAR_LEFT_DCLICK, Sound, AboutBox, AboutDialogInfo
 import wx.lib.agw.multidirdialog as MDD
 
-import mydefault as mydef
-from myutils import get_running_path, platform_info, get_special_directory, scan_directory, atof, natural_keys
+import mydefine as mydef
+from myutils import get_running_path, platform_info, get_special_directory, scan_directory
 from res import app_icon, menu_image, sound
 
 __version__ = '1.0.0'
@@ -44,6 +45,8 @@ _RESRC_PATH = ''                        # アプリアイコン等
 _CONFIG_FILE = 'config.ini'
 # ヘルプファイル
 _HELP_FILE = 'manual.html'
+# マイピクチャパス
+_MY_PICTURE = ''
 
 _TRAY_TOOLTIP = _app_name_ + ' App'
 #_TRAY_ICON = 'ScreenShot.ico'
@@ -358,7 +361,7 @@ class MyScreenShot(TaskBarIcon):
                 save_req = True
         else:
             # 自動保存フォルダが無いので、'Pictures'を登録する
-            self.prop['save_folders'].append(get_special_directory()[2])
+            self.prop['save_folders'].append(_MY_PICTURE)
             self.prop['save_folder_index'] = 0
             save_req = True
         # 自動保存時のナンバリング
@@ -1437,6 +1440,7 @@ def app_init() -> bool:
     global _EXE_PATH
     global _RESRC_PATH
     global _NO_CONSOLE
+    global _MY_PICTURE
     # コマンドラインパラメータ解析（デバッグオプションのみ）
     parser = argparse.ArgumentParser(description='My ScreenSHot Tool.')
     parser.add_argument('--debug', action='store_true', help='Debug mode.')
@@ -1446,7 +1450,7 @@ def app_init() -> bool:
 
     # 実行ファイル展開PATHを取得
     base_path, _NO_CONSOLE = get_running_path()
-    # 実行ファイルPATH
+    # 実行ファイルPATHを設定
     _EXE_PATH = os.path.dirname(sys.argv[0])
     _EXE_PATH = '.' + os.sep if len(_EXE_PATH) == 0 else _EXE_PATH
     # 設定ファイルは実行ファイル（スクリプト）ディレクトリ下
@@ -1462,9 +1466,10 @@ def app_init() -> bool:
         except OSError as e:
             wx.MessageBox(f'Configration file save failed.\n ({e})', 'ERROR', wx.ICON_ERROR)
             return False
-
     # リソースディレクトリは実行ディレクトリ下
     _RESRC_PATH = os.path.join(base_path, _RESRC_PATH)
+    # マイピクチャのPATHを取得
+    _MY_PICTURE = get_special_directory()[2]
     return True
 
 
