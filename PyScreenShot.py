@@ -470,11 +470,11 @@ class MyScreenShot(TaskBarIcon):
         item = create_menu_item(menu, MyScreenShot.ID_MENU_SETTINGS, '環境設定...', self.on_menu_settings)
         item.SetBitmap(wx.Bitmap(self._icon_img.GetBitmap(MenuIcon.SETTINGS.value)))
         sub_menu = wx.Menu()
-        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_MCURSOR, 'マウスカーソルキャプチャーを有効', self.on_menu_toggle_mouse_capture, kind = wx.ITEM_CHECK)
+        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_MCURSOR, 'マウスカーソルキャプチャーを有効', self.on_menu_toggle_item, kind = wx.ITEM_CHECK)
         sub_item.Enable(False)  # Windowsでは現状マウスカーソルがキャプチャー出来ないので「無効」にしておく
-        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_DELAYED, '遅延キャプチャーを有効', self.on_menu_toggle_delayed_capture, kind = wx.ITEM_CHECK)
+        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_DELAYED, '遅延キャプチャーを有効', self.on_menu_toggle_item, kind = wx.ITEM_CHECK)
         sub_item.Check(self.prop['delayed_capture'])
-        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_TRIMMING, 'トリミングを有効', self.on_menu_toggle_trimming, kind = wx.ITEM_CHECK)
+        sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_TRIMMING, 'トリミングを有効', self.on_menu_toggle_item, kind = wx.ITEM_CHECK)
         sub_item.Check(self.prop['trimming'])
         menu.AppendSubMenu(sub_menu, 'クイック設定')
         menu.AppendSeparator()
@@ -626,36 +626,25 @@ class MyScreenShot(TaskBarIcon):
                 # キャプチャーHotkeyアクセレーター再展開
                 self.set_capture_hotkey()
 
-    def on_menu_toggle_mouse_capture(self, event):
-        """Mouse captureメニューイベントハンドラ
-        * マウスカーソルのキャプチャーの有効/無効を切り替える。
-          ※現在の所、Windowsではマウスカーソルをキャプチャー出来ない
-        Args:
-            event (wx.EVENT): EVENTオブジェクト
-        Returns:
-            none
-        """
-        self.prop['capture_mcursor'] = not self.prop['capture_mcursor']
-
-    def on_menu_toggle_delayed_capture(self, event):
-        """Delayed captureメニューイベントハンドラ
+    def on_menu_toggle_item(self, event):
+        """クイック設定メニューイベントハンドラ
+        * マウスカーソルのキャプチャーの有効/無効を切り替える。（現状無効）
         * 遅延キャプチャーの有効/無効を切り替える。
-        Args:
-            event (wx.EVENT): EVENTオブジェクト
-        Returns:
-            none
-        """
-        self.prop['delayed_capture'] = not self.prop['delayed_capture']
-
-    def on_menu_toggle_trimming(self, event):
-        """Trimmingメニューイベントハンドラ
         * トリミングの有効/無効を切り替える。
         Args:
             event (wx.EVENT): EVENTオブジェクト
         Returns:
             none
         """
-        self.prop['trimming'] = not self.prop['trimming']
+        match event.GetId():
+            case MyScreenShot.ID_MENU_MCURSOR:  # マウスカーソルキャプチャー
+                self.prop['capture_mcursor'] = not self.prop['capture_mcursor']
+            case MyScreenShot.ID_MENU_DELAYED:  # 遅延キャプチャー
+                self.prop['delayed_capture'] = not self.prop['delayed_capture']
+            case MyScreenShot.ID_MENU_TRIMMING: # トリミング
+                self.prop['trimming'] = not self.prop['trimming']
+            case _:
+                pass
 
     def on_menu_select_save_folder(self, event):
         """Select save folderメニューイベントハンドラ
