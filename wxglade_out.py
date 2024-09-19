@@ -86,6 +86,10 @@ class SettingsDialog(wx.Dialog):
         self.BTN_ID_DEL  = 1002
         self.BTN_ID_UP   = 1003
         self.BTN_ID_DOWN = 1004
+        self.BTN_ID_BMP_CTRL_ALT   = 1101
+        self.BTN_ID_BMP_CTRL_SHIFT = 1102
+        self.BTN_ID_PNG_CTRL_ALT   = 1103
+        self.BTN_ID_PNG_CTRL_SHIFT = 1104
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_DIALOG_STYLE
         wx.Dialog.__init__(self, *args, **kwds)
         self.SetSize((400, 400))
@@ -248,20 +252,20 @@ class SettingsDialog(wx.Dialog):
         sizer_23 = wx.StaticBoxSizer(wx.StaticBox(self.notebook_1_pane_2, wx.ID_ANY, u"クリップボードコピー"), wx.VERTICAL)
         sizer_21.Add(sizer_23, 0, wx.EXPAND, 0)
 
-        self.radio_btn_hotkey_bmp_ctrl_alt = wx.RadioButton(sizer_23.GetStaticBox(), wx.ID_ANY, "Ctrl+Alt", style=wx.RB_GROUP)
+        self.radio_btn_hotkey_bmp_ctrl_alt = wx.RadioButton(sizer_23.GetStaticBox(), self.BTN_ID_BMP_CTRL_ALT, "Ctrl+Alt", style=wx.RB_GROUP)
         self.radio_btn_hotkey_bmp_ctrl_alt.SetValue(1)
         sizer_23.Add(self.radio_btn_hotkey_bmp_ctrl_alt, 1, 0, 0)
 
-        self.radio_btn_hotkey_bmp_ctrl_shift = wx.RadioButton(sizer_23.GetStaticBox(), wx.ID_ANY, "Ctrl+Shift")
+        self.radio_btn_hotkey_bmp_ctrl_shift = wx.RadioButton(sizer_23.GetStaticBox(), self.BTN_ID_BMP_CTRL_SHIFT, "Ctrl+Shift")
         sizer_23.Add(self.radio_btn_hotkey_bmp_ctrl_shift, 1, 0, 0)
 
         sizer_24 = wx.StaticBoxSizer(wx.StaticBox(self.notebook_1_pane_2, wx.ID_ANY, u"PNG保存"), wx.VERTICAL)
         sizer_21.Add(sizer_24, 0, wx.EXPAND | wx.LEFT, 4)
 
-        self.radio_btn_hotkey_png_ctrl_alt = wx.RadioButton(sizer_24.GetStaticBox(), wx.ID_ANY, "Ctrl+Alt", style=wx.RB_GROUP)
+        self.radio_btn_hotkey_png_ctrl_alt = wx.RadioButton(sizer_24.GetStaticBox(), self.BTN_ID_PNG_CTRL_ALT, "Ctrl+Alt", style=wx.RB_GROUP)
         sizer_24.Add(self.radio_btn_hotkey_png_ctrl_alt, 1, 0, 0)
 
-        self.radio_btn_hotkey_png_ctrl_shift = wx.RadioButton(sizer_24.GetStaticBox(), wx.ID_ANY, "Ctrl+Shift")
+        self.radio_btn_hotkey_png_ctrl_shift = wx.RadioButton(sizer_24.GetStaticBox(), self.BTN_ID_PNG_CTRL_SHIFT, "Ctrl+Shift")
         self.radio_btn_hotkey_png_ctrl_shift.SetValue(1)
         sizer_24.Add(self.radio_btn_hotkey_png_ctrl_shift, 1, 0, 0)
 
@@ -327,10 +331,10 @@ class SettingsDialog(wx.Dialog):
         self.button_del_folder.Bind(wx.EVT_BUTTON, self.on_save_folder_del)
         self.button_up_folder.Bind(wx.EVT_BUTTON, self.on_save_folder_move)
         self.button_down_folder.Bind(wx.EVT_BUTTON, self.on_save_folder_move)
-        self.radio_btn_hotkey_bmp_ctrl_alt.Bind(wx.EVT_RADIOBUTTON, self.on_btn_hotkey_bmp_ctrl_alt)
-        self.radio_btn_hotkey_bmp_ctrl_shift.Bind(wx.EVT_RADIOBUTTON, self.on_btn_hotkey_bmp_ctrl_shift)
-        self.radio_btn_hotkey_png_ctrl_alt.Bind(wx.EVT_RADIOBUTTON, self.on_btn_hotkey_png_ctrl_alt)
-        self.radio_btn_hotkey_png_ctrl_shift.Bind(wx.EVT_RADIOBUTTON, self.on_btn_hotkey_png_ctrl_shift)
+        self.radio_btn_hotkey_bmp_ctrl_alt.Bind(wx.EVT_RADIOBUTTON, self.on_btn_hotkey_change)
+        self.radio_btn_hotkey_bmp_ctrl_shift.Bind(wx.EVT_RADIOBUTTON, self.on_btn_hotkey_change)
+        self.radio_btn_hotkey_png_ctrl_alt.Bind(wx.EVT_RADIOBUTTON, self.on_btn_hotkey_change)
+        self.radio_btn_hotkey_png_ctrl_shift.Bind(wx.EVT_RADIOBUTTON, self.on_btn_hotkey_change)
         # end wxGlade
 
     def on_save_folder_add(self, event):  # wxGlade: SettingsDialog.<event_handler>
@@ -378,20 +382,18 @@ class SettingsDialog(wx.Dialog):
         event.Skip()
 
     """ HotKey: 修飾キーの切り替え制御 """
-    def on_btn_hotkey_bmp_ctrl_alt(self, event):  # wxGlade: SettingsDialog.<event_handler>
-        self.radio_btn_hotkey_png_ctrl_shift.SetValue(True)
-        event.Skip()
-
-    def on_btn_hotkey_bmp_ctrl_shift(self, event):  # wxGlade: SettingsDialog.<event_handler>
-        self.radio_btn_hotkey_png_ctrl_alt.SetValue(True)
-        event.Skip()
-
-    def on_btn_hotkey_png_ctrl_alt(self, event):  # wxGlade: SettingsDialog.<event_handler>
-        self.radio_btn_hotkey_bmp_ctrl_shift.SetValue(True)
-        event.Skip()
-
-    def on_btn_hotkey_png_ctrl_shift(self, event):  # wxGlade: SettingsDialog.<event_handler>
-        self.radio_btn_hotkey_bmp_ctrl_alt.SetValue(True)
+    def on_btn_hotkey_change(self, event):  # wxGlade: SettingsDialog.<event_handler>
+        match event.GetId():
+            case self.BTN_ID_BMP_CTRL_ALT:
+                self.radio_btn_hotkey_png_ctrl_shift.SetValue(True)
+            case self.BTN_ID_BMP_CTRL_SHIFT:
+                self.radio_btn_hotkey_png_ctrl_alt.SetValue(True)
+            case self.BTN_ID_PNG_CTRL_ALT:
+                self.radio_btn_hotkey_bmp_ctrl_shift.SetValue(True)
+            case self.BTN_ID_PNG_CTRL_SHIFT:
+                self.radio_btn_hotkey_bmp_ctrl_alt.SetValue(True)
+            case _:
+                pass
         event.Skip()
 
     def set_prop(self, prop: dict):
