@@ -7,7 +7,7 @@
 --noinclude-unittest-mode=allow ^
 --onefile ^
 --windows-console-mode=disable ^
---windows-icon-from-ico=./res/ScreenShot.ico ^
+--windows-icon-from-ico=./resource_data/ScreenShot.ico ^
 --output-dir=dist_nuitka ^
 --output-filename=MyScreenShot.exe ^
 PyScreenShot.py

@@ -1,0 +1,60 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build_MyScreenShot",
+            "type": "shell",
+            "command": "./.venv/Scripts/nuitka",
+            "windows": {
+                "command": ".\\.venv\\Scripts\\nuitka",
+            },
+            "args": [
+                "--msvc=14.3",
+                "--follow-imports",
+                "--nofollow-import-to=tkinter",
+                "--noinclude-unittest-mode=allow",
+                "--onefile",
+                "--windows-console-mode=disable",
+                "--windows-icon-from-ico=./resource_data/ScreenShot.ico",
+                "--output-dir=dist_nuitka",
+                "--output-filename=MyScreenShot.exe",
+                "PyScreenShot.py",
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "build_MyScreenShot_resource",
+            "type": "shell",
+            "command": "./.venv/Scripts/python.exe",
+            "windows": {
+                "command": ".\\.venv\\Scripts\\python.exe",
+            },
+            "args": [
+                ".\\make_resource_file.py"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "build EXE",
+            "type": "shell",
+            "command": "echo Compplete 'Build EXE' tasks.",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "build_MyScreenShot_resource",
+                "build_MyScreenShot",
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+    ]
+}
