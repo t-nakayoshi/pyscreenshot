@@ -12,11 +12,24 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Python デバッガー: PyScreenShot.py",
+            "name": "[Debug] PyScreenShot.py",
             "type": "debugpy",
             "request": "launch",
             "program": "PyScreenShot.py",
-            "args": ["--debug"],
+            "args": [
+                "--debug"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "[Debug2] PyScreenShot.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "PyScreenShot.py",
+            "args": [
+                "--debug",
+                "--disable-hotkeys"
+            ],
             "console": "integratedTerminal"
         }
     ]

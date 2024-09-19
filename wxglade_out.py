@@ -336,12 +336,12 @@ class SettingsDialog(wx.Dialog):
     def on_save_folder_add(self, event):  # wxGlade: SettingsDialog.<event_handler>
         """自動保存フォルダの追加
         """
-        defaultPath = os.getcwd()
-        agwstyle = MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST
+        defaultPath: str = os.getcwd()
+        agwstyle: int = MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST
         with MDD.MultiDirDialog(None, title="フォルダの追加", defaultPath=defaultPath, agwStyle=agwstyle) as dlg:
             if dlg.ShowModal() != wx.ID_OK:
                 return
-            paths = dlg.GetPaths()
+            paths: list = dlg.GetPaths()
             for folder in paths:
                 self.list_box_auto_save_folders.Append(folder)
                 print(f'Add {folder}')
@@ -350,7 +350,7 @@ class SettingsDialog(wx.Dialog):
     def on_save_folder_del(self, event):  # wxGlade: SettingsDialog.<event_handler>
         """自動保存フォルダの削除
         """
-        index = self.list_box_auto_save_folders.GetSelection()
+        index: int = self.list_box_auto_save_folders.GetSelection()
         if index != wx.NOT_FOUND:
             self.list_box_auto_save_folders.Delete(index)
         event.Skip()
@@ -358,12 +358,11 @@ class SettingsDialog(wx.Dialog):
     def on_save_folder_move(self, event):  # wxGlade: SettingsDialog.<event_handler>
         """自動保存フォルダの移動（上下）
         """
-        index = self.list_box_auto_save_folders.GetSelection()
-        id = event.GetId()
+        index: int = self.list_box_auto_save_folders.GetSelection()
+        move: int = 0
+        limit: bool = False
 
-        move = 0
-        limit = False
-        if id == self.BTN_ID_UP:
+        if event.GetId() == self.BTN_ID_UP:
             move = -1
             limit = True if index > 0 else False
         else:
@@ -371,7 +370,7 @@ class SettingsDialog(wx.Dialog):
             limit = True if index < (self.list_box_auto_save_folders.GetCount() - 1) else False
 
         if index != wx.NOT_FOUND and limit:
-            folder = self.list_box_auto_save_folders.GetString(index)
+            folder: str = self.list_box_auto_save_folders.GetString(index)
             print(f'folder={index}:{folder}')
             self.list_box_auto_save_folders.Delete(index)
             self.list_box_auto_save_folders.Insert(folder, index + move)
@@ -601,14 +600,14 @@ class PeriodicDialog(wx.Dialog):
     def on_save_folder_browse(self, event):  # wxGlade: PeriodicDialog.<event_handler>
         """保存フォルダの選択
         """
-        defaultPath = self.text_ctrl_periodic_folder.GetValue()
+        defaultPath: str = self.text_ctrl_periodic_folder.GetValue()
         if len(defaultPath) == 0 or not os.path.exists(defaultPath):
             defaultPath = os.getcwd()
-        agwstyle = MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST
+        agwstyle: int = MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST
         with MDD.MultiDirDialog(None, title="フォルダの選択", defaultPath=defaultPath, agwStyle=agwstyle) as dlg:
             if dlg.ShowModal() != wx.ID_OK:
                 return
-            paths = dlg.GetPaths()
+            paths: list = dlg.GetPaths()
             for folder in paths:
                 self.text_ctrl_periodic_folder.SetValue(folder)
                 print(f'Set {folder}')
@@ -634,7 +633,7 @@ class PeriodicDialog(wx.Dialog):
         self.choice_periodic_stop_fkey.Select(prop['periodic_stop_fkey'])
         # ターゲット
         for i in range(prop['display']):
-            item = f'ディスプレイ {i + 1}'
+            item: str = f'ディスプレイ {i + 1}'
             self.choice_periodic_capture_target.Insert(item, self.choice_periodic_capture_target.GetCount() - 1)
         if prop['periodic_target'] == -1:
             self.choice_periodic_capture_target.Select(self.choice_periodic_capture_target.GetCount() - 1)
@@ -657,7 +656,7 @@ class PeriodicDialog(wx.Dialog):
         prop['periodic_stop_modifier'] = self.choice_periodic_stopkey_modifire.GetSelection()
         prop['periodic_stop_fkey']     = self.choice_periodic_stop_fkey.GetSelection()
         # ターゲット
-        index = self.choice_periodic_capture_target.Selection()
+        index: int = self.choice_periodic_capture_target.Selection()
         if index == (self.choice_periodic_capture_target.GetCount() - 1):
             prop['periodic_target'] = -1
         else:

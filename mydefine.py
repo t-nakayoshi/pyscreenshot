@@ -37,7 +37,7 @@ _CONFIG_DEFAULT = {
         'save_folder': '',
         'interval': '3',
         'stop_modifier': '0',
-        'stop_fkey': '10',
+        'stop_fkey': '11',
         'target': '-1',
         'numbering': '0'
     }
