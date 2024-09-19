@@ -10,6 +10,8 @@ import sys
 import wx
 import wx.lib.agw.multidirdialog as MDD
 
+from res import app_icon
+
 # begin wxGlade: dependencies
 # end wxGlade
 
@@ -79,6 +81,7 @@ class MyFrame(wx.Frame):
 class SettingsDialog(wx.Dialog):
     def __init__(self, *args, **kwds):
         # begin wxGlade: SettingsDialog.__init__
+        # Button Event ID's
         self.BTN_ID_ADD  = 1001
         self.BTN_ID_DEL  = 1002
         self.BTN_ID_UP   = 1003
@@ -316,6 +319,9 @@ class SettingsDialog(wx.Dialog):
 
         self.Layout()
         self.Centre()
+        # Load Application ICON
+        icons = wx.IconBundle(app_icon.get_app_icon_stream(), wx.BITMAP_TYPE_ICO)
+        self.SetIcon(icons.GetIcon(wx.Size(16, 16)))
 
         self.button_add_folder.Bind(wx.EVT_BUTTON, self.on_save_folder_add)
         self.button_del_folder.Bind(wx.EVT_BUTTON, self.on_save_folder_del)
@@ -583,6 +589,9 @@ class PeriodicDialog(wx.Dialog):
 
         self.Layout()
         self.Centre()
+        # Load Application ICON
+        icons = wx.IconBundle(app_icon.get_app_icon_stream(), wx.BITMAP_TYPE_ICO)
+        self.SetIcon(icons.GetIcon(wx.Size(16, 16)))
 
         self.button_periodic_folder_brows.Bind(wx.EVT_BUTTON, self.on_save_folder_browse)
         self.button_periodic_start.Bind(wx.EVT_BUTTON, self.on_periodic_capture_ctrl)
