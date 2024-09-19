@@ -8,5 +8,5 @@
  pywin32      306      Python Software Foundation License                                         https://github.com/mhammond/pywin32          
  screeninfo   0.8.1    MIT License                                                                https://github.com/rr-/screeninfo            
  six          1.16.0   MIT License                                                                https://github.com/benjaminp/six             
- wxPython     4.2.1    wxWindows Library License (https://opensource.org/licenses/wxwindows.php)  http://wxPython.org/                         
+ wxPython     4.2.2    wxWindows Library License (https://opensource.org/licenses/wxwindows.php)  http://wxPython.org/                         
  zstandard    0.23.0   BSD License                                                                https://github.com/indygreg/python-zstandard 
