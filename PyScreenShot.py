@@ -242,7 +242,8 @@ class MyScreenShot(TaskBarIcon):
         # 設定値の初期設定と設定ファイルの読み込み
         self.load_config()
         # メニューアイコン画像の展開
-        self._icon_img = wx.ImageList(24, 24)
+        # self._icon_img = wx.ImageList(24, 24)
+        self._icon_img = wx.ImageList(16, 16)
         for name in menu_image.index:
             self._icon_img.Add(menu_image.catalog[name].GetBitmap())
         # BEEP音

@@ -75,13 +75,14 @@ def create_menu_image_resource(image_files: list, resource_file: str):
 if __name__ == "__main__":
     import os
 
+    SRC_DIR = f'.{os.sep}resource_data'
     RES_DIR = f'.{os.sep}res'
 
     """アイコンリソースファイルの生成
     """
     # アイコンファイル、リソース名
     app_icon_files = [
-        (os.path.join(RES_DIR, 'ScreenShot.ico'), 'app_icon')
+        (os.path.join(SRC_DIR, 'ScreenShot.ico'), 'app_icon')
     ]
     # 生成
     create_resource(app_icon_files, os.path.join(RES_DIR, 'app_icon.py'))
@@ -89,8 +90,8 @@ if __name__ == "__main__":
     """音源リソースファイルの生成
     """
     sound_files = [
-        (os.path.join(RES_DIR, '決定、ボタン押下8.wav'), 'snd_success'),
-        (os.path.join(RES_DIR, '警告音1.wav'), 'snd_beep')
+        (os.path.join(SRC_DIR, '決定、ボタン押下8.wav'), 'snd_success'),
+        (os.path.join(SRC_DIR, '警告音1.wav'), 'snd_beep')
     ]
     # 生成
     create_resource(sound_files, os.path.join(RES_DIR, 'sound.py'))
@@ -98,16 +99,26 @@ if __name__ == "__main__":
     """画像リソースファイルの生成
     """
     # 画像ファイル、リソース名リスト
-    image_files = [
-        (os.path.join(RES_DIR, 'StatusHelp.png'), 'get_icon_help'),
-        (os.path.join(RES_DIR, 'Settings.png'), 'get_icon_settings'),
-        (os.path.join(RES_DIR, 'SwitchFolders.png'), 'get_icon_auto_save_folder'),
-        (os.path.join(RES_DIR, 'FolderOpened.png'), 'menu_icon_open_folder'),
-        (os.path.join(RES_DIR, 'StartTime.png'), 'menu_icon_periodic_capture_settings'),
-        (os.path.join(RES_DIR, 'Copy.png'), 'menu_icon_copy_to_clipboard'),
-        (os.path.join(RES_DIR, 'Image.png'), 'menu_icon_save_to_png'),
-        (os.path.join(RES_DIR, 'Exit.png'), 'menu_icon_exit')
+    image_files16 = [
+        (os.path.join(SRC_DIR, 'help_x16.png'), 'get_icon_help'),
+        (os.path.join(SRC_DIR, 'settings_x16.png'), 'get_icon_settings'),
+        (os.path.join(SRC_DIR, 'folder_x16.png'), 'get_icon_auto_save_folder'),
+        (os.path.join(SRC_DIR, 'folder_open_x16.png'), 'menu_icon_open_folder'),
+        (os.path.join(SRC_DIR, 'timer_play_x16.png'), 'menu_icon_periodic_capture_settings'),
+        (os.path.join(SRC_DIR, 'content_copy_x16.png'), 'menu_icon_copy_to_clipboard'),
+        (os.path.join(SRC_DIR, 'image_x16.png'), 'menu_icon_save_to_png'),
+        (os.path.join(SRC_DIR, 'exit_to_app_x16.png'), 'menu_icon_exit')
+    ]
+    image_files24 = [
+        (os.path.join(SRC_DIR, 'help_x24.png'), 'get_icon_help'),
+        (os.path.join(SRC_DIR, 'settings_x24.png'), 'get_icon_settings'),
+        (os.path.join(SRC_DIR, 'folder_x24.png'), 'get_icon_auto_save_folder'),
+        (os.path.join(SRC_DIR, 'folder_open_x24.png'), 'menu_icon_open_folder'),
+        (os.path.join(SRC_DIR, 'timer_play_x24.png'), 'menu_icon_periodic_capture_settings'),
+        (os.path.join(SRC_DIR, 'content_copy_x24.png'), 'menu_icon_copy_to_clipboard'),
+        (os.path.join(SRC_DIR, 'image_x24.png'), 'menu_icon_save_to_png'),
+        (os.path.join(SRC_DIR, 'exit_to_app_x24.png'), 'menu_icon_exit')
     ]
     # 生成
-    create_menu_image_resource(image_files, os.path.join(RES_DIR, 'menu_image.py'))
+    create_menu_image_resource(image_files16, os.path.join(RES_DIR, 'menu_image.py'))
 
