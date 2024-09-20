@@ -1,29 +1,14 @@
-# README #
-
-This README would normally document whatever steps are necessary to get your application up and running.
-
-### What is this repository for? ###
-
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
-
-### How do I get set up? ###
-
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
-
-### Contribution guidelines ###
-
-* Writing tests
-* Code review
-* Other guidelines
-
-### Who do I talk to? ###
-
-* Repo owner or admin
-* Other community or team contact
+# Windows向けScreenShotツール　- MyScreenShot - #
+「WinShot」がマルチディスプレイに対応していないので作成した。<br>
+機能は「WinShot」の縮小版。メニュー構成や使い方は「WinShot」に準拠した。<br>
+<br>
+- マルチディスプレイ対応
+- デスクトップ（全ディスプレイ）、ディスプレイ単位、アクティブウィンドウのキャプチャー
+- クリップボード（Bitmap）と画像ファイル（PNG固定）への出力
+- キャプチャー画像のトリミング（上下左右のカット幅指定）
+- 保存ファイル名は「日時（yyyymmdd_hhmmss）」または「接頭語＋シーケンス番号」
+- ホットキーの設定
+- 遅延キャプチャー（単位：秒）
+- 定期実行キャプチャー（単位：秒、最大１時間間隔）
+- キャプチャーライブラリの制限で、マウスカーソルのキャプチャーは出来ません
+<br>
