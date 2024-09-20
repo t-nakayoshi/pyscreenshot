@@ -501,16 +501,14 @@ class MyScreenShot(TaskBarIcon):
         global _disable_hotkeys
         # メニューの生成
         menu = wx.Menu()
-        # Help
-        # sub_menu = wx.Menu()
-        # create_menu_item(sub_menu, MyScreenShot.ID_MENU_HELP, 'Helpを表示', self.on_menu_show_help)
-        # sub_menu.AppendSeparator()
+        # バージョン情報
         item = create_menu_item(menu, MyScreenShot.ID_MENU_ABOUT, 'バージョン情報...', self.on_menu_show_about)
         item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.INFO.value))
         menu.AppendSeparator()
-        # Settings
+        # 環境設定
         item = create_menu_item(menu, MyScreenShot.ID_MENU_SETTINGS, '環境設定...', self.on_menu_settings)
         item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.SETTINGS.value))
+        # クイック設定
         sub_menu = wx.Menu()
         sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_MCURSOR, 'マウスカーソルをキャプチャーする', self.on_menu_toggle_item, kind = wx.ITEM_CHECK)
         sub_item.Enable(False)  # Windowsでは現状マウスカーソルがキャプチャー出来ないので「無効」にしておく
@@ -523,7 +521,7 @@ class MyScreenShot(TaskBarIcon):
         item = menu.AppendSubMenu(sub_menu, 'クイック設定')
         item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.QUICK_SETTINGS.value))
         menu.AppendSeparator()
-        # Auto save folder
+        # 保存フォルダ
         sub_menu = wx.Menu()
         for n, folder in enumerate(self.prop['save_folders']):
             sub_item = create_menu_item(sub_menu, MyScreenShot.ID_MENU_FOLDER1 + n, f'{n + 1}: {folder}', self.on_menu_select_save_folder, kind = wx.ITEM_RADIO)
@@ -531,18 +529,18 @@ class MyScreenShot(TaskBarIcon):
                 sub_item.Check()
         item = menu.AppendSubMenu(sub_menu, '保存先フォルダ')
         item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.AUTO_SAVE_FOLDER.value))
-        # Open folder
+        # フォルダを開く
         sub_menu = wx.Menu()
         create_menu_item(sub_menu, MyScreenShot.ID_MENU_OPEN_AUTO, '1: 自動保存先フォルダ(選択中)', self.on_menu_open_folder)
         create_menu_item(sub_menu, MyScreenShot.ID_MENU_OPEN_PERIODIC, '2: 定期実行フォルダ', self.on_menu_open_folder)
         item = menu.AppendSubMenu(sub_menu, 'フォルダを開く')
         item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.OPEN_FOLDER.value))
         menu.AppendSeparator()
-        # Periodic caputure settings
+        # 定期実行設定
         item = create_menu_item(menu, MyScreenShot.ID_MENU_PERIODIC, '定期実行設定...', self.on_menu_periodic_settings)
         item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.PERIODIC.value))
         menu.AppendSeparator()
-        # Caputure
+        # キャプチャー（クリップボード、PNGファイル）
         display_count: int = self.prop['display']   # ディスプレイ数
         sub_menu1 = wx.Menu()
         sub_menu2 = wx.Menu()
@@ -561,7 +559,7 @@ class MyScreenShot(TaskBarIcon):
         item = menu.AppendSubMenu(sub_menu2, 'PNGファイルへ保存')
         item.SetBitmap(wx.Bitmap(self._icon_img.GetBitmap(MenuIcon.SAVE_TO_PNG.value)))
         menu.AppendSeparator()
-        # Exit
+        # 終了
         item = create_menu_item(menu, MyScreenShot.ID_MENU_EXIT, '終了', self.on_menu_exit)
         item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.EXIT.value))
 
@@ -634,16 +632,6 @@ class MyScreenShot(TaskBarIcon):
 
             if self.prop['sound_on_capture']:
                 self._success.Play()
-
-    def on_menu_show_help(self, event):
-        """HELPメニューイベントハンドラ
-        * アプリケーションのHELPを表示する。
-        Args:
-            event (wx.EVENT): EVENTオブジェクト
-        Returns:
-            none
-        """
-        _debug_print("on_menu_show_help")
 
     def on_menu_show_about(self, event):
         """Aboutメニューイベントハンドラ
@@ -744,7 +732,6 @@ class MyScreenShot(TaskBarIcon):
         for n in range(len(self.prop['save_folders'])):
             if id == (MyScreenShot.ID_MENU_FOLDER1 + n):
                 self.prop['save_folder_index'] = n
-        _debug_print(f'on_menu_select_save_folder (id={event.GetId()}), Change {old} => {self.prop['save_folder_index']}')
 
     def on_menu_open_folder(self, event):
         """Open folderメニューイベントハンドラ
@@ -757,7 +744,6 @@ class MyScreenShot(TaskBarIcon):
         folder: str = self.prop['save_folders'][self.prop['save_folder_index']] if event.GetId() == MyScreenShot.ID_MENU_OPEN_AUTO else self.prop['periodic_save_folder']
         if os.path.exists(folder):
             os.startfile(folder)
-            _debug_print(f'on_menu_open_folder ({event.GetId()}, {folder})')
 
     def on_menu_periodic_settings(self, event):
         """Periodic settingsメニューイベントハンドラ
@@ -804,9 +790,9 @@ class MyScreenShot(TaskBarIcon):
     def stop_periodic_capture(self):
         """定期実行停止処理
         """
-        _debug_print("Stop periodic capture")
         # 実行停止
         self.prop['periodic_capture'] = False
+        _debug_print("Stop periodic capture")
         if self.prop['sound_on_capture']:
             self._success.Play()
 
@@ -886,7 +872,6 @@ class MyScreenShot(TaskBarIcon):
             none
         """
         global _BASE_DELAY_TIME
-        _debug_print(f'copy_to_clipboard ({id})')
         # ターゲット取得
         moni_no: int = 90 if id == MyScreenShot.ID_MENU_ACTIVE_CB else (id - MyScreenShot.ID_MENU_SCREEN0_CB)
         self.req_queue.put((moni_no, ''))
@@ -904,7 +889,6 @@ class MyScreenShot(TaskBarIcon):
             none
         """
         global _BASE_DELAY_TIME
-        _debug_print(f'save_to_imagefile ({id})')
         # ターゲット取得
         moni_no: int = 90 if id == MyScreenShot.ID_MENU_ACTIVE else (id - MyScreenShot.ID_MENU_SCREEN0)
         # 保存ファイル名生成
@@ -945,7 +929,6 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             none
         """
-        _debug_print('Exit App')
         self.save_config()              # 設定値を保存
 
         wx.CallAfter(self.Destroy)
@@ -1256,7 +1239,6 @@ class SettingsDialog(wx.Dialog):
 
         if index != wx.NOT_FOUND and limit:
             folder: str = self.list_box_auto_save_folders.GetString(index)
-            _debug_print(f'folder={index}:{folder}')
             self.list_box_auto_save_folders.Delete(index)
             self.list_box_auto_save_folders.Insert(folder, index + move)
             self.list_box_auto_save_folders.SetSelection(index + move)
@@ -1497,11 +1479,9 @@ class PeriodicDialog(wx.Dialog):
             paths: list = dlg.GetPaths()
             for folder in paths:
                 self.text_ctrl_periodic_folder.SetValue(folder)
-                _debug_print(f'Set {folder}')
         event.Skip()
 
     def on_periodic_capture_ctrl(self, event):  # wxGlade: PeriodicDialog.<event_handler>
-        _debug_print(f"Event handler 'on_periodic_capture_ctrl' id={event.GetId()}")
         self.EndModal(event.GetId())
         event.Skip()
 
@@ -1569,7 +1549,6 @@ class App(wx.App):
         self.SetTopWindow(frame)
         MyScreenShot(frame)
 
-        _debug_print('launch App')
         return True
 
 
@@ -1613,7 +1592,6 @@ def app_init() -> bool:
                 config.write(fc)
 
         except OSError as e:
-            wx.MessageBox(f'Configration file save failed.\n ({e})', 'ERROR', wx.ICON_ERROR)
             return False
     # リソースディレクトリは実行ディレクトリ下
     _RESRC_PATH = os.path.join(base_path, _RESRC_PATH)
