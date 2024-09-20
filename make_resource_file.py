@@ -63,13 +63,16 @@ def create_resource(resource_files: list, filename: str):
             break
 
 
-def create_menu_image_resource(image_files: list, resource_file: str):
+def create_menu_image_resource(image_files: list, resource_file: str, size: tuple=(16, 16)):
     """画像ファイルからリソースファイルを生成する
     """
     append = False
     for f in image_files:
         img2py.img2py(image_file=f[0], python_file=resource_file, imgName=f[1], append=append, catalog=True)
         append = True
+
+    with open(resource_file, 'at', encoding='utf-8') as fc:
+        fc.write(f'# Image size\nimage_size={size}\n')
 
 
 if __name__ == "__main__":
@@ -100,25 +103,27 @@ if __name__ == "__main__":
     """
     # 画像ファイル、リソース名リスト
     image_files16 = [
-        (os.path.join(SRC_DIR, 'help_x16.png'), 'get_icon_help'),
-        (os.path.join(SRC_DIR, 'settings_x16.png'), 'get_icon_settings'),
-        (os.path.join(SRC_DIR, 'folder_x16.png'), 'get_icon_auto_save_folder'),
-        (os.path.join(SRC_DIR, 'folder_open_x16.png'), 'menu_icon_open_folder'),
-        (os.path.join(SRC_DIR, 'timer_play_x16.png'), 'menu_icon_periodic_capture_settings'),
-        (os.path.join(SRC_DIR, 'content_copy_x16.png'), 'menu_icon_copy_to_clipboard'),
-        (os.path.join(SRC_DIR, 'image_x16.png'), 'menu_icon_save_to_png'),
-        (os.path.join(SRC_DIR, 'exit_to_app_x16.png'), 'menu_icon_exit')
+        (os.path.join(SRC_DIR, 'icon-info-sign16.png'), 'get_icon_info'),
+        (os.path.join(SRC_DIR, 'icon-cog16.png'), 'get_icon_settings'),
+        (os.path.join(SRC_DIR, 'icon-check16.png'), 'get_icon_quick_settings'),
+        (os.path.join(SRC_DIR, 'icon-folder-close16.png'), 'get_icon_auto_save_folder'),
+        (os.path.join(SRC_DIR, 'icon-folder-open16.png'), 'menu_icon_open_folder'),
+        (os.path.join(SRC_DIR, 'icon-time16.png'), 'menu_icon_periodic_capture_settings'),
+        (os.path.join(SRC_DIR, 'icon-copy16.png'), 'menu_icon_copy_to_clipboard'),
+        (os.path.join(SRC_DIR, 'icon-picture16.png'), 'menu_icon_save_to_png'),
+        (os.path.join(SRC_DIR, 'icon-exit16.png'), 'menu_icon_exit')
     ]
     image_files24 = [
-        (os.path.join(SRC_DIR, 'help_x24.png'), 'get_icon_help'),
-        (os.path.join(SRC_DIR, 'settings_x24.png'), 'get_icon_settings'),
-        (os.path.join(SRC_DIR, 'folder_x24.png'), 'get_icon_auto_save_folder'),
-        (os.path.join(SRC_DIR, 'folder_open_x24.png'), 'menu_icon_open_folder'),
-        (os.path.join(SRC_DIR, 'timer_play_x24.png'), 'menu_icon_periodic_capture_settings'),
-        (os.path.join(SRC_DIR, 'content_copy_x24.png'), 'menu_icon_copy_to_clipboard'),
-        (os.path.join(SRC_DIR, 'image_x24.png'), 'menu_icon_save_to_png'),
-        (os.path.join(SRC_DIR, 'exit_to_app_x24.png'), 'menu_icon_exit')
+        (os.path.join(SRC_DIR, 'icon-info-sign24.png'), 'get_icon_info'),
+        (os.path.join(SRC_DIR, 'icon-cog24.png'), 'get_icon_settings'),
+        (os.path.join(SRC_DIR, 'icon-check24.png'), 'get_icon_quick_settings'),
+        (os.path.join(SRC_DIR, 'icon-folder-close24.png'), 'get_icon_auto_save_folder'),
+        (os.path.join(SRC_DIR, 'icon-folder-open24.png'), 'menu_icon_open_folder'),
+        (os.path.join(SRC_DIR, 'icon-time24.png'), 'menu_icon_periodic_capture_settings'),
+        (os.path.join(SRC_DIR, 'icon-copy24.png'), 'menu_icon_copy_to_clipboard'),
+        (os.path.join(SRC_DIR, 'icon-picture24.png'), 'menu_icon_save_to_png'),
+        (os.path.join(SRC_DIR, 'icon-exit24.png'), 'menu_icon_exit')
     ]
     # 生成
-    create_menu_image_resource(image_files16, os.path.join(RES_DIR, 'menu_image.py'))
+    create_menu_image_resource(image_files16, os.path.join(RES_DIR, 'menu_image.py'), (16, 16))
 

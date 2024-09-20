@@ -5,10 +5,30 @@
 　・決定、ボタン押下8.wav
 
 
-◎メニューアイコン (https://fonts.google.com/icons)
-　x96からx24を、x64からx16を作成する
+◎メニューアイコン (https://www.webhostinghub.com/glyphs/)
+　D:\@共有フォルダ\オンラインソフトウェア\ダウンロード\Web素材\
+　whhg_icons_32(16)\Black
+　x32からx24を作る
 
-Help					help_x96(64).png
+　★sRGBプロファイルがエラーになるので、事前にMetaデータを削除する。
+　　Paint.NETなら、Ctrl+A, Ctrl+C, Ctrl+Alt+Vで新規画像に貼り付けて保存する。
+
+バージョン情報			menu-32(16)\icon-info-sign.png
+環境設定				menu-32(16)\icon-cog.png
+クイック設定			menu-32(16)\icon-check.png
+保存先フォルダ			computer&mobile-32(16)\icon-folder-close.png
+フォルダを開く			computer&mobile-32(16)\icon-folder-open.png
+定期実行設定			time&location-32(16)\icon-time.png
+クリップボードへコピー	computer&mobile-32(16)\icon-copy.png
+PNGファイルへ保存		design&writing-32(16)\icon-picture.png
+終了					menu-32(16)\icon-exit.png
+
+
+◯メニューアイコン (https://fonts.google.com/icons)
+★余白がありすぎて小さくなるので再検討
+　x96からx24を、x64からx16を作る
+
+バージョン情報			info_x96(64).png
 環境設定				settings_x96(64).png
 クイック設定			
 保存先フォルダ			folder_x96(64).png
@@ -18,18 +38,4 @@ Help					help_x96(64).png
 PNGファイルへ保存		image_x96(64).png
 終了					exit_to_app_x96(64).png
 
-
-（旧）◎アイコン (https://www.webhostinghub.com/glyphs/)
-　D:\@共有フォルダ\オンラインソフトウェア\ダウンロード\Web素材\
-　whhg_icons_32\Black
-
-Help					menu-32\icon-question-sign.png
-環境設定				menu-32\icon-cog.png
-クイック設定			menu-32\
-保存先フォルダ			computer&mobile-32\icon-folder-close.png
-フォルダを開く			computer&mobile-32\icon-folder-open.png
-定期実行設定			menu-32\icon-repeat.png
-クリップボードへコピー	computer&mobile-32\icon-copy.png
-PNGファイルへ保存		design&writing-32\icon-picture.png
-終了					menu-32\icon-exit.png
 
