@@ -18,6 +18,7 @@ from res import app_icon
 # begin wxGlade: extracode
 # end wxGlade
 
+_MAX_SAVE_FOLDERS = 3   #64
 _NO_CONSOLE = False
 _debug_mode = True
 
@@ -340,45 +341,60 @@ class SettingsDialog(wx.Dialog):
     def on_save_folder_add(self, event):  # wxGlade: SettingsDialog.<event_handler>
         """自動保存フォルダの追加
         """
-        defaultPath: str = os.getcwd()
-        agwstyle: int = MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST
-        with MDD.MultiDirDialog(None, title="フォルダの追加", defaultPath=defaultPath, agwStyle=agwstyle) as dlg:
-            if dlg.ShowModal() != wx.ID_OK:
-                return
-            paths: list = dlg.GetPaths()
-            for folder in paths:
-                self.list_box_auto_save_folders.Append(folder)
-                print(f'Add {folder}')
+        global _MAX_SAVE_FOLDERS
+
+        if self.list_box_auto_save_folders.Count >= _MAX_SAVE_FOLDERS:
+            wx.MessageBox(f'{_MAX_SAVE_FOLDERS}以上登録できません。', '警告', wx.ICON_WARNING)
+        else:
+            defaultPath: str = os.getcwd()
+            agwstyle: int = MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST
+            with MDD.MultiDirDialog(None, title="フォルダの追加", defaultPath=defaultPath, agwStyle=agwstyle) as dlg:
+                if dlg.ShowModal() != wx.ID_OK:
+                    return
+                # 選択されたフォルダをListBoxに追加する
+                paths: list = dlg.GetPaths()
+                for folder in paths:
+                    self.list_box_auto_save_folders.Append(folder)
         event.Skip()
 
     def on_save_folder_del(self, event):  # wxGlade: SettingsDialog.<event_handler>
         """自動保存フォルダの削除
         """
+        count: int = self.list_box_auto_save_folders.Count
         index: int = self.list_box_auto_save_folders.GetSelection()
-        if index != wx.NOT_FOUND:
+        if not (self.list_box_auto_save_folders.Count > 0 and index != wx.NOT_FOUND):
+            wx.MessageBox(f'フォルダが無いか、選択されていません。', '警告', wx.ICON_WARNING)
+        else:
             self.list_box_auto_save_folders.Delete(index)
+            # ひとつ前のフォルダを選択状態にする
+            if (count - 1) > 0:
+                index = index - 1 if index > 0 else 0
+                self.list_box_auto_save_folders.SetSelection(index)
         event.Skip()
 
     def on_save_folder_move(self, event):  # wxGlade: SettingsDialog.<event_handler>
         """自動保存フォルダの移動（上下）
         """
+        count: int = self.list_box_auto_save_folders.Count
         index: int = self.list_box_auto_save_folders.GetSelection()
-        move: int = 0
-        limit: bool = False
-
-        if event.GetId() == self.BTN_ID_UP:
-            move = -1
-            limit = True if index > 0 else False
+        if not (count > 0 and index != wx.NOT_FOUND):
+            wx.MessageBox(f'フォルダが無いか、選択されていません。', '警告', wx.ICON_WARNING)
         else:
-            move = 1
-            limit = True if index < (self.list_box_auto_save_folders.GetCount() - 1) else False
+            move: int = 0
+            movable: bool = False
 
-        if index != wx.NOT_FOUND and limit:
-            folder: str = self.list_box_auto_save_folders.GetString(index)
-            print(f'folder={index}:{folder}')
-            self.list_box_auto_save_folders.Delete(index)
-            self.list_box_auto_save_folders.Insert(folder, index + move)
-            self.list_box_auto_save_folders.SetSelection(index + move)
+            if event.GetId() == self.BTN_ID_UP:
+                move = -1
+                movable = True if index > 0 else False
+            else:
+                move = 1
+                movable = True if index < (count - 1) else False
+
+            if movable:
+                folder: str = self.list_box_auto_save_folders.GetString(index)
+                self.list_box_auto_save_folders.Delete(index)
+                self.list_box_auto_save_folders.Insert(folder, index + move)
+                self.list_box_auto_save_folders.SetSelection(index + move)
         event.Skip()
 
     """ HotKey: 修飾キーの切り替え制御 """
@@ -612,11 +628,9 @@ class PeriodicDialog(wx.Dialog):
             paths: list = dlg.GetPaths()
             for folder in paths:
                 self.text_ctrl_periodic_folder.SetValue(folder)
-                print(f'Set {folder}')
         event.Skip()
 
     def on_periodic_capture_ctrl(self, event):  # wxGlade: PeriodicDialog.<event_handler>
-        print("Event handler 'on_periodic_capture_ctrl' not implemented!")
         self.EndModal(event.GetId())
         event.Skip()
 

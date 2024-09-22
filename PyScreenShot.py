@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 #
-""" MyScreenShot
+""" PyScreenShot
 スクリーンショットアプリケーション
 * 
 * 
@@ -42,16 +42,16 @@ _EXE_PATH = ''
 # リソースファイルパス
 _RESRC_PATH = ''                        # アプリアイコン等
 # 設定ファイルパス
-_CONFIG_FILE = 'config.ini'
+_CONFIG_FILE = 'PyScreenShot.ini'
 # ヘルプファイル
 _HELP_FILE = 'manual.html'
 # マイピクチャパス
-_MY_PICTURE = ''
+_MY_PICTURES = ''
 
 _TRAY_TOOLTIP = _app_name_ + ' App'
 #_TRAY_ICON = 'ScreenShot.ico'
 
-_MAX_SAVE_FOLDERS = 16
+_MAX_SAVE_FOLDERS = 64
 _BASE_DELAY_TIME = 400  # (ms)
 _NO_CONSOLE = False
 
@@ -60,6 +60,7 @@ _disable_hotkeys = False
 
 def _debug_print(message: str):
     global debug_mode
+
     if not _NO_CONSOLE and _debug_mode:
         ts = datetime.now().strftime('%Y/%m/%d %H%M%S.%f')[:-3]
         sys.stdout.write(f'{ts} [debug]:{message}\n')
@@ -273,6 +274,7 @@ class MyScreenShot(TaskBarIcon):
             none
         """
         global _disable_hotkeys
+
         if _disable_hotkeys:
             return
 
@@ -323,6 +325,7 @@ class MyScreenShot(TaskBarIcon):
             none
         """
         global _disable_hotkeys
+
         if _disable_hotkeys:
             return
 
@@ -389,13 +392,14 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             none
         """
-        global _MY_PICTURE
+        global _MY_PICTURES
+
         save_req: bool = False
         # 自動保存
         self.prop['auto_save'] = self.config.getboolean('basic','auto_save', fallback=True)
         # 自動保存フォルダ
         self.prop['save_folder_index'] = self.config.getint('basic', 'save_folder_index', fallback=-1)
-        for n in range(_MAX_SAVE_FOLDERS):
+        for n in range(1, _MAX_SAVE_FOLDERS + 1):
             option_name: str = f'folder{n}'
             if not self.config.has_option('basic', option_name):
                 break
@@ -403,12 +407,12 @@ class MyScreenShot(TaskBarIcon):
             self.prop['save_folders'].append(option)
 
         if len(self.prop['save_folders']) > 0:
-            if self.prop['save_folder_index'] < 0 or self.prop['save_folder_index'] >= len(self.prop['save_folders']):
+            if not (0 <= self.prop['save_folder_index'] < len(self.prop['save_folders'])):
                 self.prop['save_folder_index'] = 0
                 save_req = True
         else:
             # 自動保存フォルダが無いので、'Pictures'を登録する
-            self.prop['save_folders'].append(_MY_PICTURE)
+            self.prop['save_folders'].append(_MY_PICTURES)
             self.prop['save_folder_index'] = 0
             save_req = True
         # 自動保存時のナンバリング
@@ -433,7 +437,7 @@ class MyScreenShot(TaskBarIcon):
         self.prop['hotkey_imagefile'] = self.config.getint('hotkey', 'imagefile', fallback=1)
         self.prop['hotkey_activewin'] = self.config.getint('hotkey', 'activewin', fallback=8)
         # 定期実行
-        self.prop['periodic_save_folder']   = self.config.get('periodic', 'save_folder', fallback=_MY_PICTURE)
+        self.prop['periodic_save_folder']   = self.config.get('periodic', 'save_folder', fallback=_MY_PICTURES)
         self.prop['periodic_interval']      = self.config.getint('periodic', 'interval', fallback=3)
         self.prop['periodic_interval_ms']   = self.prop['periodic_interval'] * 1000
         self.prop['periodic_stop_modifier'] = self.config.getint('periodic', 'stop_modifier', fallback=0)
@@ -442,7 +446,7 @@ class MyScreenShot(TaskBarIcon):
         self.prop['periodic_numbering']     = self.config.getint('periodic', 'numbering', fallback=0)
         if len(self.prop['periodic_save_folder']) == 0:
             # 保存フォルダが無いので、'Pictures'を登録する
-            self.prop['periodic_save_folder'] = _MY_PICTURE
+            self.prop['periodic_save_folder'] = _MY_PICTURES
             save_req = True
 
         return save_req
@@ -499,6 +503,7 @@ class MyScreenShot(TaskBarIcon):
             wx.Menuオブジェクト
         """
         global _disable_hotkeys
+
         # メニューの生成
         menu = wx.Menu()
         # バージョン情報
@@ -585,7 +590,7 @@ class MyScreenShot(TaskBarIcon):
                 window_title, area_coord = info
                 sct_img = sct.grab(area_coord)
             else:
-                if moni_no < 0 and moni_no >= len(sct.monitors):
+                if not (0 <= moni_no < len(sct.monitors)):
                     self._beep.Play()
                     return
 
@@ -643,13 +648,14 @@ class MyScreenShot(TaskBarIcon):
         """
         global __version__
         global __author__
+
         # Aboutダイアログに各種情報を設定する
         info = AboutDialogInfo()
         info.SetIcon(self._app_icons.GetIcon(wx.Size(48, 48)))
         info.SetName(_app_name_)
         info.SetVersion(f' Ver.{__version__}\n on Python {self._platform_info[2]} and wxPython {wx.__version__}.')
         info.SetCopyright(f'(C) 2024-, by {__author__}. All right reserved.')
-        info.SetDescription('Screenshot tool. (EXE conversion is by Nuitka.)')
+        info.SetDescription('Screen Shot tool. (Converted to EXE using Nuitka+MSVC.)')
         info.SetLicense('MIT License.')
         # info.SetWebSite("")
         info.AddDeveloper(__author__)
@@ -872,6 +878,7 @@ class MyScreenShot(TaskBarIcon):
             none
         """
         global _BASE_DELAY_TIME
+
         # ターゲット取得
         moni_no: int = 90 if id == MyScreenShot.ID_MENU_ACTIVE_CB else (id - MyScreenShot.ID_MENU_SCREEN0_CB)
         self.req_queue.put((moni_no, ''))
@@ -889,6 +896,7 @@ class MyScreenShot(TaskBarIcon):
             none
         """
         global _BASE_DELAY_TIME
+
         # ターゲット取得
         moni_no: int = 90 if id == MyScreenShot.ID_MENU_ACTIVE else (id - MyScreenShot.ID_MENU_SCREEN0)
         # 保存ファイル名生成
@@ -1199,49 +1207,60 @@ class SettingsDialog(wx.Dialog):
     def on_save_folder_add(self, event):  # wxGlade: SettingsDialog.<event_handler>
         """自動保存フォルダの追加
         """
-        defaultPath: str = os.getcwd()
-        agwstyle: int = MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST
-        with MDD.MultiDirDialog(None, title="フォルダの追加", defaultPath=defaultPath, agwStyle=agwstyle) as dlg:
-            if dlg.ShowModal() != wx.ID_OK:
-                return
-            # 選択されたフォルダをListBoxに追加する
-            paths: list = dlg.GetPaths()
-            for folder in paths:
-                self.list_box_auto_save_folders.Append(folder)
+        global _MAX_SAVE_FOLDERS
+
+        if self.list_box_auto_save_folders.Count >= _MAX_SAVE_FOLDERS:
+            wx.MessageBox(f'{_MAX_SAVE_FOLDERS}以上は登録できません。', '警告', wx.ICON_WARNING)
+        else:
+            defaultPath: str = os.getcwd()
+            agwstyle: int = MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST
+            with MDD.MultiDirDialog(None, title="フォルダの追加", defaultPath=defaultPath, agwStyle=agwstyle) as dlg:
+                if dlg.ShowModal() != wx.ID_OK:
+                    return
+                # 選択されたフォルダをListBoxに追加する
+                paths: list = dlg.GetPaths()
+                for folder in paths:
+                    self.list_box_auto_save_folders.Append(folder)
         event.Skip()
 
     def on_save_folder_del(self, event):  # wxGlade: SettingsDialog.<event_handler>
         """自動保存フォルダの削除
         """
-        index:int = self.list_box_auto_save_folders.GetSelection()
-        if index != wx.NOT_FOUND:
+        count: int = self.list_box_auto_save_folders.Count
+        index: int = self.list_box_auto_save_folders.GetSelection()
+        if not (count > 0 and index != wx.NOT_FOUND):
+            wx.MessageBox(f'フォルダが無いか、選択されていません。', '警告', wx.ICON_WARNING)
+        else:
             self.list_box_auto_save_folders.Delete(index)
-
-            count: int = self.list_box_auto_save_folders.GetCount()
-            index -= 1
-            if (index >= 0 and (count > 0 and index < count)):
+            # ひとつ前のフォルダを選択状態にする
+            if (count - 1) > 0:
+                index = index - 1 if index > 0 else 0
                 self.list_box_auto_save_folders.SetSelection(index)
         event.Skip()
 
     def on_save_folder_move(self, event):  # wxGlade: SettingsDialog.<event_handler>
         """自動保存フォルダの移動（上下）
         """
+        count: int = self.list_box_auto_save_folders.Count
         index: int = self.list_box_auto_save_folders.GetSelection()
-        move: int = 0
-        limit: bool = False
-
-        if event.GetId() == self.BTN_ID_UP:
-            move = -1
-            limit = True if index > 0 else False
+        if not (count > 0 and index != wx.NOT_FOUND):
+            wx.MessageBox(f'フォルダが無いか、選択されていません。', '警告', wx.ICON_WARNING)
         else:
-            move = 1
-            limit = True if index < (self.list_box_auto_save_folders.GetCount() - 1) else False
+            move: int = 0
+            movable: bool = False
 
-        if index != wx.NOT_FOUND and limit:
-            folder: str = self.list_box_auto_save_folders.GetString(index)
-            self.list_box_auto_save_folders.Delete(index)
-            self.list_box_auto_save_folders.Insert(folder, index + move)
-            self.list_box_auto_save_folders.SetSelection(index + move)
+            if event.GetId() == self.BTN_ID_UP:
+                move = -1
+                movable = True if index > 0 else False
+            else:
+                move = 1
+                movable = True if index < (count - 1) else False
+
+            if movable:
+                folder: str = self.list_box_auto_save_folders.GetString(index)
+                self.list_box_auto_save_folders.Delete(index)
+                self.list_box_auto_save_folders.Insert(folder, index + move)
+                self.list_box_auto_save_folders.SetSelection(index + move)
         event.Skip()
 
     """ HotKey: 修飾キーの切り替え制御 """
@@ -1566,7 +1585,8 @@ def app_init() -> bool:
     global _EXE_PATH
     global _RESRC_PATH
     global _NO_CONSOLE
-    global _MY_PICTURE
+    global _MY_PICTURES
+
     # コマンドラインパラメータ解析（デバッグオプションのみ）
     parser = argparse.ArgumentParser(description='My ScreenSHot Tool.')
     parser.add_argument('--debug', action='store_true', help='Debug mode.')
@@ -1596,7 +1616,7 @@ def app_init() -> bool:
     # リソースディレクトリは実行ディレクトリ下
     _RESRC_PATH = os.path.join(base_path, _RESRC_PATH)
     # マイピクチャのPATHを取得
-    _MY_PICTURE = get_special_directory()[2]
+    _MY_PICTURES = get_special_directory()[2]
     return True
 
 
