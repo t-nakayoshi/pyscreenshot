@@ -51,17 +51,17 @@ index.append('get_icon_auto_save_folder')
 catalog['get_icon_auto_save_folder'] = get_icon_auto_save_folder
 
 #----------------------------------------------------------------------
-menu_icon_open_folder = PyEmbeddedImage(
+get_icon_open_folder = PyEmbeddedImage(
     b'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1B'
     b'AACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACLSURBVDhPY/z//z8DJYAJSlMEVID4'
     b'HhCDnALD/4B4DhATBbYDMbJmZGwDxHgBIxCDFJILjoMIdFvR8SUglgJinACbJmTsAsRFQPwH'
     b'SQyEfwFxPhAz8IMIAuAyECNrhuHrQMxwBEmAZExpIFKekKhiwHMIkyzwGkR4AfELIMYIIAL4'
     b'CRB7D3RuZGAAABPlUtiEJPnIAAAAAElFTkSuQmCC')
-index.append('menu_icon_open_folder')
-catalog['menu_icon_open_folder'] = menu_icon_open_folder
+index.append('get_icon_open_folder')
+catalog['get_icon_open_folder'] = get_icon_open_folder
 
 #----------------------------------------------------------------------
-menu_icon_periodic_capture_settings = PyEmbeddedImage(
+get_icon_periodic_capture_settings = PyEmbeddedImage(
     b'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1B'
     b'AACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAEiSURBVDhPnZPLSgMxFEAHKT6oX6Ki'
     b'FlzoXvwHcam/okuf1PovrUvduCm0oB/gD/hY+KQ9ZyZTMtpY6YHTmdzcZJrkJhvDEp5gD1+D'
@@ -70,39 +70,39 @@ menu_icon_periodic_capture_settings = PyEmbeddedImage(
     b'4yk05m1EeCLG9chAxBwad9nJCdzlG7zFmoGIRXTMi41xS5hEuYT+DD9tI7AXnv9hNzytncox'
     b'es6TWMXKMUpcSH9NYg38KiT5Wcqe7waWpey7sWQpixfEizLVZYpxT/zaA35gfJ1Hay7IsiFc'
     b'j2EmnSFeNAAAAABJRU5ErkJggg==')
-index.append('menu_icon_periodic_capture_settings')
-catalog['menu_icon_periodic_capture_settings'] = menu_icon_periodic_capture_settings
+index.append('get_icon_periodic_capture_settings')
+catalog['get_icon_periodic_capture_settings'] = get_icon_periodic_capture_settings
 
 #----------------------------------------------------------------------
-menu_icon_copy_to_clipboard = PyEmbeddedImage(
+get_icon_copy_to_clipboard = PyEmbeddedImage(
     b'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1B'
     b'AACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAB/SURBVDhPrZJRCoAgEESrj45R1DU7'
     b'ngjdymatgRY30+zBI6VFZ6IO7DC86KFJD2WgBJk14S1r3GkWyPcmzQmG69kEI85xp5ngvQLX'
     b'1NdWSGZrK8ghokrLOF8qhF8quHOZhTNmhRJGuEEVX5TTnkji1sJbsh+3OUHuPyj4uJ07ADiD'
     b'NQCA/U2eAAAAAElFTkSuQmCC')
-index.append('menu_icon_copy_to_clipboard')
-catalog['menu_icon_copy_to_clipboard'] = menu_icon_copy_to_clipboard
+index.append('get_icon_copy_to_clipboard')
+catalog['get_icon_copy_to_clipboard'] = get_icon_copy_to_clipboard
 
 #----------------------------------------------------------------------
-menu_icon_save_to_png = PyEmbeddedImage(
+get_icon_save_to_png = PyEmbeddedImage(
     b'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1B'
     b'AACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACvSURBVDhPpZNLCsJAEERbjyGC11FX'
     b'3iSIeB3jnXSjq2QjHsD9WNWmoBOijs6DR39INzMkmZhZgkWULEjTLiEr2MAWLtnIRSfgIHN6'
     b'YyOD3gne5V/RCTbw3rlmY0AFH3Dn1Quf1YJPbKGuR/eQZC0YDkviUQWZwRM8wznk24hDUeJR'
     b'BYcvUA9c4QIeQy9KPKqIw1JL6tCTxGMsxtSSQ+hR4lHFP6Tin+mnL26MwgVmT0RUUDqUvIrk'
     b'AAAAAElFTkSuQmCC')
-index.append('menu_icon_save_to_png')
-catalog['menu_icon_save_to_png'] = menu_icon_save_to_png
+index.append('get_icon_save_to_png')
+catalog['get_icon_save_to_png'] = get_icon_save_to_png
 
 #----------------------------------------------------------------------
-menu_icon_exit = PyEmbeddedImage(
+get_icon_exit = PyEmbeddedImage(
     b'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1B'
     b'AACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACUSURBVDhPpZNRDkAwDIbHTZzDi1dO'
     b'4p48ugUR3MATf22VhW6KL/mSduuajc2AEo5wi0jzFRR5WsxOUIQL8iO7Q+NcIxKddDSwteEd'
     b'TQOfGdY2tLxtQLUrLI4MaBrQ9rmOXWCWuISgOATXXOlSF/yCtxQjeAR4Dmih2tcf0efTb1Rd'
     b'pM9X+fdjomfaQ2kRO0DhORuzAxXOWY8zs/H3AAAAAElFTkSuQmCC')
-index.append('menu_icon_exit')
-catalog['menu_icon_exit'] = menu_icon_exit
+index.append('get_icon_exit')
+catalog['get_icon_exit'] = get_icon_exit
 
 # Image size
 image_size=(16, 16)

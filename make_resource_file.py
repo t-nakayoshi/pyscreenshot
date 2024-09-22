@@ -107,22 +107,22 @@ if __name__ == "__main__":
         (os.path.join(SRC_DIR, 'icon-cog16.png'), 'get_icon_settings'),
         (os.path.join(SRC_DIR, 'icon-check16.png'), 'get_icon_quick_settings'),
         (os.path.join(SRC_DIR, 'icon-folder-close16.png'), 'get_icon_auto_save_folder'),
-        (os.path.join(SRC_DIR, 'icon-folder-open16.png'), 'menu_icon_open_folder'),
-        (os.path.join(SRC_DIR, 'icon-time16.png'), 'menu_icon_periodic_capture_settings'),
-        (os.path.join(SRC_DIR, 'icon-copy16.png'), 'menu_icon_copy_to_clipboard'),
-        (os.path.join(SRC_DIR, 'icon-picture16.png'), 'menu_icon_save_to_png'),
-        (os.path.join(SRC_DIR, 'icon-exit16.png'), 'menu_icon_exit')
+        (os.path.join(SRC_DIR, 'icon-folder-open16.png'), 'get_icon_open_folder'),
+        (os.path.join(SRC_DIR, 'icon-time16.png'), 'get_icon_periodic_capture_settings'),
+        (os.path.join(SRC_DIR, 'icon-copy16.png'), 'get_icon_copy_to_clipboard'),
+        (os.path.join(SRC_DIR, 'icon-picture16.png'), 'get_icon_save_to_png'),
+        (os.path.join(SRC_DIR, 'icon-exit16.png'), 'get_icon_exit')
     ]
     image_files24 = [
         (os.path.join(SRC_DIR, 'icon-info-sign24.png'), 'get_icon_info'),
         (os.path.join(SRC_DIR, 'icon-cog24.png'), 'get_icon_settings'),
         (os.path.join(SRC_DIR, 'icon-check24.png'), 'get_icon_quick_settings'),
         (os.path.join(SRC_DIR, 'icon-folder-close24.png'), 'get_icon_auto_save_folder'),
-        (os.path.join(SRC_DIR, 'icon-folder-open24.png'), 'menu_icon_open_folder'),
-        (os.path.join(SRC_DIR, 'icon-time24.png'), 'menu_icon_periodic_capture_settings'),
-        (os.path.join(SRC_DIR, 'icon-copy24.png'), 'menu_icon_copy_to_clipboard'),
-        (os.path.join(SRC_DIR, 'icon-picture24.png'), 'menu_icon_save_to_png'),
-        (os.path.join(SRC_DIR, 'icon-exit24.png'), 'menu_icon_exit')
+        (os.path.join(SRC_DIR, 'icon-folder-open24.png'), 'get_icon_open_folder'),
+        (os.path.join(SRC_DIR, 'icon-time24.png'), 'get_icon_periodic_capture_settings'),
+        (os.path.join(SRC_DIR, 'icon-copy24.png'), 'get_icon_copy_to_clipboard'),
+        (os.path.join(SRC_DIR, 'icon-picture24.png'), 'get_icon_save_to_png'),
+        (os.path.join(SRC_DIR, 'icon-exit24.png'), 'get_icon_exit')
     ]
     # 生成
     create_menu_image_resource(image_files16, os.path.join(RES_DIR, 'menu_image.py'), (16, 16))
