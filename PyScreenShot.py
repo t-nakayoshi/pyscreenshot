@@ -31,24 +31,20 @@ import wx.lib.agw.multidirdialog as MDD
 import mydefine as mydef
 from myutils import get_running_path, platform_info, get_special_directory, scan_directory
 from res import app_icon, menu_image, sound
-
-__version__ = '1.0.0'
-__author__ = 't-nakayoshi (Takayoshi Tagawa)'
-
-_app_name_ = 'My ScreenShot'
+import version as ver
 
 # 実行ファイルパス
 _EXE_PATH = ''
 # リソースファイルパス
 _RESRC_PATH = ''                        # アプリアイコン等
 # 設定ファイルパス
-_CONFIG_FILE = 'PyScreenShot.ini'
+_CONFIG_FILE = f'{ver.app_name}.ini'
 # ヘルプファイル
 _HELP_FILE = 'manual.html'
 # マイピクチャパス
 _MY_PICTURES = ''
 
-_TRAY_TOOLTIP = _app_name_ + ' App'
+_TRAY_TOOLTIP = ver.app_name + ' App'
 #_TRAY_ICON = 'ScreenShot.ico'
 
 _MAX_SAVE_FOLDERS = 64
@@ -646,19 +642,19 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             none
         """
-        global __version__
-        global __author__
+        global __version
+        global __author
 
         # Aboutダイアログに各種情報を設定する
         info = AboutDialogInfo()
         info.SetIcon(self._app_icons.GetIcon(wx.Size(48, 48)))
-        info.SetName(_app_name_)
-        info.SetVersion(f' Ver.{__version__}\n on Python {self._platform_info[2]} and wxPython {wx.__version__}.')
-        info.SetCopyright(f'(C) 2024-, by {__author__}. All right reserved.')
-        info.SetDescription('Screen Shot tool. (Converted to EXE using Nuitka+MSVC.)')
-        info.SetLicense('MIT License.')
+        info.SetName(ver.app_name)
+        info.SetVersion(f' Ver.{ver.version}\n on Python {self._platform_info[2]} and wxPython {wx.__version__}.')
+        info.SetCopyright(ver.copy_right)
+        info.SetDescription(f'{ver.file_description}\n(Converted to EXE using Nuitka+MSVC.)')
+        info.SetLicense(ver.license)
         # info.SetWebSite("")
-        info.AddDeveloper(__author__)
+        info.AddDeveloper(ver.author)
         # 表示する
         AboutBox(info, self.frame)
 
