@@ -4,7 +4,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build_MyScreenShot",
+            "label": "build_PyScreenShot",
             "type": "shell",
             "command": "./.venv/Scripts/nuitka",
             "windows": {
@@ -24,7 +24,7 @@
                 "--product-version=1.00",
                 "--copyright='(C) 2024-, by t-nakayoshi (Takayoshi Tagawa). All right reserved.'",
                 "--output-dir=dist_nuitka",
-                "--output-filename=MyScreenShot.exe",
+                "--output-filename=PyScreenShot.exe",
                 "PyScreenShot.py",
             ],
             "group": {
@@ -33,7 +33,7 @@
             }
         },
         {
-            "label": "build_MyScreenShot_resource",
+            "label": "build_PyScreenShot_resource",
             "type": "shell",
             "command": "./.venv/Scripts/python.exe",
             "windows": {
@@ -53,8 +53,8 @@
             "command": "echo Compplete 'Build EXE' tasks.",
             "dependsOrder": "sequence",
             "dependsOn": [
-                "build_MyScreenShot_resource",
-                "build_MyScreenShot",
+                "build_PyScreenShot_resource",
+                "build_PyScreenShot",
             ],
             "group": {
                 "kind": "build",

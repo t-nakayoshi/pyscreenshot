@@ -642,9 +642,6 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             none
         """
-        global __version
-        global __author
-
         # Aboutダイアログに各種情報を設定する
         info = AboutDialogInfo()
         info.SetIcon(self._app_icons.GetIcon(wx.Size(48, 48)))

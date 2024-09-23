@@ -14,5 +14,5 @@
 --product-version=1.00 ^
 --copyright="(C) 2024-, by t-nakayoshi (Takayoshi Tagawa). All right reserved." ^
 --output-dir=dist_nuitka ^
---output-filename=MyScreenShot.exe ^
+--output-filename=PyScreenShot.exe ^
 PyScreenShot.py
