@@ -11,8 +11,8 @@
 --file-description="PyScreenShot スクリーンショットアプリケーション" ^
 --file-version=1.0.0.0 ^
 --product-name="Nakayoshi's PyScreenShot" ^
---product-version=1.00 ^
---copyright="(C) 2024-, by t-nakayoshi (Takayoshi Tagawa). All right reserved." ^
+--product-version=1.0.0 ^
+--copyright="(C) 2024-, t-nakayoshi (Takayoshi Tagawa). All right reserved." ^
 --output-dir=dist_nuitka ^
 --output-filename=PyScreenShot.exe ^
 PyScreenShot.py
