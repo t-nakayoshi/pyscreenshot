@@ -1,15 +1,18 @@
-keyboard==0.13.5
-mss==9.0.2
-Nuitka==2.4.8
-ordered-set==4.1.0
-pillow==10.4.0
-pip-licenses==5.0.0
-prettytable==3.11.0
-pynput==1.7.7
-pywin32==306
-screeninfo==0.8.1
-six==1.16.0
-tomli==2.0.1
-wcwidth==0.2.13
-wxPython==4.2.2
-zstandard==0.23.0
+Package      Version
+------------ -------
+keyboard     0.13.5
+mss          9.0.2
+Nuitka       2.4.8
+ordered-set  4.1.0
+pillow       10.4.0
+pip          24.2
+pip-licenses 5.0.0
+prettytable  3.11.0
+pynput       1.7.7
+pywin32      306
+screeninfo   0.8.1
+six          1.16.0
+tomli        2.0.2
+wcwidth      0.2.13
+wxPython     4.2.2
+zstandard    0.23.0

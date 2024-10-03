@@ -12,7 +12,7 @@ pynput       1.7.7
 pywin32      306
 screeninfo   0.8.1
 six          1.16.0
-tomli        2.0.1
+tomli        2.0.2
 wcwidth      0.2.13
 wxPython     4.2.2
 zstandard    0.23.0
