@@ -74,7 +74,6 @@ def create_menu_item(menu: wx.Menu, id: int = -1, label: str = '', func = None, 
 
 
 def enum_window_callback(hwnd:int, lparam:int, window_titles:list[str]):
-    # GW_OWNER = 4
     if win32gui.IsWindowEnabled(hwnd) == 0:
         return
 
@@ -84,11 +83,16 @@ def enum_window_callback(hwnd:int, lparam:int, window_titles:list[str]):
     if (window_text := win32gui.GetWindowText(hwnd)) == '':
         return
 
+    # GW_OWNER = 4
     # if (owner := win32gui.GetWindow(hwnd, GW_OWNER)) != 0:
     #     return
 
     # if (class_name := win32gui.GetClassName(hwnd)) in ['CabinetWClass']:
     #     return
+    # QtのPopup、ToolTipを除外する
+    class_name: str = win32gui.GetClassName(hwnd)
+    if True in {x in class_name for x in ['QToolTip', 'QPopup', 'QWindowPopup', 'QWindowToolTip']}:
+        return
 
     if window_text not in window_titles:
         window_titles.append(window_text)
