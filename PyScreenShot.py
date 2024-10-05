@@ -80,6 +80,9 @@ def enum_window_callback(hwnd:int, lparam:int, window_titles:list[str]):
     if win32gui.IsWindowVisible(hwnd) == 0:
         return
 
+    if win32gui.IsIconic(hwnd) != 0:
+        return
+
     if (window_text := win32gui.GetWindowText(hwnd)) == '':
         return
 
