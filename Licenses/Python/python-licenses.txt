@@ -5,7 +5,7 @@
  ordered-set  4.1.0    MIT License                                                                UNKNOWN                                      
  pillow       10.4.0   Historical Permission Notice and Disclaimer (HPND)                         https://python-pillow.org                    
  pynput       1.7.7    GNU Lesser General Public License v3 (LGPLv3)                              https://github.com/moses-palmer/pynput       
- pywin32      306      Python Software Foundation License                                         https://github.com/mhammond/pywin32          
+ pywin32      307      Python Software Foundation License                                         https://github.com/mhammond/pywin32          
  screeninfo   0.8.1    MIT License                                                                https://github.com/rr-/screeninfo            
  six          1.16.0   MIT License                                                                https://github.com/benjaminp/six             
  wxPython     4.2.2    wxWindows Library License (https://opensource.org/licenses/wxwindows.php)  http://wxPython.org/                         
