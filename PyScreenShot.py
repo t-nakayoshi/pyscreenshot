@@ -655,7 +655,7 @@ class MyScreenShot(TaskBarIcon):
         info.SetName(ver.app_name)
         info.SetVersion(f' Ver.{ver.version}\n on Python {self._platform_info[2]} and wxPython {wx.__version__}.')
         info.SetCopyright(ver.copy_right)
-        info.SetDescription(f'{ver.file_description}\n(Converted to EXE using Nuitka+MSVC.)')
+        info.SetDescription(f'{ver.file_description}\n(Nuitka+MSVCによるEXE化.)')
         info.SetLicense(ver.license)
         # info.SetWebSite("")
         info.AddDeveloper(ver.author)

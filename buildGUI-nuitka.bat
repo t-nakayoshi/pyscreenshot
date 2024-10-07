@@ -9,9 +9,9 @@
 --windows-console-mode=disable ^
 --windows-icon-from-ico=./resource_data/ScreenShot.ico ^
 --file-description="PyScreenShot スクリーンショットアプリケーション" ^
---file-version=1.0.1.0 ^
+--file-version=1.0.2.0 ^
 --product-name="Nakayoshi's PyScreenShot" ^
---product-version=1.0.1 ^
+--product-version=1.0.2 ^
 --copyright="(C) 2024-, t-nakayoshi (Takayoshi Tagawa). All right reserved." ^
 --output-dir=dist_nuitka ^
 --output-filename=PyScreenShot.exe ^
