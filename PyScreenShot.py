@@ -177,7 +177,7 @@ class MyScreenShot(TaskBarIcon):
     HK_MOD_CTRL_SHIFT:str = f'{HK_MOD_CTRL}+{HK_MOD_SHIFT}'
     HK_MOD_SHIFT_ALT:str  = f'{HK_MOD_SHIFT}+{HK_MOD_ALT}'
     """ Other constants """
-    BASE_DELAY_TIME:int = 0    # (ms)
+    BASE_DELAY_TIME:int = 400   # (ms)
     MAX_SAVE_FOLDERS:int = 64
 
     def __init__(self, frame):
@@ -316,8 +316,8 @@ class MyScreenShot(TaskBarIcon):
         # Hotkeyの登録（デスクトップ[0]、ディスプレイ[1～]、アクティブウィンドウ[last]）
         for n in range(len(self.menu_clipboard)):
             # self._debug_print(f'Hotkey[{n}]={self.menu_clipboard[n][0]}, {self.menu_imagefile[n][0]}, id={self.menu_clipboard[n][1]}, {self.menu_imagefile[n][1]}')
-            keyboard.add_hotkey(self.menu_clipboard[n][0], wx.CallAfter, (self.copy_to_clipboard, self.menu_clipboard[n][1]))
-            keyboard.add_hotkey(self.menu_imagefile[n][0], wx.CallAfter, (self.save_to_imagefile, self.menu_imagefile[n][1]))
+            keyboard.add_hotkey(self.menu_clipboard[n][0], wx.CallAfter, (self.copy_to_clipboard, self.menu_clipboard[n][1], False))
+            keyboard.add_hotkey(self.menu_imagefile[n][0], wx.CallAfter, (self.save_to_imagefile, self.menu_imagefile[n][1], False))
 
     def set_periodic_stop_hotkey(self, first:bool):
         """定期実行停止ホット・キー登録処理
@@ -591,9 +591,20 @@ class MyScreenShot(TaskBarIcon):
         if sct_img is not None:
             img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
             width, height = img.size
-            # self._debug_print(f'Capture (0, 0)-({width}, {height})')
-            # トリミング
-            if self.prop['trimming']:
+            """"""
+            if self.debug_mode:
+                msg:str = ''
+                match moni_no:
+                    case 90:
+                        msg = f'"Active window - {window_title}" area={area_coord}'
+                    case 0:
+                        msg = '"Desktop"'
+                    case _:
+                        msg = f'"Display-{moni_no}"'
+                self._debug_print(f'Capture {msg} & {"copy clipboard" if len(filename) == 0 else "save PNG file"}')
+            """"""
+            # トリミング（アクティブウィンドウ以外はトリミングしない）
+            if moni_no == 90 and self.prop['trimming']:
                 top:int         = self.prop['trimming_size'][0]
                 temp_bottom:int = self.prop['trimming_size'][1]
                 left:int        = self.prop['trimming_size'][2]
@@ -602,7 +613,7 @@ class MyScreenShot(TaskBarIcon):
                 bottom:int = height - temp_bottom if height > temp_bottom else height
 
                 img = img.crop((left, top, right, bottom))
-                # self._debug_print(f'Trimming ({top}, {left})-({right}, {bottom})')
+                self._debug_print(f'Trimming ({top}, {left})-({right}, {bottom})')
 
             if len(filename) == 0:
                 # クリップボードへコピー
@@ -614,17 +625,6 @@ class MyScreenShot(TaskBarIcon):
             else:
                 # ファイルへ保存
                 img.save(filename)
-
-            if self.debug_mode:
-                msg:str = ''
-                match moni_no:
-                    case 90:
-                        msg = f'"Active window - {window_title}" area={area_coord}'
-                    case 0:
-                        msg = '"Desktop"'
-                    case _:
-                        msg = f'"Display-{moni_no}"'
-                self._debug_print(f'capture {msg} & {"copy clipboard" if len(filename) == 0 else "save PNG file"}')
 
             if self.prop['sound_on_capture']:
                 self._success.Play()
@@ -869,7 +869,7 @@ class MyScreenShot(TaskBarIcon):
             # 次回を予約
             wx.CallLater(self.prop['periodic_interval_ms'], self.do_periodic)
 
-    def copy_to_clipboard(self, id:int):
+    def copy_to_clipboard(self, id:int, from_menu:bool = True):
         """キャプチャー要求処理（Clipboardコピー）
         * メニューとホット・キーイベントから呼ばれる
         Args:
@@ -880,8 +880,8 @@ class MyScreenShot(TaskBarIcon):
         # ターゲット取得
         moni_no:int = 90 if id == self.ID_MENU_ACTIVE_CB else (id - self.ID_MENU_SCREEN0_CB)
         self.req_queue.put((moni_no, ''))
-        # 遅延時間算出
-        delay_ms:int = self.prop['delayed_time_ms'] if self.prop['delayed_capture'] else self.BASE_DELAY_TIME
+        # 遅延時間算出（遅延キャプチャー以外でメニュー経由は"BASE_DELAY_TIME"遅延させる）
+        delay_ms:int = self.prop['delayed_time_ms'] if self.prop['delayed_capture'] else 0 if not from_menu else self.BASE_DELAY_TIME
         # キャプチャー実行
         wx.CallLater(delay_ms, self.do_capture)
 
