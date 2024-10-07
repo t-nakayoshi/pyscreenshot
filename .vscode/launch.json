@@ -5,10 +5,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python デバッガー: 現在のファイル",
+            "name": "[Debug] 現在のファイル",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
+            "cwd": "${fileDirname}",
             "console": "integratedTerminal"
         },
         {

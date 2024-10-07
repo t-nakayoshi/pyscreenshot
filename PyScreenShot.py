@@ -179,10 +179,6 @@ class MyScreenShot(TaskBarIcon):
     """ Other constants """
     BASE_DELAY_TIME:int = 0    # (ms)
     MAX_SAVE_FOLDERS:int = 64
-    """"""
-    MY_PICTURES = _MY_PICTURES
-    NO_CONSOLE  = _NO_CONSOLE
-    debug_mode  = _debug_mode
 
     def __init__(self, frame):
         self.frame = frame
@@ -245,6 +241,16 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             none
         """
+        global _MY_PICTURES
+        global _NO_CONSOLE
+        global _debug_mode
+        global _disable_hotkeys
+
+        self.MY_PICTURES = _MY_PICTURES
+        self.NO_CONSOLE  = _NO_CONSOLE
+        self.debug_mode  = _debug_mode
+        self.disable_hotkeys = _disable_hotkeys
+
         # 動作環境情報取得
         self._platform_info:tuple = platform_info()
         # ディスプレイ数取得
@@ -278,9 +284,7 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             none
         """
-        global _disable_hotkeys
-
-        if _disable_hotkeys:
+        if self.disable_hotkeys:
             return
 
         if not first:
@@ -322,9 +326,7 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             none
         """
-        global _disable_hotkeys
-
-        if _disable_hotkeys:
+        if self.disable_hotkeys:
             return
 
         if not first:
@@ -498,8 +500,6 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             wx.Menuオブジェクト
         """
-        global _disable_hotkeys
-
         # メニューの生成
         menu = wx.Menu()
         # バージョン情報
@@ -547,18 +547,8 @@ class MyScreenShot(TaskBarIcon):
         sub_menu1 = wx.Menu()
         sub_menu2 = wx.Menu()
         for n in range(len(self.menu_clipboard)):
-            create_menu_item(sub_menu1, self.menu_clipboard[n][1], f'{self.menu_clipboard[n][2]}\t{self.menu_clipboard[n][0] if not _disable_hotkeys else ""}', self.on_menu_clipboard)
-            create_menu_item(sub_menu2, self.menu_imagefile[n][1], f'{self.menu_imagefile[n][2]}\t{self.menu_imagefile[n][0] if not _disable_hotkeys else ""}', self.on_menu_imagefile)
-        # create_menu_item(sub_menu1, self.menu_clipboard[0][1], f'0: デスクトップ\t{self.menu_clipboard[0][0] if not _disable_hotkeys else ""}', self.on_menu_clipboard)
-        # create_menu_item(sub_menu2, self.menu_imagefile[0][1], f'0: デスクトップ\t{self.menu_imagefile[0][0] if not _disable_hotkeys else ""}', self.on_menu_imagefile)
-        # disp:int = 0
-        # for n in range(display_count):
-        #     disp += 1
-        #     create_menu_item(sub_menu1, self.menu_clipboard[disp][1], f'{disp}: ディスプレイ {disp}\t{self.menu_clipboard[disp][0] if not _disable_hotkeys else ""}', self.on_menu_clipboard)
-        #     create_menu_item(sub_menu2, self.menu_imagefile[disp][1], f'{disp}: ディスプレイ {disp}\t{self.menu_imagefile[disp][0] if not _disable_hotkeys else ""}', self.on_menu_imagefile)
-        # disp += 1
-        # create_menu_item(sub_menu1, self.menu_clipboard[disp][1], f'{disp}: アクティブウィンドウ\t{self.menu_clipboard[disp][0] if not _disable_hotkeys else ""}', self.on_menu_clipboard)
-        # create_menu_item(sub_menu2, self.menu_imagefile[disp][1], f'{disp}: アクティブウィンドウ\t{self.menu_imagefile[disp][0] if not _disable_hotkeys else ""}', self.on_menu_imagefile)
+            create_menu_item(sub_menu1, self.menu_clipboard[n][1], f'{self.menu_clipboard[n][2]}\t{self.menu_clipboard[n][0] if not self.disable_hotkeys else ""}', self.on_menu_clipboard)
+            create_menu_item(sub_menu2, self.menu_imagefile[n][1], f'{self.menu_imagefile[n][2]}\t{self.menu_imagefile[n][0] if not self.disable_hotkeys else ""}', self.on_menu_imagefile)
         item = menu.AppendSubMenu(sub_menu1, 'クリップボードへコピー')
         item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.COPY_TO_CB.value))
         item = menu.AppendSubMenu(sub_menu2, 'PNGファイルへ保存')
