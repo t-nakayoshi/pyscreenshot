@@ -137,6 +137,7 @@ def copy_bitmap_to_clipboard(data):
     win32clipboard.CloseClipboard()
 
 
+# fmt: off
 class MenuIcon(IntEnum):
     INFO = 0
     SETTINGS         = auto()
@@ -146,10 +147,12 @@ class MenuIcon(IntEnum):
     PERIODIC         = auto()
     COPY_TO_CB       = auto()
     SAVE_TO_PNG      = auto()
-    EXIT = auto()
+    EXIT             = auto()
+# fmt: on
 
 
 class MyScreenShot(TaskBarIcon):
+    # fmt: off
     """Menu IDs"""
     # バージョン情報
     ID_MENU_HELP: int  = 901         # ヘルプを表示
@@ -190,6 +193,7 @@ class MyScreenShot(TaskBarIcon):
     """ Other constants """
     BASE_DELAY_TIME: int = 400   # (ms)
     MAX_SAVE_FOLDERS: int = 64
+    # fmt: on
 
     def __init__(self, frame):
         self.frame = frame
@@ -951,6 +955,7 @@ class MyScreenShot(TaskBarIcon):
 class SettingsDialog(wx.Dialog):
     """環境設定ダイアログ（wxGladeで、設計&生成）
     """
+    # fmt: off
     def __init__(self, *args, **kwds):
         # begin wxGlade: SettingsDialog.__init__
         # Button Event ID's
@@ -1208,6 +1213,7 @@ class SettingsDialog(wx.Dialog):
         self.radio_btn_hotkey_png_ctrl_alt.Bind(wx.EVT_RADIOBUTTON, self.on_btn_hotkey_change)
         self.radio_btn_hotkey_png_ctrl_shift.Bind(wx.EVT_RADIOBUTTON, self.on_btn_hotkey_change)
         # end wxGlade
+    # fmt: on
 
     def on_save_folder_add(self, event):  # wxGlade: SettingsDialog.<event_handler>
         """自動保存フォルダの追加
@@ -1380,6 +1386,7 @@ class SettingsDialog(wx.Dialog):
 class PeriodicDialog(wx.Dialog):
     """定期実行設定ダイアログ（wxGladeで、設計&生成）
     """
+    # fmt: off
     def __init__(self, *args, **kwds):
         # begin wxGlade: PeriodicDialog.__init__
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_DIALOG_STYLE
@@ -1489,6 +1496,7 @@ class PeriodicDialog(wx.Dialog):
         self.button_periodic_start.Bind(wx.EVT_BUTTON, self.on_periodic_capture_ctrl)
         self.button_periodic_stop.Bind(wx.EVT_BUTTON, self.on_periodic_capture_ctrl)
         # end wxGlade
+    # fmt: on
 
     def on_save_folder_browse(self, event):  # wxGlade: PeriodicDialog.<event_handler>
         """保存フォルダの選択
