@@ -2,12 +2,11 @@ import wx
 
 app = wx.App()
 
-def callback(a:int, b:int):
-    """
-    """
-    print(f'a={a}, id(a)={id(a)}')
-    print(f'b={b}, id(b)={id(b)}')
 
+def callback(a: int, b: int):
+    """ """
+    print(f"a={a}, id(a)={id(a)}")
+    print(f"b={b}, id(b)={id(b)}")
 
 
 def main():
@@ -24,4 +23,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    

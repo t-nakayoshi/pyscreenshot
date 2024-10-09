@@ -18,10 +18,10 @@ import keyboard
 # keyboard.remove_hotkey(hotkey)
 # print(f'Hot-Key [{hotkey}] Removed!')
 
-print('Wait 3 times hotkey press!')
+print("Wait 3 times hotkey press!")
 for i in range(3):
     print(keyboard.read_hotkey())
 
-print('Wait [ESC]')
+print("Wait [ESC]")
 # [esc]待ち
-keyboard.wait('esc')
+keyboard.wait("esc")

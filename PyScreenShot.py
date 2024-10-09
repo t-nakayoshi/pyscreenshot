@@ -7,50 +7,61 @@
 * 
 """
 import argparse
-from enum import IntEnum, auto
 import configparser
-from datetime import datetime
-from functools import partial
 import io
+import os
+import sys
+from datetime import datetime
+from enum import IntEnum, auto
+from functools import partial
+from queue import Queue
+from typing import Union
+
 import keyboard
 import mss
 import mss.tools
-import os
-from PIL import Image
-from queue import Queue
-from screeninfo import get_monitors
-import sys
-from typing import Union
 import win32clipboard
 import win32gui
-
 import wx
-from wx.adv import TaskBarIcon, EVT_TASKBAR_LEFT_DCLICK, Sound, AboutBox, AboutDialogInfo
 import wx.lib.agw.multidirdialog as MDD
+from PIL import Image
+from screeninfo import get_monitors
+from wx.adv import (
+    EVT_TASKBAR_LEFT_DCLICK,
+    AboutBox,
+    AboutDialogInfo,
+    Sound,
+    TaskBarIcon,
+)
 
 import mydefine as mydef
-from myutils import get_running_path, platform_info, get_special_directory, scan_directory
-from res import app_icon, menu_image, sound
 import version as ver
+from myutils import (
+    get_running_path,
+    get_special_directory,
+    platform_info,
+    scan_directory,
+)
+from res import app_icon, menu_image, sound
 
 # 実行ファイルパス
-_EXE_PATH:str = ''
+_EXE_PATH: str = ""
 # リソースファイルパス（データファイルなど）
-_RESRC_PATH:str = ''
+_RESRC_PATH: str = ""
 # 設定ファイルパス
-_CONFIG_FILE:str = f'{ver.app_name}.ini'
+_CONFIG_FILE: str = f"{ver.app_name}.ini"
 # # ヘルプファイル（アプリからは未使用）
-# _HELP_FILE:str = 'manual.html'
+# _HELP_FILE: str = "manual.html"
 # マイピクチャパス
-_MY_PICTURES:str = ''
+_MY_PICTURES: str = ""
 
-_TRAY_TOOLTIP:str = f'{ver.app_name} App'
+_TRAY_TOOLTIP: str = f"{ver.app_name} App"
 
-_NO_CONSOLE:bool = False
-_debug_mode:bool = False
-_disable_hotkeys:bool = False
+_NO_CONSOLE: bool = False
+_debug_mode: bool = False
+_disable_hotkeys: bool = False
 
-def create_menu_item(menu:wx.Menu, id:int = -1, label:str = '', func = None, kind = wx.ITEM_NORMAL) -> wx.MenuItem:
+def create_menu_item(menu: wx.Menu, id: int = -1, label: str = "", func = None, kind = wx.ITEM_NORMAL) -> wx.MenuItem:
     """
     """
     item = wx.MenuItem(menu, id, label, kind = kind)
@@ -61,7 +72,7 @@ def create_menu_item(menu:wx.Menu, id:int = -1, label:str = '', func = None, kin
     return item
 
 
-def enum_window_callback(hwnd:int, lparam:int, window_titles:list[str]):
+def enum_window_callback(hwnd: int, lparam: int, window_titles: list[str]):
     if win32gui.IsWindowEnabled(hwnd) == 0:
         return
 
@@ -71,48 +82,48 @@ def enum_window_callback(hwnd:int, lparam:int, window_titles:list[str]):
     if win32gui.IsIconic(hwnd) != 0:
         return
 
-    if (window_text := win32gui.GetWindowText(hwnd)) == '':
+    if (window_text := win32gui.GetWindowText(hwnd)) == "":
         return
 
     # GW_OWNER = 4
     # if (owner := win32gui.GetWindow(hwnd, GW_OWNER)) != 0:
     #     return
 
-    # if (class_name := win32gui.GetClassName(hwnd)) in ['CabinetWClass']:
+    # if (class_name := win32gui.GetClassName(hwnd)) in ["CabinetWClass"]:
     #     return
     # QtのPopup、ToolTipを除外する
-    class_name:str = win32gui.GetClassName(hwnd)
-    if True in {x in class_name for x in ['QToolTip', 'QPopup', 'QWindowPopup', 'QWindowToolTip']}:
+    class_name: str = win32gui.GetClassName(hwnd)
+    if True in {x in class_name for x in ["QToolTip", "QPopup", "QWindowPopup", "QWindowToolTip"]}:
         return
 
     if window_text not in window_titles:
         window_titles.append(window_text)
 
 
-def get_active_window() -> Union[tuple, None]:
+def get_active_window() -> Union[tuple[str, dict], None]:
     """アクティブウィンドウの座標（RECT）を取得する
     * 取得したRECT情報とWindowタイトルを返す
     （座標はmssのキャプチャー範囲に変換する）
     """
-    window_titles:list[str] = []
+    window_titles: list[str] = []
     win32gui.EnumWindows(partial(enum_window_callback, window_titles=window_titles), 0)
     # for title in window_titles:
     #     print(title)
-    # print('====')
+    # print("====")
     if not window_titles:
         return None
 
     # hwnd  = win32gui.GetForegroundWindow()
     # title = win32gui.GetWindowText(hwnd)
-    window_title = window_titles[0]
+    window_title: str = window_titles[0]
     if (hwnd := win32gui.FindWindow(None, window_title)) == 0:
         return None
 
     # win32gui.SetForegroundWindow(hwnd)
     left, top, right, bottom = win32gui.GetWindowRect(hwnd)
-    width:int  = abs(right - left)
-    height:int = abs(bottom - top)
-    area:dict = {'left': left, 'top': top, 'width': width, 'height': height}
+    width: int  = abs(right - left)
+    height: int = abs(bottom - top)
+    area: dict = {"left": left, "top": top, "width": width, "height": height}
 
     return (window_title, area)
 
@@ -141,44 +152,44 @@ class MenuIcon(IntEnum):
 class MyScreenShot(TaskBarIcon):
     """Menu IDs"""
     # バージョン情報
-    ID_MENU_HELP:int  = 901         # ヘルプを表示
-    ID_MENU_ABOUT:int = 902         # バージョン情報
+    ID_MENU_HELP: int  = 901         # ヘルプを表示
+    ID_MENU_ABOUT: int = 902         # バージョン情報
     # 環境設定
-    ID_MENU_SETTINGS:int = 101
+    ID_MENU_SETTINGS: int = 101
     # クイック設定
-    ID_MENU_MCURSOR:int  = 102      # マウスカーソルキャプチャーを有効
-    ID_MENU_SOUND:int    = 103      # キャプチャー終了時に音を鳴らす
-    ID_MENU_DELAYED:int  = 104      # 遅延キャプチャーを有効
-    ID_MENU_TRIMMING:int = 105      # トリミングを有効
-    ID_MENU_RESET:int    = 106      # シーケンス番号のリセット
+    ID_MENU_MCURSOR: int  = 102      # マウスカーソルキャプチャーを有効
+    ID_MENU_SOUND: int    = 103      # キャプチャー終了時に音を鳴らす
+    ID_MENU_DELAYED: int  = 104      # 遅延キャプチャーを有効
+    ID_MENU_TRIMMING: int = 105      # トリミングを有効
+    ID_MENU_RESET: int    = 106      # シーケンス番号のリセット
     #--- 保存先フォルダ(Base)
-    ID_MENU_FOLDER1:int = 201
+    ID_MENU_FOLDER1: int = 201
     # フォルダを開く
-    ID_MENU_OPEN_AUTO:int     = 301 # 自動保存フォルダ(選択中)
-    ID_MENU_OPEN_PERIODIC:int = 302 # 定期実行フォルダ
+    ID_MENU_OPEN_AUTO: int     = 301 # 自動保存フォルダ(選択中)
+    ID_MENU_OPEN_PERIODIC: int = 302 # 定期実行フォルダ
     # 定期実行設定
-    ID_MENU_PERIODIC:int = 401
+    ID_MENU_PERIODIC: int = 401
     # クリップボードへコピー
-    ID_MENU_SCREEN0_CB:int = 501    # デスクトップ
-    # ID_MENU_SCREEN1_CB:int = 502    # ディスプレイ1
-    ID_MENU_ACTIVE_CB:int  = 590    # アクティブウィンドウ
+    ID_MENU_SCREEN0_CB: int = 501    # デスクトップ
+    # ID_MENU_SCREEN1_CB: int = 502    # ディスプレイ1
+    ID_MENU_ACTIVE_CB: int  = 590    # アクティブウィンドウ
     # PNG保存
-    ID_MENU_SCREEN0:int = 601       # デスクトップ
-    # ID_MENU_SCREEN1:int = 602       # ディスプレイ1
-    ID_MENU_ACTIVE:int  = 690       # アクティブウィンドウ
+    ID_MENU_SCREEN0: int = 601       # デスクトップ
+    # ID_MENU_SCREEN1: int = 602       # ディスプレイ1
+    ID_MENU_ACTIVE: int  = 690       # アクティブウィンドウ
     # 終了
-    ID_MENU_EXIT:int = 991
+    ID_MENU_EXIT: int = 991
     """ Hotkey Modifiers """
-    HK_MOD_NONE:str       = ''
-    HK_MOD_SHIFT:str      = 'Shift'
-    HK_MOD_CTRL:str       = 'Ctrl'
-    HK_MOD_ALT:str        = 'Alt'
-    HK_MOD_CTRL_ALT:str   = f'{HK_MOD_CTRL}+{HK_MOD_ALT}'
-    HK_MOD_CTRL_SHIFT:str = f'{HK_MOD_CTRL}+{HK_MOD_SHIFT}'
-    HK_MOD_SHIFT_ALT:str  = f'{HK_MOD_SHIFT}+{HK_MOD_ALT}'
+    HK_MOD_NONE: str       = ""
+    HK_MOD_SHIFT: str      = "Shift"
+    HK_MOD_CTRL: str       = "Ctrl"
+    HK_MOD_ALT: str        = "Alt"
+    HK_MOD_CTRL_ALT: str   = f"{HK_MOD_CTRL}+{HK_MOD_ALT}"
+    HK_MOD_CTRL_SHIFT: str = f"{HK_MOD_CTRL}+{HK_MOD_SHIFT}"
+    HK_MOD_SHIFT_ALT: str  = f"{HK_MOD_SHIFT}+{HK_MOD_ALT}"
     """ Other constants """
-    BASE_DELAY_TIME:int = 400   # (ms)
-    MAX_SAVE_FOLDERS:int = 64
+    BASE_DELAY_TIME: int = 400   # (ms)
+    MAX_SAVE_FOLDERS: int = 64
 
     def __init__(self, frame):
         self.frame = frame
@@ -186,52 +197,52 @@ class MyScreenShot(TaskBarIcon):
         self.Bind(EVT_TASKBAR_LEFT_DCLICK, self.on_menu_settings)
         # プロパティ
         self.prop: dict = {
-            'display': 1,
-            'auto_save': True,
-            'save_folders': [],
-            'save_folder_index': -1,
-            'numbering': 0,
-            'prefix': '',
-            'sequence_digits': 0,
-            'sequence_begin': 0,
-            'capture_mcursor': False,
-            'sound_on_capture': False,
-            'delayed_capture': False,
-            'delayed_time': 0,
-            'delayed_time_ms': 0,
-            'trimming': False,
-            'trimming_size': [0,0,0,0],
-            'hotkey_clipboard': 0,
-            'hotkey_imagefile': 1,
-            'hotkey_activewin': 8,
-            'periodic_capture': False,
-            'periodic_save_folder': '',
-            'periodic_interval': 0,
-            'periodic_interval_ms': 0,
-            'periodic_stop_modifier': 0,
-            'periodic_stop_fkey': 0,
-            'periodic_target': 0,
-            'periodic_numbering': 0,
-            'MAX_SAVE_FOLDERS': self.MAX_SAVE_FOLDERS   # for SettingDialog
+            "display": 1,
+            "auto_save": True,
+            "save_folders": [],
+            "save_folder_index": -1,
+            "numbering": 0,
+            "prefix": "",
+            "sequence_digits": 0,
+            "sequence_begin": 0,
+            "capture_mcursor": False,
+            "sound_on_capture": False,
+            "delayed_capture": False,
+            "delayed_time": 0,
+            "delayed_time_ms": 0,
+            "trimming": False,
+            "trimming_size": [0,0,0,0],
+            "hotkey_clipboard": 0,
+            "hotkey_imagefile": 1,
+            "hotkey_activewin": 8,
+            "periodic_capture": False,
+            "periodic_save_folder": "",
+            "periodic_interval": 0,
+            "periodic_interval_ms": 0,
+            "periodic_stop_modifier": 0,
+            "periodic_stop_fkey": 0,
+            "periodic_target": 0,
+            "periodic_numbering": 0,
+            "MAX_SAVE_FOLDERS": self.MAX_SAVE_FOLDERS   # for SettingDialog
         }
         self.capture_hotkey_tbl = (self.HK_MOD_CTRL_ALT, self.HK_MOD_CTRL_SHIFT)
         # キャプチャーHotkeyアクセレーターリスト（0:デスクトップ、1～:ディスプレイ、last:アクティブウィンドウ）
-        self.menu_clipboard:list[tuple] = []
-        self.menu_imagefile:list[tuple] = []
+        self.menu_clipboard: list[tuple] = []
+        self.menu_imagefile: list[tuple] = []
         # 定期実行停止Hotkey
-        self.periodic_stop_hotkey_tbl:tuple = (self.HK_MOD_NONE, self.HK_MOD_SHIFT, self.HK_MOD_CTRL, self.HK_MOD_ALT)
-        self.hotkey_periodic_stop:str = ''
+        self.periodic_stop_hotkey_tbl: tuple = (self.HK_MOD_NONE, self.HK_MOD_SHIFT, self.HK_MOD_CTRL, self.HK_MOD_ALT)
+        self.hotkey_periodic_stop: str = ""
         # シーケンス番号保持用
-        self.sequence:int = -1
+        self.sequence: int = -1
         # キャプチャー要求Queue
         self.req_queue:Queue = Queue()
         # 初期処理
         self.initialize()
 
-    def _debug_print(self, message:str):
+    def _debug_print(self, message: str):
         if not self.NO_CONSOLE and self.debug_mode:
-            ts:str = datetime.now().strftime('%Y/%m/%d %H%M%S.%f')[:-3]
-            sys.stdout.write(f'{ts} [debug]:{message}\n')
+            ts: str = datetime.now().strftime("%Y/%m/%d %H%M%S.%f")[:-3]
+            sys.stdout.write(f"{ts} [debug]:{message}\n")
 
     def initialize(self):
         """初期処理
@@ -252,9 +263,9 @@ class MyScreenShot(TaskBarIcon):
         self.disable_hotkeys = _disable_hotkeys
 
         # 動作環境情報取得
-        self._platform_info:tuple = platform_info()
+        self._platform_info: tuple = platform_info()
         # ディスプレイ数取得
-        self.prop['display'] = len(get_monitors())
+        self.prop["display"] = len(get_monitors())
         # Load Application ICON
         self._app_icons = wx.IconBundle(app_icon.get_app_icon_stream(), wx.BITMAP_TYPE_ICO)
         self.SetIcon(self._app_icons.GetIcon(wx.Size(16, 16)), _TRAY_TOOLTIP)
@@ -275,7 +286,7 @@ class MyScreenShot(TaskBarIcon):
         # 定期実行停止用Hotkey展開、設定
         self.set_periodic_stop_hotkey(True)
 
-    def set_capture_hotkey(self, first:bool=False):
+    def set_capture_hotkey(self, first: bool = False):
         """キャプチャー用ホット・キー登録処理
         * キャプチャー用ホット・キーとメニューのアクセレーター文字列を展開する
         * キャプチャー用ホット・キーを登録する
@@ -295,31 +306,31 @@ class MyScreenShot(TaskBarIcon):
                 keyboard.remove_hotkey(hotkey)
 
         # 設定値(prop)からキャプチャー用の修飾キーを取得し、それぞれのホット・キー文字列を展開する
-        hk_clipbd:str = self.capture_hotkey_tbl[self.prop['hotkey_clipboard']]
-        hk_imagef:str = self.capture_hotkey_tbl[self.prop['hotkey_imagefile']]
+        hk_clipbd: str = self.capture_hotkey_tbl[self.prop["hotkey_clipboard"]]
+        hk_imagef: str = self.capture_hotkey_tbl[self.prop["hotkey_imagefile"]]
 
         # Menu, Hotkeyの情報を生成する（[0]:Hotkey, [1]:Menu ID, [2]:Menu name）
         self.menu_clipboard.clear()
         self.menu_imagefile.clear()
-        disp:int = self.prop['display']
+        disp: int = self.prop["display"]
         # デスクトップ[0]
-        self.menu_clipboard.append((f'{hk_clipbd}+0', self.ID_MENU_SCREEN0_CB, '0: デスクトップ'))
-        self.menu_imagefile.append((f'{hk_imagef}+0', self.ID_MENU_SCREEN0   , '0: デスクトップ'))
+        self.menu_clipboard.append((f"{hk_clipbd}+0", self.ID_MENU_SCREEN0_CB, "0: デスクトップ"))
+        self.menu_imagefile.append((f"{hk_imagef}+0", self.ID_MENU_SCREEN0   , "0: デスクトップ"))
         # ディスプレイ[1～]
         for n in range(1, disp + 1):
-            self.menu_clipboard.append((f'{hk_clipbd}+{n}', self.ID_MENU_SCREEN0_CB + n, f'{n}: ディスプレイ {n}'))
-            self.menu_imagefile.append((f'{hk_imagef}+{n}', self.ID_MENU_SCREEN0    + n, f'{n}: ディスプレイ {n}'))
+            self.menu_clipboard.append((f"{hk_clipbd}+{n}", self.ID_MENU_SCREEN0_CB + n, f"{n}: ディスプレイ {n}"))
+            self.menu_imagefile.append((f"{hk_imagef}+{n}", self.ID_MENU_SCREEN0    + n, f"{n}: ディスプレイ {n}"))
         # アクティブウィンドウ
-        self.menu_clipboard.append((f'{hk_clipbd}+F{self.prop['hotkey_activewin'] + 1}', self.ID_MENU_ACTIVE_CB, f'{disp + 1}: アクティブウィンドウ'))
-        self.menu_imagefile.append((f'{hk_imagef}+F{self.prop['hotkey_activewin'] + 1}', self.ID_MENU_ACTIVE   , f'{disp + 1}: アクティブウィンドウ'))
+        self.menu_clipboard.append((f"{hk_clipbd}+F{self.prop["hotkey_activewin"] + 1}", self.ID_MENU_ACTIVE_CB, f"{disp + 1}: アクティブウィンドウ"))
+        self.menu_imagefile.append((f"{hk_imagef}+F{self.prop["hotkey_activewin"] + 1}", self.ID_MENU_ACTIVE   , f"{disp + 1}: アクティブウィンドウ"))
 
         # Hotkeyの登録（デスクトップ[0]、ディスプレイ[1～]、アクティブウィンドウ[last]）
         for n in range(len(self.menu_clipboard)):
-            # self._debug_print(f'Hotkey[{n}]={self.menu_clipboard[n][0]}, {self.menu_imagefile[n][0]}, id={self.menu_clipboard[n][1]}, {self.menu_imagefile[n][1]}')
+            # self._debug_print(f"Hotkey[{n}]={self.menu_clipboard[n][0]}, {self.menu_imagefile[n][0]}, id={self.menu_clipboard[n][1]}, {self.menu_imagefile[n][1]}")
             keyboard.add_hotkey(self.menu_clipboard[n][0], wx.CallAfter, (self.copy_to_clipboard, self.menu_clipboard[n][1], False))
             keyboard.add_hotkey(self.menu_imagefile[n][0], wx.CallAfter, (self.save_to_imagefile, self.menu_imagefile[n][1], False))
 
-    def set_periodic_stop_hotkey(self, first:bool):
+    def set_periodic_stop_hotkey(self, first: bool):
         """定期実行停止ホット・キー登録処理
         Args:
             first (bool): 初回フラグ（初回はホット・キー削除なし）
@@ -334,9 +345,9 @@ class MyScreenShot(TaskBarIcon):
             keyboard.remove_hotkey(self.hotkey_periodic_stop)
 
         # 設定値(prop)からホット・キー文字列を展開する
-        modifire:str = self.periodic_stop_hotkey_tbl[self.prop['periodic_stop_modifier']]
-        fkey:str = f'F{self.prop['periodic_stop_fkey'] + 1}'
-        self.hotkey_periodic_stop = fkey if len(modifire) == 0 else f'{modifire}+{fkey}'
+        modifire: str = self.periodic_stop_hotkey_tbl[self.prop["periodic_stop_modifier"]]
+        fkey: str = f"F{self.prop['periodic_stop_fkey'] + 1}"
+        self.hotkey_periodic_stop = fkey if len(modifire) == 0 else f"{modifire}+{fkey}"
         keyboard.add_hotkey(self.hotkey_periodic_stop, lambda: wx.CallAfter(self.stop_periodic_capture))
 
     def load_config(self):
@@ -350,15 +361,15 @@ class MyScreenShot(TaskBarIcon):
         global _CONFIG_FILE
 
         self.config = configparser.ConfigParser()
-        result:bool = False
+        result: bool = False
         try:
-            with open(_CONFIG_FILE, 'r', encoding='utf-8') as fc:
+            with open(_CONFIG_FILE, "r", encoding = "utf-8") as fc:
                 self.config.read_file(fc)
             result = True
         except OSError as e:
-            wx.MessageBox(f'設定ファイルの読み込みに失敗しました\n ({e})\n デフォルト設定を使用します', 'エラー', wx.ICON_ERROR)
+            wx.MessageBox(f"設定ファイルの読み込みに失敗しました\n ({e})\n デフォルト設定を使用します", "エラー", wx.ICON_ERROR)
         except configparser.Error as e:
-            wx.MessageBox(f'設定ファイルの解析に失敗しました\n ({e})', 'エラー', wx.ICON_ERROR)
+            wx.MessageBox(f"設定ファイルの解析に失敗しました\n ({e})", "エラー", wx.ICON_ERROR)
 
         if not result:
             self.config.read_dict(mydef._CONFIG_DEFAULT)
@@ -378,11 +389,11 @@ class MyScreenShot(TaskBarIcon):
 
         self.property_to_config()
         try:
-            with open(_CONFIG_FILE, 'w') as fc:
+            with open(_CONFIG_FILE, "w") as fc:
                 self.config.write(fc)
 
         except OSError as e:
-            wx.MessageBox(f'設定ファイルの書き込みに失敗しました\n ({e})', 'エラー', wx.ICON_ERROR)
+            wx.MessageBox(f"設定ファイルの書き込みに失敗しました\n ({e})", "エラー", wx.ICON_ERROR)
 
     def config_to_property(self) -> bool:
         """設定値展開処理
@@ -392,59 +403,59 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             none
         """
-        save_req:bool = False
+        save_req: bool = False
         # 自動保存
-        self.prop['auto_save'] = self.config.getboolean('basic','auto_save', fallback=True)
+        self.prop["auto_save"] = self.config.getboolean("basic","auto_save", fallback=True)
         # 自動保存フォルダ
-        self.prop['save_folder_index'] = self.config.getint('basic', 'save_folder_index', fallback=-1)
+        self.prop["save_folder_index"] = self.config.getint("basic", "save_folder_index", fallback=-1)
         for n in range(1, self.MAX_SAVE_FOLDERS + 1):
-            option_name: str = f'folder{n}'
-            if not self.config.has_option('basic', option_name):
+            option_name: str = f"folder{n}"
+            if not self.config.has_option("basic", option_name):
                 break
-            option: str = self.config.get('basic', option_name)
-            self.prop['save_folders'].append(option)
+            option: str = self.config.get("basic", option_name)
+            self.prop["save_folders"].append(option)
 
-        if self.prop['save_folders']:
-            if not (0 <= self.prop['save_folder_index'] < len(self.prop['save_folders'])):
-                self.prop['save_folder_index'] = 0
+        if self.prop["save_folders"]:
+            if not (0 <= self.prop["save_folder_index"] < len(self.prop["save_folders"])):
+                self.prop["save_folder_index"] = 0
                 save_req = True
         else:
-            # 自動保存フォルダが無いので、'Pictures'を登録する
-            self.prop['save_folders'].append(self.MY_PICTURES)
-            self.prop['save_folder_index'] = 0
+            # 自動保存フォルダが無いので、"Pictures"を登録する
+            self.prop["save_folders"].append(self.MY_PICTURES)
+            self.prop["save_folder_index"] = 0
             save_req = True
         # 自動保存時のナンバリング
-        self.prop['numbering']        = self.config.getint('basic', 'numbering', fallback=0)
-        self.prop['prefix']           = self.config.get('basic', 'prefix', fallback='SS')
-        self.prop['sequence_digits']  = self.config.getint('basic', 'sequence_digits', fallback=6)
-        self.prop['sequence_begin']   = self.config.getint('basic', 'sequence_begin', fallback=0)
-        self.prop['capture_mcursor']  = self.config.getboolean('other', 'mouse_cursor', fallback=False)
-        self.prop['sound_on_capture'] = self.config.getboolean('other', 'sound_on_capture', fallback=False)
-        self.prop['delayed_capture']  = self.config.getboolean('delayed_capture', 'delayed_capture', fallback=False)
-        self.prop['delayed_time']     = self.config.getint('delayed_capture', 'delayed_time', fallback=5)
-        self.prop['delayed_time_ms']  = self.prop['delayed_time'] * 1000
+        self.prop["numbering"]        = self.config.getint("basic", "numbering", fallback=0)
+        self.prop["prefix"]           = self.config.get("basic", "prefix", fallback="SS")
+        self.prop["sequence_digits"]  = self.config.getint("basic", "sequence_digits", fallback=6)
+        self.prop["sequence_begin"]   = self.config.getint("basic", "sequence_begin", fallback=0)
+        self.prop["capture_mcursor"]  = self.config.getboolean("other", "mouse_cursor", fallback=False)
+        self.prop["sound_on_capture"] = self.config.getboolean("other", "sound_on_capture", fallback=False)
+        self.prop["delayed_capture"]  = self.config.getboolean("delayed_capture", "delayed_capture", fallback=False)
+        self.prop["delayed_time"]     = self.config.getint("delayed_capture", "delayed_time", fallback=5)
+        self.prop["delayed_time_ms"]  = self.prop["delayed_time"] * 1000
         # トリミング
-        self.prop['trimming'] = self.config.getboolean('trimming', 'trimming', fallback=False)
-        top:int    = self.config.getint('trimming', 'top', fallback=0)
-        bottom:int = self.config.getint('trimming', 'bottom', fallback=0)
-        left:int   = self.config.getint('trimming', 'left', fallback=0)
-        right:int  = self.config.getint('trimming', 'right', fallback=0)
-        self.prop['trimming_size'] = [top, bottom, left, right]
+        self.prop["trimming"] = self.config.getboolean("trimming", "trimming", fallback=False)
+        top: int    = self.config.getint("trimming", "top", fallback=0)
+        bottom: int = self.config.getint("trimming", "bottom", fallback=0)
+        left: int   = self.config.getint("trimming", "left", fallback=0)
+        right: int  = self.config.getint("trimming", "right", fallback=0)
+        self.prop["trimming_size"] = [top, bottom, left, right]
         # ホット・キー
-        self.prop['hotkey_clipboard'] = self.config.getint('hotkey', 'clipboard', fallback=0)
-        self.prop['hotkey_imagefile'] = self.config.getint('hotkey', 'imagefile', fallback=1)
-        self.prop['hotkey_activewin'] = self.config.getint('hotkey', 'activewin', fallback=8)
+        self.prop["hotkey_clipboard"] = self.config.getint("hotkey", "clipboard", fallback=0)
+        self.prop["hotkey_imagefile"] = self.config.getint("hotkey", "imagefile", fallback=1)
+        self.prop["hotkey_activewin"] = self.config.getint("hotkey", "activewin", fallback=8)
         # 定期実行
-        self.prop['periodic_save_folder']   = self.config.get('periodic', 'save_folder', fallback=self.MY_PICTURES)
-        self.prop['periodic_interval']      = self.config.getint('periodic', 'interval', fallback=3)
-        self.prop['periodic_interval_ms']   = self.prop['periodic_interval'] * 1000
-        self.prop['periodic_stop_modifier'] = self.config.getint('periodic', 'stop_modifier', fallback=0)
-        self.prop['periodic_stop_fkey']     = self.config.getint('periodic', 'stop_fkey', fallback=11)
-        self.prop['periodic_target']        = self.config.getint('periodic', 'target', fallback=0)
-        self.prop['periodic_numbering']     = self.config.getint('periodic', 'numbering', fallback=0)
-        if len(self.prop['periodic_save_folder']) == 0:
-            # 保存フォルダが無いので、'Pictures'を登録する
-            self.prop['periodic_save_folder'] = self.MY_PICTURES
+        self.prop["periodic_save_folder"]   = self.config.get("periodic", "save_folder", fallback=self.MY_PICTURES)
+        self.prop["periodic_interval"]      = self.config.getint("periodic", "interval", fallback=3)
+        self.prop["periodic_interval_ms"]   = self.prop["periodic_interval"] * 1000
+        self.prop["periodic_stop_modifier"] = self.config.getint("periodic", "stop_modifier", fallback=0)
+        self.prop["periodic_stop_fkey"]     = self.config.getint("periodic", "stop_fkey", fallback=11)
+        self.prop["periodic_target"]        = self.config.getint("periodic", "target", fallback=0)
+        self.prop["periodic_numbering"]     = self.config.getint("periodic", "numbering", fallback=0)
+        if len(self.prop["periodic_save_folder"]) == 0:
+            # 保存フォルダが無いので、"Pictures"を登録する
+            self.prop["periodic_save_folder"] = self.MY_PICTURES
             save_req = True
 
         return save_req
@@ -458,38 +469,38 @@ class MyScreenShot(TaskBarIcon):
             none
         """
         # 自動保存
-        self.config.set('basic','auto_save', str(self.prop['auto_save']))
+        self.config.set("basic","auto_save", str(self.prop["auto_save"]))
         # 自動保存フォルダ
-        self.config.set('basic', 'save_folder_index', str(self.prop['save_folder_index']))
-        for n, folder_name in enumerate(self.prop['save_folders']):
-            option_name: str = 'folder' + str(n + 1)
-            self.config.set('basic', option_name, folder_name)
+        self.config.set("basic", "save_folder_index", str(self.prop["save_folder_index"]))
+        for n, folder_name in enumerate(self.prop["save_folders"]):
+            option_name: str = "folder" + str(n + 1)
+            self.config.set("basic", option_name, folder_name)
         # 自動保存時のナンバリング
-        self.config.set('basic', 'numbering', str(self.prop['numbering']))
-        self.config.set('basic', 'prefix', self.prop['prefix'])
-        self.config.set('basic', 'sequence_digits', str(self.prop['sequence_digits']))
-        self.config.set('basic', 'sequence_begin', str(self.prop['sequence_begin']))
-        self.config.set('other', 'mouse_cursor', str(self.prop['capture_mcursor']))
-        self.config.set('other', 'sound_on_capture', str(self.prop['sound_on_capture']))
-        self.config.set('delayed_capture', 'delayed_capture', str(self.prop['delayed_capture']))
-        self.config.set('delayed_capture', 'delayed_time', str(self.prop['delayed_time']))
+        self.config.set("basic", "numbering", str(self.prop["numbering"]))
+        self.config.set("basic", "prefix", self.prop["prefix"])
+        self.config.set("basic", "sequence_digits", str(self.prop["sequence_digits"]))
+        self.config.set("basic", "sequence_begin", str(self.prop["sequence_begin"]))
+        self.config.set("other", "mouse_cursor", str(self.prop["capture_mcursor"]))
+        self.config.set("other", "sound_on_capture", str(self.prop["sound_on_capture"]))
+        self.config.set("delayed_capture", "delayed_capture", str(self.prop["delayed_capture"]))
+        self.config.set("delayed_capture", "delayed_time", str(self.prop["delayed_time"]))
         # トリミング
-        self.config.set('trimming', 'trimming', str(self.prop['trimming']))
-        self.config.set('trimming', 'top', str(self.prop['trimming_size'][0]))
-        self.config.set('trimming', 'bottom', str(self.prop['trimming_size'][1]))
-        self.config.set('trimming', 'left', str(self.prop['trimming_size'][2]))
-        self.config.set('trimming', 'right', str(self.prop['trimming_size'][3]))
+        self.config.set("trimming", "trimming", str(self.prop["trimming"]))
+        self.config.set("trimming", "top", str(self.prop["trimming_size"][0]))
+        self.config.set("trimming", "bottom", str(self.prop["trimming_size"][1]))
+        self.config.set("trimming", "left", str(self.prop["trimming_size"][2]))
+        self.config.set("trimming", "right", str(self.prop["trimming_size"][3]))
         # ホット・キー
-        self.config.set('hotkey', 'clipboard', str(self.prop['hotkey_clipboard']))
-        self.config.set('hotkey', 'imagefile', str(self.prop['hotkey_imagefile']))
-        self.config.set('hotkey', 'activewin', str(self.prop['hotkey_activewin']))
+        self.config.set("hotkey", "clipboard", str(self.prop["hotkey_clipboard"]))
+        self.config.set("hotkey", "imagefile", str(self.prop["hotkey_imagefile"]))
+        self.config.set("hotkey", "activewin", str(self.prop["hotkey_activewin"]))
         # 定期実行
-        self.config.set('periodic', 'save_folder', self.prop['periodic_save_folder'])
-        self.config.set('periodic', 'interval', str(self.prop['periodic_interval']))
-        self.config.set('periodic', 'stop_modifier', str(self.prop['periodic_stop_modifier']))
-        self.config.set('periodic', 'stop_fkey', str(self.prop['periodic_stop_fkey']))
-        self.config.set('periodic', 'target', str(self.prop['periodic_target']))
-        self.config.set('periodic', 'numbering', str(self.prop['periodic_numbering']))
+        self.config.set("periodic", "save_folder", self.prop["periodic_save_folder"])
+        self.config.set("periodic", "interval", str(self.prop["periodic_interval"]))
+        self.config.set("periodic", "stop_modifier", str(self.prop["periodic_stop_modifier"]))
+        self.config.set("periodic", "stop_fkey", str(self.prop["periodic_stop_fkey"]))
+        self.config.set("periodic", "target", str(self.prop["periodic_target"]))
+        self.config.set("periodic", "numbering", str(self.prop["periodic_numbering"]))
 
     def CreatePopupMenu(self) -> wx.Menu:
         """Popupメニューの生成 (override)
@@ -503,59 +514,59 @@ class MyScreenShot(TaskBarIcon):
         # メニューの生成
         menu = wx.Menu()
         # バージョン情報
-        item = create_menu_item(menu, self.ID_MENU_ABOUT, 'バージョン情報...', self.on_menu_show_about)
+        item = create_menu_item(menu, self.ID_MENU_ABOUT, "バージョン情報...", self.on_menu_show_about)
         item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.INFO.value))
         menu.AppendSeparator()
         # 環境設定
-        item = create_menu_item(menu, self.ID_MENU_SETTINGS, '環境設定...', self.on_menu_settings)
+        item = create_menu_item(menu, self.ID_MENU_SETTINGS, "環境設定...", self.on_menu_settings)
         item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.SETTINGS.value))
         # クイック設定
         sub_menu = wx.Menu()
-        sub_item = create_menu_item(sub_menu, self.ID_MENU_MCURSOR, 'マウスカーソルをキャプチャーする', self.on_menu_toggle_item, kind = wx.ITEM_CHECK)
+        sub_item = create_menu_item(sub_menu, self.ID_MENU_MCURSOR, "マウスカーソルをキャプチャーする", self.on_menu_toggle_item, kind = wx.ITEM_CHECK)
         sub_item.Enable(False)  # Windowsでは現状マウスカーソルがキャプチャー出来ないので「無効」にしておく
-        sub_item = create_menu_item(sub_menu, self.ID_MENU_SOUND, 'キャプチャー終了時に音を鳴らす', self.on_menu_toggle_item, kind = wx.ITEM_CHECK)
-        sub_item.Check(self.prop['sound_on_capture'])
-        sub_item = create_menu_item(sub_menu, self.ID_MENU_DELAYED, '遅延キャプチャーをする', self.on_menu_toggle_item, kind = wx.ITEM_CHECK)
-        sub_item.Check(self.prop['delayed_capture'])
-        sub_item = create_menu_item(sub_menu, self.ID_MENU_TRIMMING, 'トリミングをする', self.on_menu_toggle_item, kind = wx.ITEM_CHECK)
-        sub_item.Check(self.prop['trimming'])
-        sub_item = create_menu_item(sub_menu, self.ID_MENU_RESET, 'シーケンス番号のリセット', self.on_menu_reset_sequence)
-        item = menu.AppendSubMenu(sub_menu, 'クイック設定')
+        sub_item = create_menu_item(sub_menu, self.ID_MENU_SOUND, "キャプチャー終了時に音を鳴らす", self.on_menu_toggle_item, kind = wx.ITEM_CHECK)
+        sub_item.Check(self.prop["sound_on_capture"])
+        sub_item = create_menu_item(sub_menu, self.ID_MENU_DELAYED, "遅延キャプチャーをする", self.on_menu_toggle_item, kind = wx.ITEM_CHECK)
+        sub_item.Check(self.prop["delayed_capture"])
+        sub_item = create_menu_item(sub_menu, self.ID_MENU_TRIMMING, "トリミングをする", self.on_menu_toggle_item, kind = wx.ITEM_CHECK)
+        sub_item.Check(self.prop["trimming"])
+        sub_item = create_menu_item(sub_menu, self.ID_MENU_RESET, "シーケンス番号のリセット", self.on_menu_reset_sequence)
+        item = menu.AppendSubMenu(sub_menu, "クイック設定")
         item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.QUICK_SETTINGS.value))
         menu.AppendSeparator()
         # 保存フォルダ
         sub_menu = wx.Menu()
-        for n, folder in enumerate(self.prop['save_folders']):
-            sub_item = create_menu_item(sub_menu, self.ID_MENU_FOLDER1 + n, f'{n + 1}: {folder}', self.on_menu_select_save_folder, kind = wx.ITEM_RADIO)
-            if n == self.prop['save_folder_index']:
+        for n, folder in enumerate(self.prop["save_folders"]):
+            sub_item = create_menu_item(sub_menu, self.ID_MENU_FOLDER1 + n, f"{n + 1}: {folder}", self.on_menu_select_save_folder, kind = wx.ITEM_RADIO)
+            if n == self.prop["save_folder_index"]:
                 sub_item.Check()
-        item = menu.AppendSubMenu(sub_menu, '保存先フォルダ')
+        item = menu.AppendSubMenu(sub_menu, "保存先フォルダ")
         item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.AUTO_SAVE_FOLDER.value))
         # フォルダを開く
         sub_menu = wx.Menu()
-        create_menu_item(sub_menu, self.ID_MENU_OPEN_AUTO, '1: 自動保存先フォルダ(選択中)', self.on_menu_open_folder)
-        create_menu_item(sub_menu, self.ID_MENU_OPEN_PERIODIC, '2: 定期実行フォルダ', self.on_menu_open_folder)
-        item = menu.AppendSubMenu(sub_menu, 'フォルダを開く')
+        create_menu_item(sub_menu, self.ID_MENU_OPEN_AUTO, "1: 自動保存先フォルダ(選択中)", self.on_menu_open_folder)
+        create_menu_item(sub_menu, self.ID_MENU_OPEN_PERIODIC, "2: 定期実行フォルダ", self.on_menu_open_folder)
+        item = menu.AppendSubMenu(sub_menu, "フォルダを開く")
         item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.OPEN_FOLDER.value))
         menu.AppendSeparator()
         # 定期実行設定
-        item = create_menu_item(menu, self.ID_MENU_PERIODIC, '定期実行設定...', self.on_menu_periodic_settings)
+        item = create_menu_item(menu, self.ID_MENU_PERIODIC, "定期実行設定...", self.on_menu_periodic_settings)
         item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.PERIODIC.value))
         menu.AppendSeparator()
         # キャプチャー（クリップボード、PNGファイル）
-        display_count: int = self.prop['display']   # ディスプレイ数
+        display_count: int = self.prop["display"]   # ディスプレイ数
         sub_menu1 = wx.Menu()
         sub_menu2 = wx.Menu()
         for n in range(len(self.menu_clipboard)):
-            create_menu_item(sub_menu1, self.menu_clipboard[n][1], f'{self.menu_clipboard[n][2]}\t{self.menu_clipboard[n][0] if not self.disable_hotkeys else ""}', self.on_menu_clipboard)
-            create_menu_item(sub_menu2, self.menu_imagefile[n][1], f'{self.menu_imagefile[n][2]}\t{self.menu_imagefile[n][0] if not self.disable_hotkeys else ""}', self.on_menu_imagefile)
-        item = menu.AppendSubMenu(sub_menu1, 'クリップボードへコピー')
+            create_menu_item(sub_menu1, self.menu_clipboard[n][1], f"{self.menu_clipboard[n][2]}\t{self.menu_clipboard[n][0] if not self.disable_hotkeys else ''}", self.on_menu_clipboard)
+            create_menu_item(sub_menu2, self.menu_imagefile[n][1], f"{self.menu_imagefile[n][2]}\t{self.menu_imagefile[n][0] if not self.disable_hotkeys else ''}", self.on_menu_imagefile)
+        item = menu.AppendSubMenu(sub_menu1, "クリップボードへコピー")
         item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.COPY_TO_CB.value))
-        item = menu.AppendSubMenu(sub_menu2, 'PNGファイルへ保存')
+        item = menu.AppendSubMenu(sub_menu2, "PNGファイルへ保存")
         item.SetBitmap(wx.Bitmap(self._icon_img.GetBitmap(MenuIcon.SAVE_TO_PNG.value)))
         menu.AppendSeparator()
         # 終了
-        item = create_menu_item(menu, self.ID_MENU_EXIT, '終了', self.on_menu_exit)
+        item = create_menu_item(menu, self.ID_MENU_EXIT, "終了", self.on_menu_exit)
         item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.EXIT.value))
 
         return menu
@@ -568,10 +579,8 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             none
         """
-        global _debug_mode
-
         moni_no, filename = self.req_queue.get()
-        # self._debug_print(f"do_capture moni_no={moni_no}, filename={filename}")
+        # self._debug_print(f"do_capture {moni_no=}, {filename=}")
         sct_img = None
         with mss.mss() as sct:
             if moni_no == 90:   # アクティブウィンドウ
@@ -593,32 +602,32 @@ class MyScreenShot(TaskBarIcon):
             width, height = img.size
             """"""
             if self.debug_mode:
-                msg:str = ''
+                msg: str = ""
                 match moni_no:
                     case 90:
-                        msg = f'"Active window - {window_title}" area={area_coord}'
+                        msg = f"'Active window - [{window_title}]', {area_coord}"
                     case 0:
-                        msg = '"Desktop"'
+                        msg = "'Desktop'"
                     case _:
-                        msg = f'"Display-{moni_no}"'
-                self._debug_print(f'Capture {msg} & {"copy clipboard" if len(filename) == 0 else "save PNG file"}')
+                        msg = f"'Display-{moni_no}'"
+                self._debug_print(f"Capture {msg} & {'copy clipboard' if len(filename) == 0 else 'save PNG file'}")
             """"""
             # トリミング（アクティブウィンドウ以外はトリミングしない）
-            if moni_no == 90 and self.prop['trimming']:
-                top:int         = self.prop['trimming_size'][0]
-                temp_bottom:int = self.prop['trimming_size'][1]
-                left:int        = self.prop['trimming_size'][2]
-                temp_right:int  = self.prop['trimming_size'][3]
-                right:int  = width  - temp_right  if width  > temp_right  else width
-                bottom:int = height - temp_bottom if height > temp_bottom else height
+            if moni_no == 90 and self.prop["trimming"]:
+                top: int         = self.prop["trimming_size"][0]
+                temp_bottom: int = self.prop["trimming_size"][1]
+                left: int        = self.prop["trimming_size"][2]
+                temp_right: int  = self.prop["trimming_size"][3]
+                right: int  = width  - temp_right  if width  > temp_right  else width
+                bottom: int = height - temp_bottom if height > temp_bottom else height
 
                 img = img.crop((left, top, right, bottom))
-                self._debug_print(f'Trimming ({top}, {left})-({right}, {bottom})')
+                self._debug_print(f"Trimming ({top}, {left})-({right}, {bottom})")
 
             if len(filename) == 0:
                 # クリップボードへコピー
                 output = io.BytesIO()
-                img.convert('RGB').save(output, 'BMP')
+                img.convert("RGB").save(output, "BMP")
                 data = output.getvalue()[14:]
                 output.close()
                 copy_bitmap_to_clipboard(data)
@@ -626,7 +635,7 @@ class MyScreenShot(TaskBarIcon):
                 # ファイルへ保存
                 img.save(filename)
 
-            if self.prop['sound_on_capture']:
+            if self.prop["sound_on_capture"]:
                 self._success.Play()
 
     def on_menu_show_about(self, event):
@@ -641,9 +650,9 @@ class MyScreenShot(TaskBarIcon):
         info = AboutDialogInfo()
         info.SetIcon(self._app_icons.GetIcon(wx.Size(48, 48)))
         info.SetName(ver.app_name)
-        info.SetVersion(f' Ver.{ver.version}\n on Python {self._platform_info[2]} and wxPython {wx.__version__}.')
+        info.SetVersion(f" Ver.{ver.version}\n on Python {self._platform_info[2]} and wxPython {wx.__version__}.")
         info.SetCopyright(ver.copy_right)
-        info.SetDescription(f'{ver.file_description}\n(Nuitka+MSVCによるEXE化.)')
+        info.SetDescription(f"{ver.file_description}\n(Nuitka+MSVCによるEXE化.)")
         info.SetLicense(ver.license)
         # info.SetWebSite("")
         info.AddDeveloper(ver.author)
@@ -663,32 +672,32 @@ class MyScreenShot(TaskBarIcon):
             # 設定ダイアログを表示する
             if dlg.ShowModal() == wx.ID_OK:
                 # 前回値をコピー
-                auto_save:bool  = self.prop['auto_save']
-                save_folder:str = self.prop['save_folders'][self.prop['save_folder_index']] if not self.prop['save_folder_index'] < 0 else ''
-                numbering:int   = self.prop['numbering']
-                prefix:str      = self.prop['prefix']
-                digits:int      = self.prop['sequence_digits']
-                begin:int       = self.prop['sequence_begin']
-                hotkey_clipboard:int = self.prop['hotkey_clipboard']
-                hotkey_activewin:int = self.prop['hotkey_activewin']
+                auto_save: bool  = self.prop["auto_save"]
+                save_folder: str = self.prop["save_folders"][self.prop["save_folder_index"]] if not self.prop["save_folder_index"] < 0 else ""
+                numbering: int   = self.prop["numbering"]
+                prefix: str      = self.prop["prefix"]
+                digits: int      = self.prop["sequence_digits"]
+                begin: int       = self.prop["sequence_begin"]
+                hotkey_clipboard: int = self.prop["hotkey_clipboard"]
+                hotkey_activewin: int = self.prop["hotkey_activewin"]
                 dlg.get_prop(self.prop) # ダイアログの設定状態を取得する
 
-                new_save_folder:str = self.prop['save_folders'][self.prop['save_folder_index']] if not self.prop['save_folder_index'] < 0 else ''
+                new_save_folder: str = self.prop["save_folders"][self.prop["save_folder_index"]] if not self.prop["save_folder_index"] < 0 else ""
                 # 自動保存に変更 or 保存フォルダが変更 or (ナンバリングがシーケンス番号に変更) or
                 # (接頭語が変更) or シーケンス桁数が変更 or 開始番号が変更 なら
                 # 次回シーケンス番号をリセット
-                if ((auto_save != self.prop['auto_save'] and self.prop['auto_save']) or
+                if ((auto_save != self.prop["auto_save"] and self.prop["auto_save"]) or
                     (save_folder != new_save_folder) or
-                    (numbering != self.prop['numbering'] and self.prop['numbering'] != 0) or
-                    (self.prop['numbering'] != 0 and (
-                        prefix != self.prop['prefix'] or digits != self.prop['sequence_digits'] or begin != self.prop['sequence_begin']))):
+                    (numbering != self.prop["numbering"] and self.prop["numbering"] != 0) or
+                    (self.prop["numbering"] != 0 and (
+                        prefix != self.prop["prefix"] or digits != self.prop["sequence_digits"] or begin != self.prop["sequence_begin"]))):
                     self.sequence = -1
-                    # self._debug_print('Reset sequence No.')
+                    # self._debug_print("Reset sequence No.")
                 # キャプチャーHotkeyが変更されたら再登録
-                if (hotkey_clipboard != self.prop['hotkey_clipboard'] or
-                    hotkey_activewin != self.prop['hotkey_activewin']):
+                if (hotkey_clipboard != self.prop["hotkey_clipboard"] or
+                    hotkey_activewin != self.prop["hotkey_activewin"]):
                     self.set_capture_hotkey()
-                    # self._debug_print('Change capture Hotkey.')
+                    # self._debug_print("Change capture Hotkey.")
 
     def on_menu_toggle_item(self, event):
         """クイック設定メニューイベントハンドラ
@@ -703,13 +712,13 @@ class MyScreenShot(TaskBarIcon):
         """
         match event.GetId():
             case self.ID_MENU_MCURSOR:  # マウスカーソルキャプチャー
-                self.prop['capture_mcursor'] = not self.prop['capture_mcursor']
+                self.prop["capture_mcursor"] = not self.prop["capture_mcursor"]
             case self.ID_MENU_SOUND:    # キャプチャー終了時に音を鳴らす
-                self.prop['sound_on_capture'] = not self.prop['sound_on_capture']
+                self.prop["sound_on_capture"] = not self.prop["sound_on_capture"]
             case self.ID_MENU_DELAYED:  # 遅延キャプチャー
-                self.prop['delayed_capture'] = not self.prop['delayed_capture']
+                self.prop["delayed_capture"] = not self.prop["delayed_capture"]
             case self.ID_MENU_TRIMMING: # トリミング
-                self.prop['trimming'] = not self.prop['trimming']
+                self.prop["trimming"] = not self.prop["trimming"]
             case _:
                 pass
 
@@ -731,11 +740,11 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             none
         """
-        # old:int = self.prop['save_folder_index']
-        id:int = event.GetId()
-        for n in range(len(self.prop['save_folders'])):
+        # old: int = self.prop["save_folder_index"]
+        id: int = event.GetId()
+        for n in range(len(self.prop["save_folders"])):
             if id == (self.ID_MENU_FOLDER1 + n):
-                self.prop['save_folder_index'] = n
+                self.prop["save_folder_index"] = n
                 break
 
     def on_menu_open_folder(self, event):
@@ -746,7 +755,7 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             none
         """
-        folder:str = self.prop['save_folders'][self.prop['save_folder_index']] if event.GetId() == self.ID_MENU_OPEN_AUTO else self.prop['periodic_save_folder']
+        folder: str = self.prop["save_folders"][self.prop["save_folder_index"]] if event.GetId() == self.ID_MENU_OPEN_AUTO else self.prop["periodic_save_folder"]
         if os.path.exists(folder):
             os.startfile(folder)
 
@@ -765,42 +774,42 @@ class MyScreenShot(TaskBarIcon):
             match dlg.ShowModal():
                 case wx.ID_EXECUTE | wx.ID_OK:
                     # 前回値としてコピー
-                    save_folder:str   = self.prop['periodic_save_folder']
-                    numbering:int     = self.prop['periodic_numbering']
-                    stop_modifier:int = self.prop['periodic_stop_modifier']
-                    fkey:str          = self.prop['periodic_stop_fkey']
+                    save_folder: str   = self.prop["periodic_save_folder"]
+                    numbering: int     = self.prop["periodic_numbering"]
+                    stop_modifier: int = self.prop["periodic_stop_modifier"]
+                    fkey: str          = self.prop["periodic_stop_fkey"]
                     dlg.get_prop(self.prop) # ダイアログの設定状態を取得する
 
                     # 保存フォルダが変更 or ナンバリングがシーケンス番号に変更 なら
                     # 次回シーケンス番号をリセット
-                    if ((save_folder != self.prop['periodic_save_folder']) or
-                        (numbering != self.prop['periodic_numbering'] and self.prop['periodic_numbering'] != 0 and self.prop['numbering'] != 0)):
+                    if ((save_folder != self.prop["periodic_save_folder"]) or
+                        (numbering != self.prop["periodic_numbering"] and self.prop["periodic_numbering"] != 0 and self.prop["numbering"] != 0)):
                         self.sequence = -1
-                        # self._debug_print('Reset sequence No.')
+                        # self._debug_print("Reset sequence No.")
                     # 停止用Hotkeyが変更されたら再登録
-                    if (stop_modifier != self.prop['periodic_stop_modifier'] or fkey != self.prop['periodic_stop_fkey']):
+                    if (stop_modifier != self.prop["periodic_stop_modifier"] or fkey != self.prop["periodic_stop_fkey"]):
                         self.set_periodic_stop_hotkey(True)
-                        # self._debug_print('Change periodic stop Hotkey.')
+                        # self._debug_print("Change periodic stop Hotkey.")
                 case wx.ID_EXECUTE:
                     # self._debug_print("on_menu_periodic_settings closed 'Start'")
                     # 実行開始
-                    self.prop['periodic_capture'] = True
-                    wx.CallLater(self.prop['periodic_interval_ms'] ,self.do_periodic)
+                    self.prop["periodic_capture"] = True
+                    wx.CallLater(self.prop["periodic_interval_ms"] ,self.do_periodic)
                 case wx.ID_STOP:
                     # self._debug_print("on_menu_periodic_settings closed 'Stop'")
                     # 実行停止
-                    self.prop['periodic_capture'] = False
+                    self.prop["periodic_capture"] = False
 
     def stop_periodic_capture(self):
         """定期実行停止処理
         """
         # 実行停止
-        self.prop['periodic_capture'] = False
+        self.prop["periodic_capture"] = False
         # self._debug_print("Stop periodic capture")
-        if self.prop['sound_on_capture']:
+        if self.prop["sound_on_capture"]:
             self._success.Play()
 
-    def create_filename(self, periodic:bool=False) -> str:
+    def create_filename(self, periodic: bool=False) -> str:
         """PNGファイル名生成処理
         * PNGファイル名を生成する。
         Args:
@@ -809,47 +818,47 @@ class MyScreenShot(TaskBarIcon):
             PNGファイル名 (str)
         """
         # 選択中の保存フォルダを取得する
-        path:str = self.prop['periodic_save_folder'] if periodic else self.prop['save_folders'][self.prop['save_folder_index']]
+        path: str = self.prop["periodic_save_folder"] if periodic else self.prop["save_folders"][self.prop["save_folder_index"]]
         if not os.path.exists(path):
-            wx.MessageBox(f'保存フォルダ "{path}" が見つかりません。', 'ERROR', wx.ICON_ERROR)
-            return ''
+            wx.MessageBox(f"保存フォルダ '{path}' が見つかりません。", "ERROR", wx.ICON_ERROR)
+            return ""
 
         # ナンバリング種別を取得する
-        kind:int = self.prop['numbering'] if not periodic else (self.prop['periodic_numbering'] if self.prop['periodic_numbering'] == 0 else self.prop['numbering'])
+        kind: int = self.prop["numbering"] if not periodic else (self.prop["periodic_numbering"] if self.prop["periodic_numbering"] == 0 else self.prop["numbering"])
         if kind == 0:   # 日時
-            filename:str = datetime.now().strftime('%Y%m%d_%H%M%S') + '.png'
+            filename: str = datetime.now().strftime("%Y%m%d_%H%M%S") + ".png"
         else:           # 接頭語＋シーケンス番号
-            prefix:str = self.prop['prefix']
-            prefix_len:int = len(prefix)
-            digits:int = self.prop['sequence_digits']
-            begin:int  = self.sequence if self.sequence > self.prop['sequence_begin'] else self.prop['sequence_begin']
-            # self._debug_print(f'Sequence No.={begin}')
+            prefix: str = self.prop["prefix"]
+            prefix_len: int = len(prefix)
+            digits: int = self.prop["sequence_digits"]
+            begin: int  = self.sequence if self.sequence > self.prop["sequence_begin"] else self.prop["sequence_begin"]
+            # self._debug_print(f"Sequence No.={begin}")
 
-            filename = f'{prefix}{begin:0>{digits}}.png'
+            filename = f"{prefix}{begin:0>{digits}}.png"
             if os.path.exists(os.path.join(path, filename)):
                 # 現在のシーケンス番号のファイルが存在した場合、空きを探す
-                ptn:str = rf'{prefix}\d{{{digits}}}\.png'
-                files:list[str] = scan_directory(path, ptn, False)
+                ptn: str = rf"{prefix}\d{{{digits}}}\.png"
+                files: list[str] = scan_directory(path, ptn, False)
                 if not files:
                     # 存在しない -> プレフィックス＋開始番号
-                    # self._debug_print('Sequencial file not found.')
-                    filename = f'{prefix}{begin:0>{digits}}.png'
+                    # self._debug_print("Sequencial file not found.")
+                    filename = f"{prefix}{begin:0>{digits}}.png"
                 else:
                     # ToDo: 保存フォルダからprefix+sequencial_no(digits)のファイル名の一覧を取得し、次のファイル名を決定する
                     # ファイル名からシーケンス番号のlistを作る
-                    nums:list[int] = [int(os.path.basename(file)[prefix_len:prefix_len + digits]) for file in files]
-                    # self._debug_print(f'Sequencial No. list is {nums}')
+                    nums: list[int] = [int(os.path.basename(file)[prefix_len:prefix_len + digits]) for file in files]
+                    # self._debug_print(f"Sequencial No. list is {nums}")
                     # 空きを確認
-                    snos:list[int] = [y - 1 for x, y in zip(nums, nums[1:]) if x != y - 1 and y - 1 >= begin]
+                    snos: list[int] = [y - 1 for x, y in zip(nums, nums[1:]) if x != y - 1 and y - 1 >= begin]
                     # 空きがなければシーケンス番号の最大値+1
                     begin = snos[0] if snos else nums[len(nums) - 1] + 1
-                    # self._debug_print(f'Sequence No. changed to {begin}')
-                    filename = f'{prefix}{begin:0>{digits}}.png'
+                    # self._debug_print(f"Sequence No. changed to {begin}")
+                    filename = f"{prefix}{begin:0>{digits}}.png"
             # else:
-            #     self._debug_print(f'No duplicates "{filename}')
+            #     self._debug_print(f"No duplicates "{filename}")
 
             self.sequence = begin + 1   # 次回のシーケンス番号
-            # self._debug_print(f'Next sequence NO.={self.sequence}')
+            # self._debug_print(f"Next sequence No.={self.sequence}")
 
         return os.path.join(path, filename)
 
@@ -860,16 +869,16 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             none
         """
-        if self.prop['periodic_capture']:
+        if self.prop["periodic_capture"]:
             # ターゲットを取得
-            moni_no:int  = self.prop['periodic_target'] if self.prop['periodic_target'] != -1 else 90
-            filename:str = self.create_filename(True)
+            moni_no: int  = self.prop["periodic_target"] if self.prop["periodic_target"] != -1 else 90
+            filename: str = self.create_filename(True)
             self.req_queue.put((moni_no, filename))
             wx.CallAfter(self.do_capture)
             # 次回を予約
-            wx.CallLater(self.prop['periodic_interval_ms'], self.do_periodic)
+            wx.CallLater(self.prop["periodic_interval_ms"], self.do_periodic)
 
-    def copy_to_clipboard(self, id:int, from_menu:bool = True):
+    def copy_to_clipboard(self, id: int, from_menu: bool = True):
         """キャプチャー要求処理（Clipboardコピー）
         * メニューとホット・キーイベントから呼ばれる
         Args:
@@ -878,14 +887,14 @@ class MyScreenShot(TaskBarIcon):
             none
         """
         # ターゲット取得
-        moni_no:int = 90 if id == self.ID_MENU_ACTIVE_CB else (id - self.ID_MENU_SCREEN0_CB)
-        self.req_queue.put((moni_no, ''))
+        moni_no: int = 90 if id == self.ID_MENU_ACTIVE_CB else (id - self.ID_MENU_SCREEN0_CB)
+        self.req_queue.put((moni_no, ""))
         # 遅延時間算出（遅延キャプチャー以外でメニュー経由は"BASE_DELAY_TIME"遅延させる）
-        delay_ms:int = self.prop['delayed_time_ms'] if self.prop['delayed_capture'] else 0 if not from_menu else self.BASE_DELAY_TIME
+        delay_ms: int = self.prop["delayed_time_ms"] if self.prop["delayed_capture"] else 0 if not from_menu else self.BASE_DELAY_TIME
         # キャプチャー実行
         wx.CallLater(delay_ms, self.do_capture)
 
-    def save_to_imagefile(self, id:int):
+    def save_to_imagefile(self, id: int, from_menu: bool = True):
         """キャプチャー要求処理（PNGファイル保存）
         * メニューとホット・キーイベントから呼ばれる
         Args:
@@ -894,14 +903,14 @@ class MyScreenShot(TaskBarIcon):
             none
         """
         # ターゲット取得
-        moni_no:int = 90 if id == self.ID_MENU_ACTIVE else (id - self.ID_MENU_SCREEN0)
+        moni_no: int = 90 if id == self.ID_MENU_ACTIVE else (id - self.ID_MENU_SCREEN0)
         # 保存ファイル名生成
-        filename:str = self.create_filename(self.prop['periodic_capture'])
+        filename: str = self.create_filename(self.prop["periodic_capture"])
         if len(filename) == 0:
             return
 
         self.req_queue.put((moni_no, filename))
-        delay_ms:int = self.prop['delayed_time_ms'] if self.prop['delayed_capture'] else self.BASE_DELAY_TIME
+        delay_ms: int = self.prop["delayed_time_ms"] if self.prop["delayed_capture"] else 0 if not from_menu else self.BASE_DELAY_TIME
         # キャプチャー実行
         wx.CallLater(delay_ms, self.do_capture)
 
@@ -1204,15 +1213,15 @@ class SettingsDialog(wx.Dialog):
         """自動保存フォルダの追加
         """
         if self.list_box_auto_save_folders.Count >= self.MAX_SAVE_FOLDERS:
-            wx.MessageBox(f'{self.MAX_SAVE_FOLDERS}以上は登録できません。', '警告', wx.ICON_WARNING)
+            wx.MessageBox(f"{self.MAX_SAVE_FOLDERS}以上は登録できません。", "警告", wx.ICON_WARNING)
         else:
-            defaultPath:str = os.getcwd()
-            agwstyle:int = MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST
+            defaultPath: str = os.getcwd()
+            agwstyle: int = MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST
             with MDD.MultiDirDialog(None, title="フォルダの追加", defaultPath=defaultPath, agwStyle=agwstyle) as dlg:
                 if dlg.ShowModal() != wx.ID_OK:
                     return
                 # 選択されたフォルダをListBoxに追加する
-                paths:list = dlg.GetPaths()
+                paths: list = dlg.GetPaths()
                 for folder in paths:
                     self.list_box_auto_save_folders.Append(folder)
         event.Skip()
@@ -1220,10 +1229,10 @@ class SettingsDialog(wx.Dialog):
     def on_save_folder_del(self, event):  # wxGlade: SettingsDialog.<event_handler>
         """自動保存フォルダの削除
         """
-        count:int = self.list_box_auto_save_folders.Count
-        index:int = self.list_box_auto_save_folders.GetSelection()
+        count: int = self.list_box_auto_save_folders.Count
+        index: int = self.list_box_auto_save_folders.GetSelection()
         if not (count > 0 and index != wx.NOT_FOUND):
-            wx.MessageBox('フォルダが無いか、選択されていません。', '警告', wx.ICON_WARNING)
+            wx.MessageBox("フォルダが無いか、選択されていません。", "警告", wx.ICON_WARNING)
         else:
             self.list_box_auto_save_folders.Delete(index)
             # ひとつ前のフォルダを選択状態にする
@@ -1235,13 +1244,13 @@ class SettingsDialog(wx.Dialog):
     def on_save_folder_move(self, event):  # wxGlade: SettingsDialog.<event_handler>
         """自動保存フォルダの移動（上下）
         """
-        count:int = self.list_box_auto_save_folders.Count
-        index:int = self.list_box_auto_save_folders.GetSelection()
+        count: int = self.list_box_auto_save_folders.Count
+        index: int = self.list_box_auto_save_folders.GetSelection()
         if not (count > 0 and index != wx.NOT_FOUND):
-            wx.MessageBox('フォルダが無いか、選択されていません。', '警告', wx.ICON_WARNING)
+            wx.MessageBox("フォルダが無いか、選択されていません。", "警告", wx.ICON_WARNING)
         else:
-            move:int = 0
-            movable:bool = False
+            move: int = 0
+            movable: bool = False
 
             if event.GetId() == self.BTN_ID_UP:
                 move = -1
@@ -1251,7 +1260,7 @@ class SettingsDialog(wx.Dialog):
                 movable = True if index < (count - 1) else False
 
             if movable:
-                folder:str = self.list_box_auto_save_folders.GetString(index)
+                folder: str = self.list_box_auto_save_folders.GetString(index)
                 self.list_box_auto_save_folders.Delete(index)
                 self.list_box_auto_save_folders.Insert(folder, index + move)
                 self.list_box_auto_save_folders.SetSelection(index + move)
@@ -1272,84 +1281,84 @@ class SettingsDialog(wx.Dialog):
                 pass
         event.Skip()
 
-    def set_prop(self, prop:dict):
+    def set_prop(self, prop: dict):
         """設定値をコントロールに反映する
         """
         #--- 基本設定
         # 自動/手動
-        if prop['auto_save']:
+        if prop["auto_save"]:
             self.radio_btn_auto_save.SetValue(True)
         else:
             self.radio_btn_inquire_allways.SetValue(True)
         # 自動保存フォルダ
-        for folder in prop['save_folders']:
+        for folder in prop["save_folders"]:
             self.list_box_auto_save_folders.Append(folder)
-        self.list_box_auto_save_folders.SetSelection(prop['save_folder_index'])
+        self.list_box_auto_save_folders.SetSelection(prop["save_folder_index"])
         # ナンバリング
-        if prop['numbering'] == 0:
+        if prop["numbering"] == 0:
             self.radio_btn_numbering_datetime.SetValue(True)
         else:
             self.radio_btn_nubering_prefix_sequence.SetValue(True)
         # 接頭語/シーケンス桁数/開始番号
-        self.text_ctrl_prefix.SetValue(prop['prefix'])
-        self.spin_ctrl_sequence_digits.SetValue(prop['sequence_digits'])
-        self.spin_ctrl_sequence_begin.SetValue(prop['sequence_begin'])
+        self.text_ctrl_prefix.SetValue(prop["prefix"])
+        self.spin_ctrl_sequence_digits.SetValue(prop["sequence_digits"])
+        self.spin_ctrl_sequence_begin.SetValue(prop["sequence_begin"])
         #--- その他の設定
         # マスカーソルをキャプチャーする/キャプチャー終了時に音を鳴らす
-        self.checkbox_capture_mcursor.SetValue(prop['capture_mcursor'])
-        self.checkbox_sound_on_capture.SetValue(prop['sound_on_capture'])
+        self.checkbox_capture_mcursor.SetValue(prop["capture_mcursor"])
+        self.checkbox_sound_on_capture.SetValue(prop["sound_on_capture"])
         # 遅延キャプチャー
-        self.checkbox_delayed_capture.SetValue(prop['delayed_capture'])
-        self.spin_ctrl_delayed_time.SetValue(prop['delayed_time'])
+        self.checkbox_delayed_capture.SetValue(prop["delayed_capture"])
+        self.spin_ctrl_delayed_time.SetValue(prop["delayed_time"])
         # トリミング
-        self.checkbox_trimming.SetValue(prop['trimming'])
-        self.spin_ctrl_trimming_top.SetValue(prop['trimming_size'][0])
-        self.spin_ctrl_trimming_bottom.SetValue(prop['trimming_size'][1])
-        self.spin_ctrl_trimming_left.SetValue(prop['trimming_size'][2])
-        self.spin_ctrl_trimming_right.SetValue(prop['trimming_size'][3])
+        self.checkbox_trimming.SetValue(prop["trimming"])
+        self.spin_ctrl_trimming_top.SetValue(prop["trimming_size"][0])
+        self.spin_ctrl_trimming_bottom.SetValue(prop["trimming_size"][1])
+        self.spin_ctrl_trimming_left.SetValue(prop["trimming_size"][2])
+        self.spin_ctrl_trimming_right.SetValue(prop["trimming_size"][3])
         # ホット・キー
-        if prop['hotkey_clipboard'] == 0:
+        if prop["hotkey_clipboard"] == 0:
             self.radio_btn_hotkey_bmp_ctrl_alt.SetValue(True)
             self.radio_btn_hotkey_png_ctrl_shift.SetValue(True)
         else:
             self.radio_btn_hotkey_bmp_ctrl_shift.SetValue(True)
             self.radio_btn_hotkey_png_ctrl_alt.SetValue(True)
         # ターゲット
-        self.choice_hotkey_active_window.SetSelection(prop['hotkey_activewin'])
+        self.choice_hotkey_active_window.SetSelection(prop["hotkey_activewin"])
         # その他
-        self.MAX_SAVE_FOLDERS = prop['MAX_SAVE_FOLDERS']
+        self.MAX_SAVE_FOLDERS = prop["MAX_SAVE_FOLDERS"]
 
-    def get_prop(self, prop:dict):
+    def get_prop(self, prop: dict):
         """設定値をプロパティに反映する
         """
         #--- 基本設定
         # 自動/手動
-        prop['auto_save'] = self.radio_btn_auto_save.GetValue()
+        prop["auto_save"] = self.radio_btn_auto_save.GetValue()
         # 自動保存フォルダ
-        prop['save_folders'].clear()
+        prop["save_folders"].clear()
         for folder in self.list_box_auto_save_folders.Items:
-            prop['save_folders'].append(folder)
-        prop['save_folder_index'] = self.list_box_auto_save_folders.GetSelection()
+            prop["save_folders"].append(folder)
+        prop["save_folder_index"] = self.list_box_auto_save_folders.GetSelection()
         # ナンバリング
         if self.radio_btn_numbering_datetime.GetValue():
-            prop['numbering'] = 0
+            prop["numbering"] = 0
         else:
-            prop['numbering'] = 1
+            prop["numbering"] = 1
         # 接頭語/シーケンス桁数/開始番号
-        prop['prefix'] = self.text_ctrl_prefix.GetValue()
-        prop['sequence_digits'] = self.spin_ctrl_sequence_digits.GetValue()
-        prop['sequence_begin']  = self.spin_ctrl_sequence_begin.GetValue()
+        prop["prefix"] = self.text_ctrl_prefix.GetValue()
+        prop["sequence_digits"] = self.spin_ctrl_sequence_digits.GetValue()
+        prop["sequence_begin"]  = self.spin_ctrl_sequence_begin.GetValue()
         #--- その他の設定
         # マスカーソルをキャプチャーする/キャプチャー終了時に音を鳴らす
-        prop['capture_mcursor']  = self.checkbox_capture_mcursor.GetValue()
-        prop['sound_on_capture'] = self.checkbox_sound_on_capture.GetValue()
+        prop["capture_mcursor"]  = self.checkbox_capture_mcursor.GetValue()
+        prop["sound_on_capture"] = self.checkbox_sound_on_capture.GetValue()
         # 遅延キャプチャー
-        prop['delayed_capture'] = self.checkbox_delayed_capture.GetValue()
-        prop['delayed_time']    = self.spin_ctrl_delayed_time.GetValue()
-        prop['delayed_time_ms'] = prop['delayed_time'] * 1000
+        prop["delayed_capture"] = self.checkbox_delayed_capture.GetValue()
+        prop["delayed_time"]    = self.spin_ctrl_delayed_time.GetValue()
+        prop["delayed_time_ms"] = prop["delayed_time"] * 1000
         # トリミング
-        prop['trimming'] = self.checkbox_trimming.GetValue()
-        prop['trimming_size'] = [
+        prop["trimming"] = self.checkbox_trimming.GetValue()
+        prop["trimming_size"] = [
             self.spin_ctrl_trimming_top.GetValue(),
             self.spin_ctrl_trimming_bottom.GetValue(),
             self.spin_ctrl_trimming_left.GetValue(),
@@ -1357,13 +1366,13 @@ class SettingsDialog(wx.Dialog):
         ]
         # ホット・キー
         if self.radio_btn_hotkey_bmp_ctrl_alt.GetValue():
-            prop['hotkey_clipboard'] = 0
-            prop['hotkey_imagefile'] = 1
+            prop["hotkey_clipboard"] = 0
+            prop["hotkey_imagefile"] = 1
         else:
-            prop['hotkey_clipboard'] = 1
-            prop['hotkey_imagefile'] = 0
+            prop["hotkey_clipboard"] = 1
+            prop["hotkey_imagefile"] = 0
         # ターゲット
-        prop['hotkey_activewin'] = self.choice_hotkey_active_window.GetSelection()
+        prop["hotkey_activewin"] = self.choice_hotkey_active_window.GetSelection()
 
 # end of class SettingsDialog
 
@@ -1484,14 +1493,14 @@ class PeriodicDialog(wx.Dialog):
     def on_save_folder_browse(self, event):  # wxGlade: PeriodicDialog.<event_handler>
         """保存フォルダの選択
         """
-        defaultPath:str = self.text_ctrl_periodic_folder.GetValue()
+        defaultPath: str = self.text_ctrl_periodic_folder.GetValue()
         if len(defaultPath) == 0 or not os.path.exists(defaultPath):
             defaultPath = os.getcwd()
-        agwstyle:int = MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST
+        agwstyle: int = MDD.DD_MULTIPLE|MDD.DD_DIR_MUST_EXIST
         with MDD.MultiDirDialog(None, title="フォルダの選択", defaultPath=defaultPath, agwStyle=agwstyle) as dlg:
             if dlg.ShowModal() != wx.ID_OK:
                 return
-            paths:list = dlg.GetPaths()
+            paths: list = dlg.GetPaths()
             for folder in paths:
                 self.text_ctrl_periodic_folder.SetValue(folder)
         event.Skip()
@@ -1500,58 +1509,58 @@ class PeriodicDialog(wx.Dialog):
         self.EndModal(event.GetId())
         event.Skip()
 
-    def set_prop(self, prop:dict):
+    def set_prop(self, prop: dict):
         """設定値をコントロールに反映する
         """
         # 実行状態によるボタンの有効/無効設定
-        self.button_periodic_start.Enable(not prop['periodic_capture'])
-        self.button_periodic_stop.Enable(prop['periodic_capture'])
+        self.button_periodic_start.Enable(not prop["periodic_capture"])
+        self.button_periodic_stop.Enable(prop["periodic_capture"])
         # 保存フォルダ
-        self.text_ctrl_periodic_folder.SetValue(prop['periodic_save_folder'])
+        self.text_ctrl_periodic_folder.SetValue(prop["periodic_save_folder"])
         # 間隔
-        self.spin_ctrl_periodic_interval.SetValue(prop['periodic_interval'])
+        self.spin_ctrl_periodic_interval.SetValue(prop["periodic_interval"])
         # 停止キー（修飾キー）
-        self.choice_periodic_stopkey_modifire.SetSelection(prop['periodic_stop_modifier'])
-        self.choice_periodic_stop_fkey.SetSelection(prop['periodic_stop_fkey'])
+        self.choice_periodic_stopkey_modifire.SetSelection(prop["periodic_stop_modifier"])
+        self.choice_periodic_stop_fkey.SetSelection(prop["periodic_stop_fkey"])
         # ターゲット
-        for i in range(prop['display']):
-            item: str = f'ディスプレイ {i + 1}'
+        for i in range(prop["display"]):
+            item: str = f"ディスプレイ {i + 1}"
             self.choice_periodic_capture_target.Insert(item, self.choice_periodic_capture_target.GetCount() - 1)
-        if prop['periodic_target'] == -1:
+        if prop["periodic_target"] == -1:
             self.choice_periodic_capture_target.SetSelection(self.choice_periodic_capture_target.GetCount() - 1)
         else:
-            self.choice_periodic_capture_target.SetSelection(prop['periodic_target'])
+            self.choice_periodic_capture_target.SetSelection(prop["periodic_target"])
         # ナンバリング
-        if prop['periodic_numbering'] == 0:
+        if prop["periodic_numbering"] == 0:
             self.radio_btn_periodic_numbering_datetime.SetValue(True)
         else:
             self.radio_btn_periodic_numbering_autosave.SetValue(True)
 
-    def get_prop(self, prop:dict):
+    def get_prop(self, prop: dict):
         """設定値をプロパティに反映する
         """
         # 実行状態によるボタンの有効/無効設定
-        self.button_periodic_start.Enable(not prop['periodic_capture'])
-        self.button_periodic_stop.Enable(prop['periodic_capture'])
+        self.button_periodic_start.Enable(not prop["periodic_capture"])
+        self.button_periodic_stop.Enable(prop["periodic_capture"])
         # 保存フォルダ
-        prop['periodic_save_folder'] = self.text_ctrl_periodic_folder.GetValue()
+        prop["periodic_save_folder"] = self.text_ctrl_periodic_folder.GetValue()
         # 間隔
-        prop['periodic_interval'] = self.spin_ctrl_periodic_interval.GetValue()
-        prop['periodic_interval_ms'] = prop['periodic_interval'] * 1000
+        prop["periodic_interval"] = self.spin_ctrl_periodic_interval.GetValue()
+        prop["periodic_interval_ms"] = prop["periodic_interval"] * 1000
         # 停止キー（修飾キー）
-        prop['periodic_stop_modifier'] = self.choice_periodic_stopkey_modifire.GetSelection()
-        prop['periodic_stop_fkey']     = self.choice_periodic_stop_fkey.GetSelection()
+        prop["periodic_stop_modifier"] = self.choice_periodic_stopkey_modifire.GetSelection()
+        prop["periodic_stop_fkey"]     = self.choice_periodic_stop_fkey.GetSelection()
         # ターゲット
         index: int = self.choice_periodic_capture_target.GetSelection()
         if index == (self.choice_periodic_capture_target.GetCount() - 1):
-            prop['periodic_target'] = -1
+            prop["periodic_target"] = -1
         else:
-            prop['periodic_target'] = index
+            prop["periodic_target"] = index
         # ナンバリング
         if self.radio_btn_periodic_numbering_datetime.GetValue():
-            prop['periodic_numbering'] = 0
+            prop["periodic_numbering"] = 0
         else:
-            prop['periodic_numbering'] = 1
+            prop["periodic_numbering"] = 1
 
 # end of class PeriodicDialog
 
@@ -1584,9 +1593,9 @@ def app_init() -> bool:
     global _MY_PICTURES
 
     # コマンドラインパラメータ解析（デバッグオプションのみ）
-    parser = argparse.ArgumentParser(description='My ScreenSHot Tool.')
-    parser.add_argument('--debug', action='store_true', help='Debug mode.')
-    parser.add_argument('--disable-hotkeys', action='store_true', help='Disable Hot Keys.')
+    parser = argparse.ArgumentParser(description="My ScreenSHot Tool.")
+    parser.add_argument("--debug", action="store_true", help="Debug mode.")
+    parser.add_argument("--disable-hotkeys", action="store_true", help="Disable Hot Keys.")
     # 解析結果
     args = parser.parse_args()
     _debug_mode = args.debug
@@ -1596,7 +1605,7 @@ def app_init() -> bool:
     base_path, _NO_CONSOLE = get_running_path()
     # 実行ファイルPATHを設定
     _EXE_PATH = os.path.dirname(sys.argv[0])
-    _EXE_PATH = '.' + os.sep if len(_EXE_PATH) == 0 else _EXE_PATH
+    _EXE_PATH = "." + os.sep if len(_EXE_PATH) == 0 else _EXE_PATH
     # 設定ファイルは実行ファイル（スクリプト）ディレクトリ下
     _CONFIG_FILE = os.path.join(_EXE_PATH, _CONFIG_FILE)
     if not os.path.exists(_CONFIG_FILE):
@@ -1604,7 +1613,7 @@ def app_init() -> bool:
         config = configparser.ConfigParser()
         config.read_dict(mydef._CONFIG_DEFAULT)
         try:
-            with open(_CONFIG_FILE, 'w') as fc:
+            with open(_CONFIG_FILE, "w") as fc:
                 config.write(fc)
 
         except OSError as e:

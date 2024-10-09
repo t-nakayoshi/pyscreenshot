@@ -4,14 +4,14 @@
 """ version.py
 バージョン情報
 """
-app_name = 'PyScreenShot'
-author   = 't-nakayoshi (Takayoshi Tagawa)'
+app_name: str = "PyScreenShot"
+author: str = "t-nakayoshi (Takayoshi Tagawa)"
 
-file_description = 'PyScreenShot スクリーンショットアプリケーション'
-file_version = '1.0.5.0'
-product_name = f"Nakayoshi's {app_name}"
-product_version = '1.0.5'
-copy_right = f'(C) 2024-, {author}. All right reserved.'
+file_description: str = "PyScreenShot スクリーンショットアプリケーション"
+file_version: str = "1.0.5.0"
+product_name: str = f"{app_name}"
+product_version: str = "1.0.5"
+copy_right: str = f"(C) 2024-, {author}. All right reserved."
 
-version  = product_version
-license = 'MIT License'
+version: str = product_version
+license: str = "MIT License"

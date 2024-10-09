@@ -1,16 +1,21 @@
-import time
 import datetime
-from win32gui import GetWindowText, GetForegroundWindow, GetWindowRect
+import time
 
-def remove_unsupported_characters(string, encoding = 'cp932'):
+from win32gui import GetForegroundWindow, GetWindowRect, GetWindowText
+
+
+def remove_unsupported_characters(string, encoding="cp932"):
     # From string, remove characters which is not supported by specified encoding.
-    return string.encode(encoding, errors='ignore').decode(encoding)
+    return string.encode(encoding, errors="ignore").decode(encoding)
+
 
 def get_active_window_title(hwnd: int) -> str:
     return GetWindowText(hwnd)
 
+
 def get_active_windows_rect(hwnd: int) -> tuple:
     return GetWindowRect(hwnd)
+
 
 def get_log_string(title: str, message: str, rect: tuple) -> str:
     title = remove_unsupported_characters(title)
@@ -18,18 +23,23 @@ def get_log_string(title: str, message: str, rect: tuple) -> str:
         title = f"{title} "
     return f"* {datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')} {title}{message} {rect}"
 
+
 def format_date():
     return datetime.datetime.today().strftime("%Y%m%d")
+
 
 def get_log_filename(date):
     return date + "-Window_Log.md"
 
-def log_active_window(verbose = False, message = '', prev_title = None, filename = get_log_filename(format_date())):
+
+def log_active_window(
+    verbose=False, message="", prev_title=None, filename=get_log_filename(format_date())
+):
     hwnd = GetForegroundWindow()
     title = get_active_window_title(hwnd)
     rect = get_active_windows_rect(hwnd)
 
-    if (prev_title == title):
+    if prev_title == title:
         return title
     out = get_log_string(title, message, rect)
     if verbose:
@@ -37,6 +47,7 @@ def log_active_window(verbose = False, message = '', prev_title = None, filename
     with open(filename, "a", encoding="UTF-8", errors="ignore") as f:
         f.write(out + "\n")
     return title
+
 
 def keep_logging(interval, skip_duplicate, verbose, message):
     """
@@ -65,28 +76,48 @@ def keep_logging(interval, skip_duplicate, verbose, message):
                 prev_title = title
             time.sleep(interval)
 
-if __name__ == '__main__':
-    import argparse, sys
+
+if __name__ == "__main__":
+    import argparse
+    import sys
+
     parser = argparse.ArgumentParser()
-    parser.add_argument('-k', '--keep_logging',
-            help='if this argument is set, keep logging',
-            action='store_true', default=False)
-    parser.add_argument('-i', '--interval',
-            help='set interval of logging in seconds. default interval is 120',
-            type=int, default=120)
-    parser.add_argument('-s', '--skip_duplicate',
-            help='if this argument is set, skip logging of duplicated title',
-            action='store_true', default=False)
-    parser.add_argument('-v', '--verbose',
-            action='store_true', default=False,
-            help='show log to standard output also')
-    parser.add_argument('message', nargs='*', default=[],
-            help='addtional message stored with window title')
+    parser.add_argument(
+        "-k",
+        "--keep_logging",
+        help="if this argument is set, keep logging",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "-i",
+        "--interval",
+        help="set interval of logging in seconds. default interval is 120",
+        type=int,
+        default=120,
+    )
+    parser.add_argument(
+        "-s",
+        "--skip_duplicate",
+        help="if this argument is set, skip logging of duplicated title",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        default=False,
+        help="show log to standard output also",
+    )
+    parser.add_argument(
+        "message", nargs="*", default=[], help="addtional message stored with window title"
+    )
     args = parser.parse_args()
     if not sys.stdout:
         # this will happen when script is invoked by pythonw.
         args.verbose = False
-    message = ' '.join(args.message)
+    message = " ".join(args.message)
     if args.keep_logging:
         keep_logging(args.interval, args.skip_duplicate, args.verbose, message)
     else:
