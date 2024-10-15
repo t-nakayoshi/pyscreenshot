@@ -14,12 +14,13 @@
     get_running_path    実行時ディレクトリとコンソールの有無を取得する
     scan_directory      指定ディレクト内のファイル一覧を取得する（拡張子のフィルタリングあり）
     is_abort            中断問い合わせ
+    strtobool(val)      bool型に変換
 
 ToDo:
     *
 
 """
-__version__ = "1.2.1"
+__version__ = "1.3.0"
 __author__ = "t-nakayoshi (Takayoshi Tagawa)"
 
 import argparse
@@ -27,7 +28,6 @@ import os
 import platform
 import re
 import sys
-from typing import Union
 
 _PS1_FILE: str = r".\myFolders.ps1"
 _PS1_SCRIPT: str = """#
@@ -76,12 +76,14 @@ def get_special_directory() -> tuple[str, str, str, str, str]:
         folders: list = os.popen(rf"{shell} {_PS1_FILE}").read().rstrip("\n").split("\n")
     else:
         import glib  # type: ignore
+
         folders: list = [
             glib.get_user_special_dir(glib.USER_DIRECTORY_DOCUMENTS),
-            glib.get_user_special_dir(glib.USER_DIRECTORY_MUSIC).
-            glib.get_user_special_dir(glib.USER_DIRECTORY_PICTURES),
+            glib.get_user_special_dir(glib.USER_DIRECTORY_MUSIC).glib.get_user_special_dir(
+                glib.USER_DIRECTORY_PICTURES
+            ),
             glib.get_user_special_dir(glib.USER_DIRECTORY_VIDEOS),
-            glib.get_user_special_dir(glib.USER_DIRECTORY_DOWNLOAD)
+            glib.get_user_special_dir(glib.USER_DIRECTORY_DOWNLOAD),
         ]
 
     return tuple(folders)
@@ -101,14 +103,13 @@ def get_running_path() -> tuple[str, bool]:
     """
     # 実行時ディレクトリを取得
     try:
-        """EXE化した場合のTenporary実行時ディレクトリを取得
-        """
-        base_path:str = sys._MEIPASS    # type: ignore
+        """EXE化した場合のTenporary実行時ディレクトリを取得"""
+        base_path: str = sys._MEIPASS  # type: ignore
     except:
         # スクリプト実行パスを取得
-        base_path:str = os.path.dirname(__file__)
+        base_path: str = os.path.dirname(__file__)
 
-    no_console:bool = False
+    no_console: bool = False
     if sys.stderr.fileno() != 2:
         no_console = True
 
@@ -116,29 +117,26 @@ def get_running_path() -> tuple[str, bool]:
 
 
 class IsFileAction(argparse.Action):
-    """ファイルが存在するか確認するAction
-    """
+    """ファイルが存在するか確認するAction"""
+
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
-        """`__call__`メソッドで受け取る`values`がリストでないことをチェック（`nargs`を制限）
-        """
+        """`__call__`メソッドで受け取る`values`がリストでないことをチェック（`nargs`を制限）"""
         if nargs is not None and nargs != "?":
             raise ValueError("Invalid `nargs`: multiple arguments not allowed.")
         super(IsFileAction, self).__init__(option_strings, dest, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
-        """ファイルが存在しなければエラー
-        """
+        """ファイルが存在しなければエラー"""
         if not os.path.isfile(str(values)):
             parser.error(f"File not found. ({values})")
         setattr(namespace, self.dest, values)
 
 
 class IsDirAction(argparse.Action):
-    """ディレクトリが存在するか確認するAction
-    """
+    """ディレクトリが存在するか確認するAction"""
+
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
-        """`__call__`メソッドで受け取る`values`がリストでないことをチェック（`nargs`を制限）
-        """
+        """`__call__`メソッドで受け取る`values`がリストでないことをチェック（`nargs`を制限）"""
         if nargs is not None and nargs != "?":
             raise ValueError("Invalid `nargs`: multiple arguments not allowed.")
         super(IsDirAction, self).__init__(option_strings, dest, **kwargs)
@@ -151,18 +149,17 @@ class IsDirAction(argparse.Action):
 
 
 class IsParentAction(argparse.Action):
-    """親ディレクトリが存在するか確認するAction
-    """
-    def __init__(self, option_strings, dest, nargs = None, **kwargs):
-        """`__call__`メソッドで受け取る`values`がリストでないことをチェック（`nargs`を制限）
-        """
+    """親ディレクトリが存在するか確認するAction"""
+
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        """`__call__`メソッドで受け取る`values`がリストでないことをチェック（`nargs`を制限）"""
         if nargs is not None and nargs != "?":
             raise ValueError("Invalid `nargs`: multiple arguments not allowed.")
         super(IsParentAction, self).__init__(option_strings, dest, **kwargs)
 
-    def __call__(self, parser, namespace, values, option_string = None):
+    def __call__(self, parser, namespace, values, option_string=None):
         """親ディレクトリが存在しなければエラー"""
-        parent:str = os.path.dirname(str(values))
+        parent: str = os.path.dirname(str(values))
         if len(parent) == 0:
             parent = ".."
         if not os.path.isdir(parent):
@@ -218,7 +215,7 @@ def is_abort() -> bool:
         return False
 
 
-def atof(text: str) -> Union[float, str]:
+def atof(text: str) -> float | str:
     """浮動小数変換(数値ソート向け)"""
     try:
         retval = float(text)
@@ -235,3 +232,19 @@ def natural_keys(text: str):
     float regex comes from https://stackoverflow.com/a/12643073/190597
     """
     return [atof(c) for c in re.split(r"[+-]?([0-9]+(?:[.][0-9]*)?|[.][0-9]+)", text)]
+
+
+def strtobool(val) -> bool:
+    """Convert a string representation of truth to true (1) or false (0).
+
+    True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
+    are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
+    'val' is anything else.
+    """
+    val = val.lower()
+    if val in ("y", "yes", "t", "true", "on", "1"):
+        return True
+    elif val in ("n", "no", "f", "false", "off", "0"):
+        return False
+    else:
+        raise ValueError("invalid truth value {!r}".format(val))
