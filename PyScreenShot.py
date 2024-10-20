@@ -3,8 +3,6 @@
 #
 """ PyScreenShot
 スクリーンショットアプリケーション
-* 
-* 
 """
 import argparse
 import configparser

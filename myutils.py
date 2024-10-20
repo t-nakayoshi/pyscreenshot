@@ -20,7 +20,7 @@ ToDo:
     *
 
 """
-__version__ = "1.3.0"
+__version__ = "1.3.1"
 __author__ = "t-nakayoshi (Takayoshi Tagawa)"
 
 import argparse
@@ -167,33 +167,39 @@ class IsParentAction(argparse.Action):
         setattr(namespace, self.dest, values)
 
 
-def scan_directory(directory: str, ptn: str = "", recursive: bool = True) -> list[str]:
+def scan_directory(dir_path: str, pattern: str = "", recursive: bool = True) -> list[str]:
     """ファイルの抽出
     指定ディレクトリ内のファイルをリストアップする。（昇順）
     Args:
-        directory: ディレクトリ名
-        ptn (str) : ファイル名フィルタ（正規表現）
+        dir_path (str): ディレクトリ名
+        pattern (str): ファイル名フィルタ（正規表現文字列）
         recursive (bool): 再帰検索フラグ（True=再帰）
     Returns:
         list: ファイル名のリスト
     Exsamples:
         >>> files = scan_directory("abc")
     """
-    files: list[str] = []
-    reg = None
-    if len(ptn) > 0:
-        reg = re.compile(ptn)
+    regex = re.compile(pattern) if len(pattern) > 0 else None
+    if regex is not None:
+        files = [
+            os.path.join(dir_path, f)
+            for f in os.listdir(dir_path)
+            if os.path.isfile(os.path.join(dir_path, f)) and regex.search(f, re.IGNORECASE)
+        ]
+    else:
+        files = [
+            os.path.join(dir_path, f)
+            for f in os.listdir(dir_path)
+            if os.path.isfile(os.path.join(dir_path, f))
+        ]
 
-    for f in os.listdir(directory):
-        child: str = os.path.join(directory, f)
-        if os.path.isdir(child) and recursive:
-            files += scan_directory(child, ptn)
-        elif os.path.isfile(child):
-            if reg is None:
-                files.append(child)
-            else:
-                if reg.search(child, re.IGNORECASE):
-                    files.append(child)
+    if recursive:
+        for dir in [
+            os.path.join(dir_path, f)
+            for f in os.listdir(dir_path)
+            if os.path.isdir(os.path.join(dir_path, f))
+        ]:
+            files += scan_directory(dir, pattern)
 
     if files:
         files.sort(key=natural_keys)
