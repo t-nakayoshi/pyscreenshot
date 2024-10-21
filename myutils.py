@@ -20,7 +20,7 @@ ToDo:
     *
 
 """
-__version__ = "1.3.1"
+__version__ = "1.3.2"
 __author__ = "t-nakayoshi (Takayoshi Tagawa)"
 
 import argparse
@@ -143,7 +143,8 @@ class IsDirAction(argparse.Action):
 
     def __call__(self, parser, namespace, values, option_string=None):
         """ディレクトリが存在しなければエラー"""
-        if not os.path.isdir(str(values)):
+        dir, _ = os.path.split(str(values))
+        if not os.path.isdir("." if len(dir) == 0 else dir):
             parser.error(f"Directory not found. ({values})")
         setattr(namespace, self.dest, values)
 
