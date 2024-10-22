@@ -6,7 +6,7 @@
 """
 from wx.tools import img2py
 
-from res.res_func import convert_base64
+from myutils.res_func import convert_base64
 
 
 def create_resource(resource_files: list, filename: str):

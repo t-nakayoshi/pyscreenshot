@@ -1,0 +1,3 @@
+[submodule "myutils"]
+	path = myutils
+	url = https://takayoshi-t@bitbucket.org/takayoshi-t/myutils.git
