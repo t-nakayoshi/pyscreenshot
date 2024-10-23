@@ -7,6 +7,8 @@
 import argparse
 import configparser
 import io
+import logging
+import logging.handlers
 import os
 import sys
 from datetime import datetime
@@ -33,25 +35,21 @@ from wx.adv import (
 
 import mydefine as mydef
 import version as ver
-from myutils.util import platform_info, get_running_path, get_special_directory, scan_directory
+from myutils.util import (
+    get_special_directory,
+    platform_info,
+    scan_directory,
+)
 from res import app_icon, menu_image, sound
 
-# 実行ファイルパス
-_EXE_PATH: str = ""
-# リソースファイルパス（データファイルなど）
-_RESRC_PATH: str = ""
+logger = logging.getLogger(__name__)
+
 # 設定ファイルパス
 _CONFIG_FILE: str = f"{ver.app_name}.ini"
 # # ヘルプファイル（アプリからは未使用）
 # _HELP_FILE: str = "manual.html"
-# マイピクチャパス
-_MY_PICTURES: str = ""
 
 _TRAY_TOOLTIP: str = f"{ver.app_name} App"
-
-_NO_CONSOLE: bool = False
-_debug_mode: bool = False
-_disable_hotkeys: bool = False
 
 
 def create_menu_item(
@@ -187,6 +185,10 @@ class MyScreenShot(TaskBarIcon):
     BASE_DELAY_TIME: int = 400   # (ms)
     MAX_SAVE_FOLDERS: int = 64
     # fmt: on
+    MY_PICTURES: str = ""
+    #
+    debug_mode: bool = False
+    disable_hotkeys: bool = False
 
     def __init__(self, frame):
         self.frame = frame
@@ -241,11 +243,6 @@ class MyScreenShot(TaskBarIcon):
         # 初期処理
         self.initialize()
 
-    def _debug_print(self, message: str):
-        if not self.NO_CONSOLE and self.debug_mode:
-            ts: str = datetime.now().strftime("%Y/%m/%d %H%M%S.%f")[:-3]
-            sys.stdout.write(f"{ts} [debug]:{message}\n")
-
     def initialize(self):
         """初期処理
         * 各種設定値の初期化、設定読み込み、ディスプレイ情報の取得、等
@@ -254,16 +251,6 @@ class MyScreenShot(TaskBarIcon):
         Returns:
             none
         """
-        global _MY_PICTURES
-        global _NO_CONSOLE
-        global _debug_mode
-        global _disable_hotkeys
-
-        self.MY_PICTURES = _MY_PICTURES
-        self.NO_CONSOLE = _NO_CONSOLE
-        self.debug_mode = _debug_mode
-        self.disable_hotkeys = _disable_hotkeys
-
         # 動作環境情報取得
         self._platform_info: tuple = platform_info()
         # ディスプレイ数取得
@@ -344,7 +331,9 @@ class MyScreenShot(TaskBarIcon):
 
         # Hotkeyの登録（デスクトップ[0]、ディスプレイ[1～]、アクティブウィンドウ[last]）
         for n in range(len(self.menu_clipboard)):
-            # self._debug_print(f"Hotkey[{n}]={self.menu_clipboard[n][0]}, {self.menu_imagefile[n][0]}, id={self.menu_clipboard[n][1]}, {self.menu_imagefile[n][1]}")
+            logger.debug(
+                f"Hotkey[{n}]={self.menu_clipboard[n][0]}, {self.menu_imagefile[n][0]}, id={self.menu_clipboard[n][1]}, {self.menu_imagefile[n][1]}"
+            )
             keyboard.add_hotkey(
                 self.menu_clipboard[n][0],
                 wx.CallAfter,
@@ -681,7 +670,7 @@ class MyScreenShot(TaskBarIcon):
             none
         """
         moni_no, filename = self.req_queue.get()
-        # self._debug_print(f"do_capture {moni_no=}, {filename=}")
+        logger.debug(f"do_capture {moni_no=}, {filename=}")
         sct_img = None
         with mss.mss() as sct:
             if moni_no == 90:  # アクティブウィンドウ
@@ -711,8 +700,8 @@ class MyScreenShot(TaskBarIcon):
                         msg = "'Desktop'"
                     case _:
                         msg = f"'Display-{moni_no}'"
-                self._debug_print(
-                    f"Capture {msg} & {'copy clipboard' if len(filename) == 0 else 'save PNG file'}"
+                logger.debug(
+                    f"Capture {msg}  & {'copy clipboard' if len(filename) == 0 else 'save PNG file'}"
                 )
             """"""
             # トリミング（アクティブウィンドウ以外はトリミングしない）
@@ -725,7 +714,7 @@ class MyScreenShot(TaskBarIcon):
                 bottom: int = height - temp_bottom if height > temp_bottom else height
 
                 img = img.crop((left, top, right, bottom))
-                self._debug_print(f"Trimming ({top}, {left})-({right}, {bottom})")
+                logger.debug(f"Trimming ({top}, {left})-({right}, {bottom})")
 
             if len(filename) == 0:
                 # クリップボードへコピー
@@ -813,14 +802,14 @@ class MyScreenShot(TaskBarIcon):
                     )
                 ):
                     self.sequence = -1
-                    # self._debug_print("Reset sequence No.")
+                    logger.debug("Reset sequence No.")
                 # キャプチャーHotkeyが変更されたら再登録
                 if (
                     hotkey_clipboard != self.prop["hotkey_clipboard"]
                     or hotkey_activewin != self.prop["hotkey_activewin"]
                 ):
                     self.set_capture_hotkey()
-                    # self._debug_print("Change capture Hotkey.")
+                    logger.debug("Change capture Hotkey.")
 
     def on_menu_toggle_item(self, event):
         """クイック設定メニューイベントハンドラ
@@ -915,21 +904,21 @@ class MyScreenShot(TaskBarIcon):
                         and self.prop["numbering"] != 0
                     ):
                         self.sequence = -1
-                        # self._debug_print("Reset sequence No.")
+                        logger.debug("Reset sequence No.")
                     # 停止用Hotkeyが変更されたら再登録
                     if (
                         stop_modifier != self.prop["periodic_stop_modifier"]
                         or fkey != self.prop["periodic_stop_fkey"]
                     ):
                         self.set_periodic_stop_hotkey(True)
-                        # self._debug_print("Change periodic stop Hotkey.")
+                        logger.debug("Change periodic stop Hotkey.")
                 case wx.ID_EXECUTE:
-                    # self._debug_print("on_menu_periodic_settings closed 'Start'")
+                    logger.debug("on_menu_periodic_settings closed 'Start'")
                     # 実行開始
                     self.prop["periodic_capture"] = True
                     wx.CallLater(self.prop["periodic_interval_ms"], self.do_periodic)
                 case wx.ID_STOP:
-                    # self._debug_print("on_menu_periodic_settings closed 'Stop'")
+                    logger.debug("on_menu_periodic_settings closed 'Stop'")
                     # 実行停止
                     self.prop["periodic_capture"] = False
 
@@ -937,7 +926,7 @@ class MyScreenShot(TaskBarIcon):
         """定期実行停止処理"""
         # 実行停止
         self.prop["periodic_capture"] = False
-        # self._debug_print("Stop periodic capture")
+        logger.debug("Stop periodic capture")
         if self.prop["sound_on_capture"]:
             self._success.Play()
 
@@ -980,7 +969,7 @@ class MyScreenShot(TaskBarIcon):
                 if self.sequence > self.prop["sequence_begin"]
                 else self.prop["sequence_begin"]
             )
-            # self._debug_print(f"Sequence No.={begin}")
+            logger.debug(f"Sequence No.={begin}")
 
             filename = f"{prefix}{begin:0>{digits}}.png"
             if os.path.exists(os.path.join(path, filename)):
@@ -989,7 +978,7 @@ class MyScreenShot(TaskBarIcon):
                 files: list[str] = scan_directory(path, ptn, False)
                 if not files:
                     # 存在しない -> プレフィックス＋開始番号
-                    # self._debug_print("Sequencial file not found.")
+                    logger.debug("Sequencial file not found.")
                     filename = f"{prefix}{begin:0>{digits}}.png"
                 else:
                     # ToDo: 保存フォルダからprefix+sequencial_no(digits)のファイル名の一覧を取得し、次のファイル名を決定する
@@ -998,20 +987,20 @@ class MyScreenShot(TaskBarIcon):
                         int(os.path.basename(file)[prefix_len : prefix_len + digits])
                         for file in files
                     ]
-                    # self._debug_print(f"Sequencial No. list is {nums}")
+                    logger.debug(f"Sequencial No. list is {nums}")
                     # 空きを確認
                     snos: list[int] = [
                         y - 1 for x, y in zip(nums, nums[1:]) if x != y - 1 and y - 1 >= begin
                     ]
                     # 空きがなければシーケンス番号の最大値+1
                     begin = snos[0] if snos else nums[len(nums) - 1] + 1
-                    # self._debug_print(f"Sequence No. changed to {begin}")
+                    logger.debug(f"Sequence No. changed to {begin}")
                     filename = f"{prefix}{begin:0>{digits}}.png"
-            # else:
-            #     self._debug_print(f"No duplicates "{filename}")
+            else:
+                logger.debug(f"No duplicates '{filename}'")
 
             self.sequence = begin + 1  # 次回のシーケンス番号
-            # self._debug_print(f"Next sequence No.={self.sequence}")
+            logger.debug(f"Next sequence No.={self.sequence}")
 
         return os.path.join(path, filename)
 
@@ -1756,32 +1745,37 @@ def app_init() -> bool:
     Returns:
         none
     """
-    global _debug_mode
-    global _disable_hotkeys
     global _CONFIG_FILE
-    global _EXE_PATH
-    global _RESRC_PATH
-    global _NO_CONSOLE
-    global _MY_PICTURES
 
     # コマンドラインパラメータ解析（デバッグオプションのみ）
     parser = argparse.ArgumentParser(description="My ScreenSHot Tool.")
     parser.add_argument("--debug", action="store_true", help="Debug mode.")
     parser.add_argument("--disable-hotkeys", action="store_true", help="Disable Hot Keys.")
-    # 解析結果
+    # 解析結果を格納
     args = parser.parse_args()
-    _debug_mode = args.debug
-    _disable_hotkeys = args.disable_hotkeys
+    MyScreenShot.debug_mode = args.debug
+    MyScreenShot.disable_hotkeys = args.disable_hotkeys
+    # ログ設定
+    log_level = logging.DEBUG if args.debug else logging.INFO
+    logging.basicConfig(level=log_level)
+    handler = logging.handlers.TimedRotatingFileHandler(
+        filename=f"{ver.app_name}.log", when="D", encoding="utf-8"
+    )
+    FORMAT = "%(levelname)-9s %(asctime)s [%(filename)s:%(lineno)d] %(message)s"
+    handler.setFormatter(logging.Formatter(FORMAT))
+    logger.addHandler(handler)
 
-    # 実行ファイル展開PATHを取得
-    base_path, _NO_CONSOLE = get_running_path()
     # 実行ファイルPATHを設定
     _EXE_PATH = os.path.dirname(sys.argv[0])
     _EXE_PATH = "." + os.sep if len(_EXE_PATH) == 0 else _EXE_PATH
+    # マイピクチャのPATHを取得
+    MyScreenShot.MY_PICTURES = get_special_directory()[2]
+
     # 設定ファイルは実行ファイル（スクリプト）ディレクトリ下
     _CONFIG_FILE = os.path.join(_EXE_PATH, _CONFIG_FILE)
     if not os.path.exists(_CONFIG_FILE):
         # 設定ファイルが存在しない場合は、デフォルト設定で作成
+        logger.warning("設定ファイルがありません。デフォルト設定で作成します。")
         config = configparser.ConfigParser()
         config.read_dict(mydef._CONFIG_DEFAULT)
         try:
@@ -1789,11 +1783,9 @@ def app_init() -> bool:
                 config.write(fc)
 
         except OSError as e:
+            logger.warning("設定ファイルが作成できません。")
             return False
-    # リソースディレクトリは実行ディレクトリ下
-    _RESRC_PATH = os.path.join(base_path, _RESRC_PATH)
-    # マイピクチャのPATHを取得
-    _MY_PICTURES = get_special_directory()[2]
+
     return True
 
 
@@ -1802,5 +1794,9 @@ if __name__ == "__main__":
     if not app_init():
         sys.exit()
 
+    logger.info("=== Start ===")
+
     app = App(False)
     app.MainLoop()
+
+    logger.info("=== Finish ===")

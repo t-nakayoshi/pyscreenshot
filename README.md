@@ -17,6 +17,6 @@
 
 ## 著作権、ライセンス ##
 
-- img2icoの著作権は Takayoshi Tagawa にあります。
+- PyScreenShotの著作権は Takayoshi Tagawa にあります。
 - ライセンスは MIT-License です。
 - Python、Python package の著作権は、それぞれの開発者にあります。

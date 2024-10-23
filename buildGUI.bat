@@ -9,9 +9,9 @@
 --windows-icon-from-ico=./resource_data/ScreenShot.ico ^
 --company-name="Nakayoshi Studio" ^
 --file-description="PyScreenShot スクリーンショットアプリケーション" ^
---file-version=1.0.7.0 ^
+--file-version=1.0.8.0 ^
 --product-name="PyScreenShot" ^
---product-version=1.0.7 ^
+--product-version=1.0.8 ^
 --copyright="(C) 2024-, t-nakayoshi (Takayoshi Tagawa). All right reserved." ^
 --onefile ^
 --onefile-tempdir-spec="{TEMP}/{COMPANY}/{PRODUCT}" ^
