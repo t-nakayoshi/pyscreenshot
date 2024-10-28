@@ -2,10 +2,10 @@ Package      Version
 ------------ -------
 keyboard     0.13.5
 mss          9.0.2
-Nuitka       2.4.10
+Nuitka       2.4.11
 ordered-set  4.1.0
 pillow       11.0.0
-pip          24.2
+pip          24.3.1
 pip-licenses 5.0.0
 prettytable  3.11.0
 pynput       1.7.7

@@ -1,6 +1,6 @@
 keyboard==0.13.5
 mss==9.0.2
-Nuitka==2.4.10
+Nuitka==2.4.11
 ordered-set==4.1.0
 pillow==11.0.0
 pip-licenses==5.0.0
