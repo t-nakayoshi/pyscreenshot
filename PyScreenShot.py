@@ -45,11 +45,11 @@ from res import app_icon, menu_image, sound
 logger = logging.getLogger(__name__)
 
 # 設定ファイルパス
-_CONFIG_FILE: str = f"{ver.app_name}.ini"
+_CONFIG_FILE: str = f"{ver.INFO["APP_NAME"]}.ini"
 # # ヘルプファイル（アプリからは未使用）
 # _HELP_FILE: str = "manual.html"
 
-_TRAY_TOOLTIP: str = f"{ver.app_name} App"
+_TRAY_TOOLTIP: str = f"{ver.INFO["APP_NAME"]} App"
 
 
 def create_menu_item(
@@ -741,15 +741,15 @@ class MyScreenShot(TaskBarIcon):
         # Aboutダイアログに各種情報を設定する
         info = AboutDialogInfo()
         info.SetIcon(self._app_icons.GetIcon(wx.Size(48, 48)))
-        info.SetName(ver.app_name)
+        info.SetName(ver.INFO["APP_NAME"])
         info.SetVersion(
-            f" Ver.{ver.version}\n on Python {self._platform_info[2]} and wxPython {wx.__version__}."
+            f" Ver.{ver.INFO["VERSION"]}\n on Python {self._platform_info[2]} and wxPython {wx.__version__}."
         )
-        info.SetCopyright(ver.copy_right)
-        info.SetDescription(f"{ver.file_description}\n(Nuitka+MSVCによるEXE化.)")
-        info.SetLicense(ver.license)
+        info.SetCopyright(ver.COPYRIGHT["COPYRIGHT"])
+        info.SetDescription(f"{ver.INFO["FILE_DESCRIPTION"]}\n(Nuitka+MSVCによるEXE化.)")
+        info.SetLicense(ver.COPYRIGHT["LICENSE"])
         # info.SetWebSite("")
-        info.AddDeveloper(ver.author)
+        info.AddDeveloper(ver.COPYRIGHT["AUTHOR"])
         # 表示する
         AboutBox(info, self.frame)
 
@@ -1759,7 +1759,7 @@ def app_init() -> bool:
     log_level = logging.DEBUG if args.debug else logging.INFO
     logging.basicConfig(level=log_level)
     handler = logging.handlers.TimedRotatingFileHandler(
-        filename=f"{ver.app_name}.log", when="D", encoding="utf-8"
+        filename=f"{ver.INFO["APP_NAME"]}.log", when="D", encoding="utf-8"
     )
     FORMAT = "%(levelname)-9s %(asctime)s [%(filename)s:%(lineno)d] %(message)s"
     handler.setFormatter(logging.Formatter(FORMAT))
