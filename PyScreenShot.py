@@ -12,7 +12,6 @@ import logging.handlers
 import os
 import sys
 from datetime import datetime
-from enum import IntEnum, auto
 from functools import partial
 from queue import Queue
 
@@ -128,20 +127,6 @@ def copy_bitmap_to_clipboard(data):
     win32clipboard.CloseClipboard()
 
 
-# fmt: off
-class MenuIcon(IntEnum):
-    INFO = 0
-    SETTINGS         = auto()
-    QUICK_SETTINGS   = auto()
-    AUTO_SAVE_FOLDER = auto()
-    OPEN_FOLDER      = auto()
-    PERIODIC         = auto()
-    COPY_TO_CB       = auto()
-    SAVE_TO_PNG      = auto()
-    EXIT             = auto()
-# fmt: on
-
-
 class MyScreenShot(TaskBarIcon):
     # fmt: off
     """Menu IDs"""
@@ -173,6 +158,16 @@ class MyScreenShot(TaskBarIcon):
     ID_MENU_ACTIVE: int  = 690       # アクティブウィンドウ
     # 終了
     ID_MENU_EXIT: int = 991
+    """ ICON Index for ImageList """
+    ICON_INFO             = 0
+    ICON_SETTINGS         = 1
+    ICON_QUICK_SETTINGS   = 2
+    ICON_AUTO_SAVE_FOLDER = 3
+    ICON_OPEN_FOLDER      = 4
+    ICON_PERIODIC         = 5
+    ICON_COPY_TO_CB       = 6
+    ICON_SAVE_TO_PNG      = 7
+    ICON_EXIT             = 8
     """ Hotkey Modifiers """
     HK_MOD_NONE: str       = ""
     HK_MOD_SHIFT: str      = "Shift"
@@ -559,13 +554,13 @@ class MyScreenShot(TaskBarIcon):
         item = create_menu_item(
             menu, myss_cls.ID_MENU_ABOUT, "バージョン情報...", self.on_menu_show_about
         )
-        item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.INFO.value))
+        item.SetBitmap(self._icon_img.GetBitmap(myss_cls.ICON_INFO))
         menu.AppendSeparator()
         # 環境設定
         item = create_menu_item(
             menu, myss_cls.ID_MENU_SETTINGS, "環境設定...", self.on_menu_settings
         )
-        item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.SETTINGS.value))
+        item.SetBitmap(self._icon_img.GetBitmap(myss_cls.ICON_SETTINGS))
         # クイック設定
         sub_menu = wx.Menu()
         sub_item = create_menu_item(
@@ -609,7 +604,7 @@ class MyScreenShot(TaskBarIcon):
             self.on_menu_reset_sequence,
         )
         item = menu.AppendSubMenu(sub_menu, "クイック設定")
-        item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.QUICK_SETTINGS.value))
+        item.SetBitmap(self._icon_img.GetBitmap(myss_cls.ICON_QUICK_SETTINGS))
         menu.AppendSeparator()
         # 保存フォルダ
         sub_menu = wx.Menu()
@@ -624,7 +619,7 @@ class MyScreenShot(TaskBarIcon):
             if n == self.prop["save_folder_index"]:
                 sub_item.Check()
         item = menu.AppendSubMenu(sub_menu, "保存先フォルダ")
-        item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.AUTO_SAVE_FOLDER.value))
+        item.SetBitmap(self._icon_img.GetBitmap(myss_cls.ICON_AUTO_SAVE_FOLDER))
         # フォルダを開く
         sub_menu = wx.Menu()
         create_menu_item(
@@ -640,13 +635,13 @@ class MyScreenShot(TaskBarIcon):
             self.on_menu_open_folder,
         )
         item = menu.AppendSubMenu(sub_menu, "フォルダを開く")
-        item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.OPEN_FOLDER.value))
+        item.SetBitmap(self._icon_img.GetBitmap(myss_cls.ICON_OPEN_FOLDER))
         menu.AppendSeparator()
         # 定期実行設定
         item = create_menu_item(
             menu, myss_cls.ID_MENU_PERIODIC, "定期実行設定...", self.on_menu_periodic_settings
         )
-        item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.PERIODIC.value))
+        item.SetBitmap(self._icon_img.GetBitmap(myss_cls.ICON_PERIODIC))
         menu.AppendSeparator()
         # キャプチャー（クリップボード、PNGファイル）
         display_count: int = self.prop["display"]  # ディスプレイ数
@@ -666,13 +661,13 @@ class MyScreenShot(TaskBarIcon):
                 self.on_menu_imagefile,
             )
         item = menu.AppendSubMenu(sub_menu1, "クリップボードへコピー")
-        item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.COPY_TO_CB.value))
+        item.SetBitmap(self._icon_img.GetBitmap(myss_cls.ICON_COPY_TO_CB))
         item = menu.AppendSubMenu(sub_menu2, "PNGファイルへ保存")
-        item.SetBitmap(wx.Bitmap(self._icon_img.GetBitmap(MenuIcon.SAVE_TO_PNG.value)))
+        item.SetBitmap(wx.Bitmap(self._icon_img.GetBitmap(myss_cls.ICON_SAVE_TO_PNG)))
         menu.AppendSeparator()
         # 終了
         item = create_menu_item(menu, myss_cls.ID_MENU_EXIT, "終了", self.on_menu_exit)
-        item.SetBitmap(self._icon_img.GetBitmap(MenuIcon.EXIT.value))
+        item.SetBitmap(self._icon_img.GetBitmap(myss_cls.ICON_EXIT))
 
         return menu
 
