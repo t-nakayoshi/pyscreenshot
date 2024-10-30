@@ -1774,10 +1774,15 @@ def app_init() -> bool:
     # ログ設定
     log_level = logging.DEBUG if args.debug else logging.INFO
     logging.basicConfig(level=log_level)
-    handler = logging.handlers.TimedRotatingFileHandler(
-        filename=f"{ver.INFO["APP_NAME"]}.log", when="D", encoding="utf-8"
+    handler = logging.handlers.RotatingFileHandler(
+        filename=f"{ver.INFO["APP_NAME"]}.log", maxBytes=1048576, backupCount=3, encoding="utf-8"
     )
-    FORMAT = "%(levelname)-9s %(asctime)s [%(filename)s:%(lineno)d] %(message)s"
+    FORMAT_TML = "%(asctime)s.%(msecs)03d [%(levelname)-8s]"
+    FORMAT_DBG = "[%(filename)s:%(lineno)d]"
+    FORMAT_MSG = "%(message)s"
+    FORMAT = (
+        f"{FORMAT_TML} {FORMAT_DBG} {FORMAT_MSG}" if args.debug else f"{FORMAT_TML} {FORMAT_MSG}"
+    )
     handler.setFormatter(logging.Formatter(FORMAT))
     logger.addHandler(handler)
 
