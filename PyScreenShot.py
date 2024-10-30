@@ -975,7 +975,7 @@ class MyScreenShot(TaskBarIcon):
             if os.path.exists(os.path.join(path, filename)):
                 # 現在のシーケンス番号のファイルが存在した場合、空きを探す
                 ptn: str = rf"{prefix}\d{{{digits}}}\.png"
-                files: list[str] = scan_directory(path, ptn, False)
+                files: list[str] = scan_directory(path, pattern=ptn, recursive=False)
                 if not files:
                     # 存在しない -> プレフィックス＋開始番号
                     logger.debug("Sequencial file not found.")
