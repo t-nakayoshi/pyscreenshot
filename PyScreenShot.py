@@ -83,8 +83,8 @@ def enum_window_callback(hwnd: int, lparam: int, window_titles: list[str]):
     # if (class_name := win32gui.GetClassName(hwnd)) in ["CabinetWClass"]:
     #     return
     # QtのPopup、ToolTipを除外する
-    class_name: str = win32gui.GetClassName(hwnd)
-    if True in {x in class_name for x in ["QToolTip", "QPopup", "QWindowPopup", "QWindowToolTip"]}:
+    class_name = win32gui.GetClassName(hwnd)
+    if class_name is None or True in {x in class_name for x in ["QToolTip", "QPopup", "QWindowPopup", "QWindowToolTip"]}:
         return
 
     if window_text not in window_titles:

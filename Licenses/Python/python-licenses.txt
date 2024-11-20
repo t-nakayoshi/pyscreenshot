@@ -1,7 +1,7 @@
  Name         Version  License                                                                    URL                                          
- Nuitka       2.4.11   Apache Software License                                                    https://nuitka.net                           
+ Nuitka       2.5.1    Apache Software License                                                    https://nuitka.net                           
  keyboard     0.13.5   MIT License                                                                https://github.com/boppreh/keyboard          
- mss          9.0.2    MIT License                                                                https://github.com/BoboTiG/python-mss        
+ mss          10.0.0   MIT License                                                                https://github.com/BoboTiG/python-mss        
  ordered-set  4.1.0    MIT License                                                                UNKNOWN                                      
  pillow       11.0.0   CMU License (MIT-CMU)                                                      https://python-pillow.org                    
  pynput       1.7.7    GNU Lesser General Public License v3 (LGPLv3)                              https://github.com/moses-palmer/pynput       
