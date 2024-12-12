@@ -11,10 +11,10 @@ _app_name: str = "PyScreenShot"
 INFO: dict = {
     "APP_NAME": f"{_app_name}",
     "FILE_DESCRIPTION": "PyScreenShot スクリーンショットアプリケーション",
-    "FILE_VERSION": "1.0.11.0",
+    "FILE_VERSION": "1.0.12.0",
     "PRODUCT_NAME": f"{_app_name}",
-    "PRODUCT_VERSION": "1.0.11",
-    "VERSION": "1.0.11"
+    "PRODUCT_VERSION": "1.0.12",
+    "VERSION": "1.0.12"
 }
 
 COPYRIGHT: dict = {
