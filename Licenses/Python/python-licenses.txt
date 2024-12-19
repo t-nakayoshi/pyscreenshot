@@ -1,5 +1,5 @@
  Name         Version  License                                                                    URL                                          
- Nuitka       2.5.6    Apache Software License                                                    https://nuitka.net                           
+ Nuitka       2.5.7    Apache Software License                                                    https://nuitka.net                           
  keyboard     0.13.5   MIT License                                                                https://github.com/boppreh/keyboard          
  mss          10.0.0   MIT License                                                                https://github.com/BoboTiG/python-mss        
  ordered-set  4.1.0    MIT License                                                                UNKNOWN                                      
