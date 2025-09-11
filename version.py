@@ -16,7 +16,7 @@ INFO: dict = {
     "FILE_VERSION": "2.0.0.0",
     "PRODUCT_NAME": f"{_app_name}",
     "PRODUCT_VERSION": "2.0.0",
-    "VERSION": "2.0.0"
+    "VERSION": "2.0.0",
 }
 
 COPYRIGHT: dict = {
