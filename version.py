@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
-# -*- coding: UTF-8 -*-
 #
-""" version.py
+"""version.py
+
 バージョン情報
+
 """
+
 # fmt: off
 _author = "t-nakayoshi (Takayoshi Tagawa)"
 _app_name: str = "PyScreenShot"
 
 INFO: dict = {
     "APP_NAME": f"{_app_name}",
-    "FILE_DESCRIPTION": "PyScreenShot スクリーンショットアプリケーション",
-    "FILE_VERSION": "1.0.12.0",
+    "FILE_DESCRIPTION": f"{_app_name} スクリーンショットアプリケーション",
+    "FILE_VERSION": "2.0.0.0",
     "PRODUCT_NAME": f"{_app_name}",
-    "PRODUCT_VERSION": "1.0.12",
-    "VERSION": "1.0.12"
+    "PRODUCT_VERSION": "2.0.0",
+    "VERSION": "2.0.0"
 }
 
 COPYRIGHT: dict = {

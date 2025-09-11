@@ -1,0 +1,53 @@
+[project]
+name = "PyScreenShot"
+version = "2.0.0"
+description = "Screen shot application"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "keyboard>=0.13.5",
+    "mss>=10.1.0",
+    "pillow>=11.3.0",
+    "pynput>=1.8.1",
+    "pywin32>=311",
+    "screeninfo>=0.8.1",
+    "wxpython>=4.2.3",
+]
+
+[dependency-groups]
+dev = [
+    "nuitka>=2.7.14",
+    "ordered-set>=4.1.0",
+    "pip-licenses>=5.0.0",
+    "zstandard>=0.24.0",
+]
+
+[tool.ruff]
+line-length = 128
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "D1",    # undocumented
+    "D203",  # one blank line before class
+    "D213",  # multi-line summary second line
+    "F541",  # print-f-string
+    "G004",  # logging-f-string
+    "T201",  # allow print()
+    "D400", "D415",  # ignore end with period
+    "ERA001",  # allow commennted code
+    "INP001",  # ignore no __init__.py
+    "PLC1901", # allow compare-to-empty-string
+    "PLR2004", # allow magic-value-comparison
+    "RUF001", "RUF002", "RUF003",  # allow 'ambiguous unicode character'
+    "TD001", # invalid todo tag
+    "TD002", # missing todo author
+    "TD003", # missing todo link
+]
+unfixable = [
+    "F401", # unused import
+    "F841", # unused variable
+]

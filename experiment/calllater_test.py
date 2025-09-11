@@ -1,8 +1,5 @@
 import wx
 
-app = wx.App()
-
-
 def callback(a: int, b: int):
     """ """
     print(f"a={a}, id(a)={id(a)}")
@@ -10,6 +7,8 @@ def callback(a: int, b: int):
 
 
 def main():
+    app = wx.AppConsole()
+
     b = 1
     c = 2
     wx.CallLater(1000, callback, b, c)
@@ -19,6 +18,8 @@ def main():
     b += 1
     c += 1
     wx.CallLater(3000, callback, b, c)
+
+    app.MainLoop()
 
 
 if __name__ == "__main__":

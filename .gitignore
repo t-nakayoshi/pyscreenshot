@@ -43,7 +43,7 @@ Thumbs.db
 
 # Large media files
 *.mp4
-#*.tiff
+*.tiff
 *.avi
 *.flv
 *.mov
@@ -52,6 +52,9 @@ Thumbs.db
 # My virtual env
 venv/
 .venv/
+*.lock
+*.ini
+*.ps1
 
 # Python convert to Exe
 build/
@@ -63,5 +66,4 @@ dist_*/
 *.onefile-build/
 
 # wxGlade backup files
-*.py.bak
-*.wxg.bak
+*.bak

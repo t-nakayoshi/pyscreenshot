@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-# -*- coding: UTF-8 -*-
-""" mydefault.py
+"""mydefault.py
+
 * デフォルト設定等
+
 """
 
-_CONFIG_DEFAULT = {
+CONFIG_DEFAULT = {
     "basic": {
         "auto_save": "True",
         "numbering": "0",
