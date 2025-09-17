@@ -21,7 +21,7 @@ INFO: dict = {
 
 COPYRIGHT: dict = {
     "AUTHOR"   : _author,
-    "COPYRIGHT": f"Copyright(C) 2024-, {_author}. All right reserved.",
+    "COPYRIGHT": f"Copyright(C) 2024-2025, {_author}. All right reserved.",
     "LICENSE"  : "MIT License",
 }
 # fmt: on
