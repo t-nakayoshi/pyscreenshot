@@ -224,7 +224,7 @@ class PeriodicDialog(PeriodicDialogBase):
         self.EndModal(event.GetId())
         event.Skip()
 
-    def set_prop(self, settings: AppSettings) -> None:
+    def set_prop(self, displays: int, settings: AppSettings) -> None:
         """設定値をコントロールに反映する"""
         # 実行状態によるボタンの有効/無効設定
         self.button_periodic_start.Enable(not settings.periodic_capture)
@@ -237,7 +237,7 @@ class PeriodicDialog(PeriodicDialogBase):
         self.choice_periodic_stopkey_modifire.SetSelection(settings.periodic_stop_modifier)
         self.choice_periodic_stop_fkey.SetSelection(settings.periodic_stop_fkey)
         # ターゲット
-        for i in range(settings.display):
+        for i in range(displays):
             item: str = f"ディスプレイ {i + 1}"
             self.choice_periodic_capture_target.Insert(
                 item,

@@ -5,9 +5,9 @@ from res import sound
 
 class SoundManager:
     def __init__(self) -> None:
-        self._beep = Sound()
+        self._beep: Sound = Sound()
         self._beep.CreateFromData(sound.get_snd_beep_bytearray())
-        self._success = Sound()
+        self._success: Sound = Sound()
         self._success.CreateFromData(sound.get_snd_success_bytearray())
 
     def success(self) -> None:

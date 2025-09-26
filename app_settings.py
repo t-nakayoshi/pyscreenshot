@@ -3,7 +3,6 @@ from dataclasses import dataclass, field
 
 @dataclass
 class AppSettings:
-    display: int = 1
     auto_save: bool = True
     save_folders: list[str] = field(default_factory=list)
     save_folder_index: int = -1
@@ -28,10 +27,8 @@ class AppSettings:
     periodic_target: int = -1
     periodic_numbering: int = 0
 
-    @property
-    def delayed_time_ms(self) -> int:
+    def delayed_time_to_ms(self) -> int:
         return self.delayed_time * 1000
 
-    @property
-    def periodic_interval_ms(self) -> int:
+    def periodic_interval_to_ms(self) -> int:
         return self.periodic_interval * 1000

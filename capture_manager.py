@@ -7,9 +7,10 @@ import mss.tools
 import win32clipboard
 import win32gui
 from PIL import Image
+from wx.adv import Sound
 
 from app_settings import AppSettings
-from sound_manager import SoundManager
+from res import sound
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +38,10 @@ def _enum_window_callback(hwnd: int, _lparam: int, window_titles: list[str]) -> 
 
 class CaptureManager:
     def __init__(self) -> None:
-        self.sound_manager = SoundManager()
+        self._beep: Sound = Sound()
+        self._beep.CreateFromData(sound.get_snd_beep_bytearray())
+        self._success: Sound = Sound()
+        self._success.CreateFromData(sound.get_snd_success_bytearray())
 
     def _get_active_window(self) -> tuple[str, dict] | None:
         window_titles: list[str] = []
@@ -75,6 +79,14 @@ class CaptureManager:
         logger.debug(f"Trimming ({top}, {left})-({right}, {bottom})")
         return image.crop((left, top, right, bottom))
 
+    def success(self) -> None:
+        """成功時サウンド"""
+        self._success.Play()
+
+    def beep(self) -> None:
+        """エラー時サウンド"""
+        self._beep.Play()
+
     def execute_capture(self, moni_no: int, filename: str, settings: AppSettings) -> None:
         img = None
         with mss.mss() as sct:
@@ -92,7 +104,7 @@ class CaptureManager:
                 if (sct_img := sct.grab(area_coord)) is not None:
                     img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
             else:
-                self.sound_manager.beep()
+                self.beep()
 
         if img:
             logger.debug(
@@ -111,6 +123,6 @@ class CaptureManager:
                 img.save(filename)
 
             if settings.sound_on_capture:
-                self.sound_manager.success()
+                self.success()
         else:
             logger.error("Can not captured!")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""mydefault.py
+"""config_default.py
 
 * デフォルト設定等
 
@@ -14,10 +14,26 @@ CONFIG_DEFAULT = {
         "sequence_begin": "0",
         "save_folder_index": "-1",
     },
-    "other": {"mouse_cursor": "False", "sound_on_capture": "False"},
-    "delayed_capture": {"delayed_capture": "False", "delayed_time": "5"},
-    "trimming": {"trimming": "False", "top": "0", "bottom": "0", "left": "0", "right": "0"},
-    "hotkey": {"clipboard": "0", "imagefile": "1", "activewin": "8"},
+    "other": {
+        "mouse_cursor": "False",
+        "sound_on_capture": "False",
+    },
+    "delayed_capture": {
+        "delayed_capture": "False",
+        "delayed_time": "5",
+    },
+    "trimming": {
+        "trimming": "False",
+        "top": "0",
+        "bottom": "0",
+        "left": "0",
+        "right": "0",
+    },
+    "hotkey": {
+        "clipboard": "0",
+        "imagefile": "1",
+        "activewin": "8",
+    },
     "periodic": {
         "save_folder": "",
         "interval": "3",

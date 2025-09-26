@@ -8,7 +8,6 @@
 """
 
 import argparse
-import configparser
 import logging
 import logging.handlers
 import os
@@ -19,7 +18,6 @@ from pathlib import Path
 from queue import Queue
 from zoneinfo import ZoneInfo
 
-import keyboard
 import wx
 from screeninfo import get_monitors
 from wx.adv import (
@@ -29,19 +27,18 @@ from wx.adv import (
     TaskBarIcon,
 )
 
-import mydefine as mydef
 import version as ver
 from app_settings import AppSettings
 from capture_manager import CaptureManager
 from config_manager import ConfigManager
 from dialogs import PeriodicDialog, SettingsDialog
+from hotkey_manager import HotkeyManager
 from myutils.util import (
     get_special_directory,
     platform_info,
     scan_directory,
 )
 from res import app_icon, menu_image
-from sound_manager import SoundManager
 
 logger = logging.getLogger(__name__)
 
@@ -68,8 +65,7 @@ def create_menu_item(
 
 class ScreenShot(TaskBarIcon):
     # fmt: off
-    """Menu IDs"""
-
+    #--- Menu IDs
     # バージョン情報
     ID_MENU_HELP: int  = 901         # ヘルプを表示
     ID_MENU_ABOUT: int = 902         # バージョン情報
@@ -81,7 +77,7 @@ class ScreenShot(TaskBarIcon):
     ID_MENU_DELAYED: int  = 104      # 遅延キャプチャーを有効
     ID_MENU_TRIMMING: int = 105      # トリミングを有効
     ID_MENU_RESET: int    = 106      # シーケンス番号のリセット
-    #--- 保存先フォルダ(Base)
+    # 保存先フォルダ(Base)
     ID_MENU_FOLDER1: int = 201
     # フォルダを開く
     ID_MENU_OPEN_AUTO: int     = 301 # 自動保存フォルダ(選択中)
@@ -98,7 +94,7 @@ class ScreenShot(TaskBarIcon):
     ID_MENU_ACTIVE: int  = 690       # アクティブウィンドウ
     # 終了
     ID_MENU_EXIT: int = 991
-    """ ICON Index for ImageList """
+    #--- ICON Index for ImageList
     ICON_INFO             = 0
     ICON_SETTINGS         = 1
     ICON_QUICK_SETTINGS   = 2
@@ -108,18 +104,11 @@ class ScreenShot(TaskBarIcon):
     ICON_COPY_TO_CB       = 6
     ICON_SAVE_TO_PNG      = 7
     ICON_EXIT             = 8
-    """ Hotkey Modifiers """
-    HK_MOD_NONE: str       = ""
-    HK_MOD_SHIFT: str      = "Shift"
-    HK_MOD_CTRL: str       = "Ctrl"
-    HK_MOD_ALT: str        = "Alt"
-    HK_MOD_CTRL_ALT: str   = f"{HK_MOD_CTRL}+{HK_MOD_ALT}"
-    HK_MOD_CTRL_SHIFT: str = f"{HK_MOD_CTRL}+{HK_MOD_SHIFT}"
-    HK_MOD_SHIFT_ALT: str  = f"{HK_MOD_SHIFT}+{HK_MOD_ALT}"
-    """ Other constants """
+    #--- Other constants
     BASE_DELAY_TIME: int = 400   # (ms)
     MAX_SAVE_FOLDERS: int = 64
     # fmt: on
+
     # 設定ファイルパス
     CONFIG_FILE: Path = Path()
     # ヘルプファイル（現在未使用）
@@ -132,25 +121,20 @@ class ScreenShot(TaskBarIcon):
         self.frame = frame
         super().__init__()
         self.Bind(EVT_TASKBAR_LEFT_DCLICK, self.on_menu_settings)
-        # プロパティ
-        myss_cls = ScreenShot
-        self.settings = AppSettings()
-        self.config_manager = ConfigManager(ScreenShot.CONFIG_FILE, ScreenShot.MY_PICTURES)
-        self.capture_manager = CaptureManager()
-        self.sound_manager = SoundManager()
+        # ディスプレイ数取得
+        self.display_count = len(get_monitors())
 
-        self.capture_hotkey_tbl = (myss_cls.HK_MOD_CTRL_ALT, myss_cls.HK_MOD_CTRL_SHIFT)
+        # 設定管理オブジェクト生成
+        self.config = ConfigManager(ScreenShot.CONFIG_FILE, ScreenShot.MY_PICTURES, ScreenShot.MAX_SAVE_FOLDERS)
+        self.settings = AppSettings()
+        # キャプチャー管理、サウンド管理オブジェクト生成
+        self.capture = CaptureManager()
+        # ホット・キー管理オブジェクト生成
+        self.hotkey = HotkeyManager()
+
         # キャプチャーHotkeyアクセレーターリスト（0:デスクトップ、1～:ディスプレイ、last:アクティブウィンドウ）
         self.menu_clipboard: list[tuple] = []
         self.menu_imagefile: list[tuple] = []
-        # 定期実行停止Hotkey
-        self.periodic_stop_hotkey_tbl: tuple = (
-            myss_cls.HK_MOD_NONE,
-            myss_cls.HK_MOD_SHIFT,
-            myss_cls.HK_MOD_CTRL,
-            myss_cls.HK_MOD_ALT,
-        )
-        self.hotkey_periodic_stop: str = ""
         # シーケンス番号保持用
         self.sequence: int = -1
         # キャプチャー要求Queue
@@ -172,13 +156,14 @@ class ScreenShot(TaskBarIcon):
         """
         # 動作環境情報取得
         self._platform_info: tuple = platform_info()
-        # ディスプレイ数取得
-        self.settings.display = len(get_monitors())
         # Load Application ICON
         self._app_icons = wx.IconBundle(app_icon.get_app_icon_stream(), wx.BITMAP_TYPE_ICO)  # pyright: ignore[reportCallIssue,reportArgumentType]
         self.SetIcon(wx.BitmapBundle(self._app_icons.GetIcon(wx.Size(16, 16))), TRAY_TOOLTIP)
-        # 設定値の初期設定と設定ファイルの読み込み
-        self.load_config()
+        # 設定値の初期設定
+        self.config.config_from_settings(self.settings)
+        # 設定ファイルの読み込み
+        if not self.config.load():
+            logger.warning(f"設定ファイルの読み込み/解析に失敗しました。")
         # メニューアイコン画像の展開
         w, h = menu_image.image_size
         self._icon_img = wx.ImageList(w, h)
@@ -186,9 +171,60 @@ class ScreenShot(TaskBarIcon):
             self._icon_img.Add(menu_image.catalog[name].GetBitmap())
 
         # キャプチャーHotkeyアクセレーター展開、設定
-        self.set_capture_hotkey()
+        self.add_caputure_hotkeys()
         # 定期実行停止用Hotkey展開、設定
-        self.set_periodic_stop_hotkey()
+        self.add_periodic_stop_hotkey()
+
+    def add_caputure_hotkeys(self) -> None:
+        """キャプチャー用ホット・キー登録処理
+
+        * キャプチャー用ホット・キーとメニューのアクセレーター文字列を展開する
+        * キャプチャー用ホット・キーを登録する
+
+        Args:
+            none
+
+        Returns:
+            none
+
+        """
+        if ScreenShot.disable_hotkeys:
+            return
+
+        # 設定値(prop)からキャプチャー用の修飾キーを取得し、それぞれのホット・キー文字列を展開する
+        # hk_clipbd: str = self.capture_hotkey_tbl[self.settings.hotkey_clipboard]
+        hk_clipbd: str = self.hotkey.get_capture_hotkey(self.settings.hotkey_clipboard)
+        # hk_imagef: str = self.capture_hotkey_tbl[self.settings.hotkey_imagefile]
+        hk_imagef: str = self.hotkey.get_capture_hotkey(self.settings.hotkey_imagefile)
+
+        # Menu, Hotkeyの情報を生成する（[0]:Hotkey, [1]:Menu ID, [2]:Menu name）
+        self.menu_clipboard.clear()
+        self.menu_imagefile.clear()
+        disp: int = self.display_count
+        # デスクトップ[0]
+        self.menu_clipboard.append((f"{hk_clipbd}+0", ScreenShot.ID_MENU_SCREEN0_CB, "0: デスクトップ"))
+        self.menu_imagefile.append((f"{hk_imagef}+0", ScreenShot.ID_MENU_SCREEN0, "0: デスクトップ"))
+        # ディスプレイ[1～]
+        for n in range(1, disp + 1):
+            self.menu_clipboard.append((f"{hk_clipbd}+{n}", ScreenShot.ID_MENU_SCREEN0_CB + n, f"{n}: ディスプレイ {n}"))
+            self.menu_imagefile.append((f"{hk_imagef}+{n}", ScreenShot.ID_MENU_SCREEN0 + n, f"{n}: ディスプレイ {n}"))
+        # アクティブウィンドウ
+        fkey: int = self.settings.hotkey_activewin + 1
+        self.menu_clipboard.append(
+            (f"{hk_clipbd}+F{fkey}", ScreenShot.ID_MENU_ACTIVE_CB, f"{disp + 1}: アクティブウィンドウ"),
+        )
+        self.menu_imagefile.append(
+            (f"{hk_imagef}+F{fkey}", ScreenShot.ID_MENU_ACTIVE, f"{disp + 1}: アクティブウィンドウ"),
+        )
+
+        # Hotkeyの登録（デスクトップ[0]、ディスプレイ[1～]、アクティブウィンドウ[last]）
+        for n in range(len(self.menu_clipboard)):
+            hotkey_clipboard, id_clipboard, _ = self.menu_clipboard[n]
+            hotkey_imagefile, id_imagefile, _ = self.menu_imagefile[n]
+
+            logger.debug(f"Hotkey[{n}]={hotkey_clipboard}, {hotkey_imagefile}, id={id_clipboard}, {id_imagefile}")
+            self.hotkey.add_clipboard(hotkey_clipboard, id_clipboard, self.copy_to_clipboard)
+            self.hotkey.add_imagefile(hotkey_imagefile, id_imagefile, self.save_to_imagefile)
 
     def remove_capture_hotkey(self) -> None:
         """キャプチャー用ホット・キー削除処理
@@ -203,96 +239,9 @@ class ScreenShot(TaskBarIcon):
 
         """
         # 現在のHotkeyを削除
-        for hotkey, _, _ in self.menu_clipboard:
-            keyboard.remove_hotkey(hotkey)
-        for hotkey, _, _ in self.menu_imagefile:
-            keyboard.remove_hotkey(hotkey)
+        self.hotkey.remove_capture()
 
-    def set_capture_hotkey(self) -> None:
-        """キャプチャー用ホット・キー登録処理
-
-        * キャプチャー用ホット・キーとメニューのアクセレーター文字列を展開する
-        * キャプチャー用ホット・キーを登録する
-
-        Args:
-            none
-
-        Returns:
-            none
-
-        """
-        myss_cls = ScreenShot
-        if myss_cls.disable_hotkeys:
-            return
-
-        # 設定値(prop)からキャプチャー用の修飾キーを取得し、それぞれのホット・キー文字列を展開する
-        hk_clipbd: str = self.capture_hotkey_tbl[self.settings.hotkey_clipboard]
-        hk_imagef: str = self.capture_hotkey_tbl[self.settings.hotkey_imagefile]
-
-        # Menu, Hotkeyの情報を生成する（[0]:Hotkey, [1]:Menu ID, [2]:Menu name）
-        self.menu_clipboard.clear()
-        self.menu_imagefile.clear()
-        disp: int = self.settings.display
-        # デスクトップ[0]
-        self.menu_clipboard.append(
-            (f"{hk_clipbd}+0", myss_cls.ID_MENU_SCREEN0_CB, "0: デスクトップ"),
-        )
-        self.menu_imagefile.append((f"{hk_imagef}+0", myss_cls.ID_MENU_SCREEN0, "0: デスクトップ"))
-        # ディスプレイ[1～]
-        for n in range(1, disp + 1):
-            self.menu_clipboard.append(
-                (f"{hk_clipbd}+{n}", myss_cls.ID_MENU_SCREEN0_CB + n, f"{n}: ディスプレイ {n}"),
-            )
-            self.menu_imagefile.append(
-                (f"{hk_imagef}+{n}", myss_cls.ID_MENU_SCREEN0 + n, f"{n}: ディスプレイ {n}"),
-            )
-        # アクティブウィンドウ
-        self.menu_clipboard.append(
-            (
-                f"{hk_clipbd}+F{self.settings.hotkey_activewin + 1}",
-                myss_cls.ID_MENU_ACTIVE_CB,
-                f"{disp + 1}: アクティブウィンドウ",
-            ),
-        )
-        self.menu_imagefile.append(
-            (
-                f"{hk_imagef}+F{self.settings.hotkey_activewin + 1}",
-                myss_cls.ID_MENU_ACTIVE,
-                f"{disp + 1}: アクティブウィンドウ",
-            ),
-        )
-
-        # Hotkeyの登録（デスクトップ[0]、ディスプレイ[1～]、アクティブウィンドウ[last]）
-        for n in range(len(self.menu_clipboard)):
-            logger.debug(
-                f"Hotkey[{n}]={self.menu_clipboard[n][0]}, {self.menu_imagefile[n][0]}, \
-                    id={self.menu_clipboard[n][1]}, {self.menu_imagefile[n][1]}",
-            )
-            keyboard.add_hotkey(
-                self.menu_clipboard[n][0],
-                wx.CallAfter,
-                (self.copy_to_clipboard, self.menu_clipboard[n][1], False),
-            )
-            keyboard.add_hotkey(
-                self.menu_imagefile[n][0],
-                wx.CallAfter,
-                (self.save_to_imagefile, self.menu_imagefile[n][1], False),
-            )
-
-    def remove_periodic_stop_hotkey(self) -> None:
-        """定期実行停止ホット・キー削除処理
-
-        Args:
-            none
-
-        Returns:
-            none
-
-        """
-        # 現在のHotkeyを削除
-        keyboard.remove_hotkey(self.hotkey_periodic_stop)
-
-    def set_periodic_stop_hotkey(self) -> None:
+    def add_periodic_stop_hotkey(self) -> None:
         """定期実行停止ホット・キー登録処理
 
         Args:
@@ -306,18 +255,14 @@ class ScreenShot(TaskBarIcon):
             return
 
         # 設定値(prop)からホット・キー文字列を展開する
-        modifire: str = self.periodic_stop_hotkey_tbl[self.settings.periodic_stop_modifier]
+        # modifire: str = self.periodic_stop_hotkey_tbl[self.settings.periodic_stop_modifier]
+        modifire: str = self.hotkey.get_periodic_stop_hotkey(self.settings.periodic_stop_modifier)
         fkey: str = f"F{self.settings.periodic_stop_fkey + 1}"
-        self.hotkey_periodic_stop = fkey if len(modifire) == 0 else f"{modifire}+{fkey}"
-        keyboard.add_hotkey(
-            self.hotkey_periodic_stop,
-            lambda: wx.CallAfter(self.stop_periodic_capture),
-        )
 
-    def load_config(self) -> None:
-        """設定値読み込み処理
+        self.hotkey.add_periodic_stop(fkey if len(modifire) == 0 else f"{modifire}+{fkey}", self.stop_periodic_capture)
 
-        * 各種設定値を初期設定後、設定ファイルから読み込む。
+    def remove_periodic_stop_hotkey(self) -> None:
+        """定期実行停止ホット・キー削除処理
 
         Args:
             none
@@ -326,36 +271,8 @@ class ScreenShot(TaskBarIcon):
             none
 
         """
-        if not self.config_manager.config_path.exists():
-            logger.warning("設定ファイルがありません。デフォルト設定で作成します。")
-            default_config = configparser.ConfigParser()
-            default_config.read_dict(mydef.CONFIG_DEFAULT)
-            try:
-                with self.config_manager.config_path.open("w", encoding="utf-8") as fc:
-                    default_config.write(fc)
-            except OSError as e:
-                logger.warning(f"設定ファイルが作成できません。({e.errno})")
-
-        if not self.config_manager.load_config_file():
-            self.config_manager.config.read_dict(mydef.CONFIG_DEFAULT)
-
-        if self.config_manager.to_app_settings(self.settings, ScreenShot.MAX_SAVE_FOLDERS):
-            self.save_config()
-
-    def save_config(self) -> None:
-        """設定値保存処理
-
-        * 各種設定値をファイルの書き込む。
-
-        Args:
-            none
-
-        Returns:
-            none
-
-        """
-        self.config_manager.from_app_settings(self.settings)
-        self.config_manager.save_config_file()
+        # 現在のHotkeyを削除
+        self.hotkey.remove_periodic_stop()
 
     def CreatePopupMenu(self) -> wx.Menu:
         """Popupメニューの生成 (override)
@@ -370,31 +287,30 @@ class ScreenShot(TaskBarIcon):
             wx.Menuオブジェクト
 
         """
-        myss_cls = ScreenShot
         # メニューの生成
         menu = wx.Menu()
         # バージョン情報
         item = create_menu_item(
             menu,
-            myss_cls.ID_MENU_ABOUT,
+            ScreenShot.ID_MENU_ABOUT,
             "バージョン情報...",
             self.on_menu_show_about,
         )
-        item.SetBitmap(wx.BitmapBundle(self._icon_img.GetBitmap(myss_cls.ICON_INFO)))
+        item.SetBitmap(wx.BitmapBundle(self._icon_img.GetBitmap(ScreenShot.ICON_INFO)))
         menu.AppendSeparator()
         # 環境設定
         item = create_menu_item(
             menu,
-            myss_cls.ID_MENU_SETTINGS,
+            ScreenShot.ID_MENU_SETTINGS,
             "環境設定...",
             self.on_menu_settings,
         )
-        item.SetBitmap(wx.BitmapBundle(self._icon_img.GetBitmap(myss_cls.ICON_SETTINGS)))
+        item.SetBitmap(wx.BitmapBundle(self._icon_img.GetBitmap(ScreenShot.ICON_SETTINGS)))
         # クイック設定
         sub_menu = wx.Menu()
         sub_item = create_menu_item(
             sub_menu,
-            myss_cls.ID_MENU_MCURSOR,
+            ScreenShot.ID_MENU_MCURSOR,
             "マウスカーソルをキャプチャーする",
             self.on_menu_toggle_item,
             kind=wx.ITEM_CHECK,
@@ -403,7 +319,7 @@ class ScreenShot(TaskBarIcon):
         sub_item.Enable(enable=False)
         sub_item = create_menu_item(
             sub_menu,
-            myss_cls.ID_MENU_SOUND,
+            ScreenShot.ID_MENU_SOUND,
             "キャプチャー終了時に音を鳴らす",
             self.on_menu_toggle_item,
             kind=wx.ITEM_CHECK,
@@ -411,7 +327,7 @@ class ScreenShot(TaskBarIcon):
         sub_item.Check(self.settings.sound_on_capture)
         sub_item = create_menu_item(
             sub_menu,
-            myss_cls.ID_MENU_DELAYED,
+            ScreenShot.ID_MENU_DELAYED,
             "遅延キャプチャーをする",
             self.on_menu_toggle_item,
             kind=wx.ITEM_CHECK,
@@ -419,7 +335,7 @@ class ScreenShot(TaskBarIcon):
         sub_item.Check(self.settings.delayed_capture)
         sub_item = create_menu_item(
             sub_menu,
-            myss_cls.ID_MENU_TRIMMING,
+            ScreenShot.ID_MENU_TRIMMING,
             "トリミングをする",
             self.on_menu_toggle_item,
             kind=wx.ITEM_CHECK,
@@ -427,19 +343,19 @@ class ScreenShot(TaskBarIcon):
         sub_item.Check(self.settings.trimming)
         sub_item = create_menu_item(
             sub_menu,
-            myss_cls.ID_MENU_RESET,
+            ScreenShot.ID_MENU_RESET,
             "シーケンス番号のリセット",
             self.on_menu_reset_sequence,
         )
         item = menu.AppendSubMenu(sub_menu, "クイック設定")
-        item.SetBitmap(wx.BitmapBundle(self._icon_img.GetBitmap(myss_cls.ICON_QUICK_SETTINGS)))
+        item.SetBitmap(wx.BitmapBundle(self._icon_img.GetBitmap(ScreenShot.ICON_QUICK_SETTINGS)))
         menu.AppendSeparator()
         # 保存フォルダ
         sub_menu = wx.Menu()
         for n, folder in enumerate(self.settings.save_folders):
             sub_item = create_menu_item(
                 sub_menu,
-                myss_cls.ID_MENU_FOLDER1 + n,
+                ScreenShot.ID_MENU_FOLDER1 + n,
                 f"{n + 1}: {folder}",
                 self.on_menu_select_save_folder,
                 kind=wx.ITEM_RADIO,
@@ -447,58 +363,57 @@ class ScreenShot(TaskBarIcon):
             if n == self.settings.save_folder_index:
                 sub_item.Check()
         item = menu.AppendSubMenu(sub_menu, "保存先フォルダ")
-        item.SetBitmap(wx.BitmapBundle(self._icon_img.GetBitmap(myss_cls.ICON_AUTO_SAVE_FOLDER)))
+        item.SetBitmap(wx.BitmapBundle(self._icon_img.GetBitmap(ScreenShot.ICON_AUTO_SAVE_FOLDER)))
         # フォルダを開く
         sub_menu = wx.Menu()
         create_menu_item(
             sub_menu,
-            myss_cls.ID_MENU_OPEN_AUTO,
+            ScreenShot.ID_MENU_OPEN_AUTO,
             "1: 自動保存先フォルダ(選択中)",
             self.on_menu_open_folder,
         )
         create_menu_item(
             sub_menu,
-            myss_cls.ID_MENU_OPEN_PERIODIC,
+            ScreenShot.ID_MENU_OPEN_PERIODIC,
             "2: 定期実行フォルダ",
             self.on_menu_open_folder,
         )
         item = menu.AppendSubMenu(sub_menu, "フォルダを開く")
-        item.SetBitmap(wx.BitmapBundle(self._icon_img.GetBitmap(myss_cls.ICON_OPEN_FOLDER)))
+        item.SetBitmap(wx.BitmapBundle(self._icon_img.GetBitmap(ScreenShot.ICON_OPEN_FOLDER)))
         menu.AppendSeparator()
         # 定期実行設定
         item = create_menu_item(
             menu,
-            myss_cls.ID_MENU_PERIODIC,
+            ScreenShot.ID_MENU_PERIODIC,
             "定期実行設定...",
             self.on_menu_periodic_settings,
         )
-        item.SetBitmap(wx.BitmapBundle(self._icon_img.GetBitmap(myss_cls.ICON_PERIODIC)))
+        item.SetBitmap(wx.BitmapBundle(self._icon_img.GetBitmap(ScreenShot.ICON_PERIODIC)))
         menu.AppendSeparator()
         # キャプチャー（クリップボード、PNGファイル）
-        # display_count: int = self.prop["display"]
         sub_menu1 = wx.Menu()
         sub_menu2 = wx.Menu()
         for n in range(len(self.menu_clipboard)):
             create_menu_item(
                 sub_menu1,
                 self.menu_clipboard[n][1],
-                f"{self.menu_clipboard[n][2]}\t{self.menu_clipboard[n][0] if not myss_cls.disable_hotkeys else ''}",
+                f"{self.menu_clipboard[n][2]}\t{self.menu_clipboard[n][0] if not ScreenShot.disable_hotkeys else ''}",
                 self.on_menu_clipboard,
             )
             create_menu_item(
                 sub_menu2,
                 self.menu_imagefile[n][1],
-                f"{self.menu_imagefile[n][2]}\t{self.menu_imagefile[n][0] if not myss_cls.disable_hotkeys else ''}",
+                f"{self.menu_imagefile[n][2]}\t{self.menu_imagefile[n][0] if not ScreenShot.disable_hotkeys else ''}",
                 self.on_menu_imagefile,
             )
         item = menu.AppendSubMenu(sub_menu1, "クリップボードへコピー")
-        item.SetBitmap(wx.BitmapBundle(self._icon_img.GetBitmap(myss_cls.ICON_COPY_TO_CB)))
+        item.SetBitmap(wx.BitmapBundle(self._icon_img.GetBitmap(ScreenShot.ICON_COPY_TO_CB)))
         item = menu.AppendSubMenu(sub_menu2, "PNGファイルへ保存")
-        item.SetBitmap(wx.BitmapBundle(self._icon_img.GetBitmap(myss_cls.ICON_SAVE_TO_PNG)))
+        item.SetBitmap(wx.BitmapBundle(self._icon_img.GetBitmap(ScreenShot.ICON_SAVE_TO_PNG)))
         menu.AppendSeparator()
         # 終了
-        item = create_menu_item(menu, myss_cls.ID_MENU_EXIT, "終了", self.on_menu_exit)
-        item.SetBitmap(wx.BitmapBundle(self._icon_img.GetBitmap(myss_cls.ICON_EXIT)))
+        item = create_menu_item(menu, ScreenShot.ID_MENU_EXIT, "終了", self.on_menu_exit)
+        item.SetBitmap(wx.BitmapBundle(self._icon_img.GetBitmap(ScreenShot.ICON_EXIT)))
 
         return menu
 
@@ -518,7 +433,7 @@ class ScreenShot(TaskBarIcon):
         logger.debug(f"do_capture {moni_no=}, {filename=}")
 
         try:
-            self.capture_manager.execute_capture(
+            self.capture.execute_capture(
                 moni_no=moni_no,
                 filename=filename,
                 settings=self.settings,
@@ -559,7 +474,7 @@ class ScreenShot(TaskBarIcon):
     def on_menu_settings(self, _event: wx.Event) -> None:
         """Settingメニューイベントハンドラ
 
-        * 環境の設定ダイヤログを表示する。
+        * 環境設定ダイヤログを表示する。
 
         Args:
             event (wx.EVENT): EVENTオブジェクト
@@ -605,7 +520,7 @@ class ScreenShot(TaskBarIcon):
                     or old_settings.hotkey_activewin != self.settings.hotkey_activewin
                 ):
                     self.remove_capture_hotkey()
-                    self.set_capture_hotkey()
+                    self.add_caputure_hotkeys()
                     logger.debug("Change capture Hotkey.")
 
     def on_menu_toggle_item(self, event: wx.Event) -> None:
@@ -623,15 +538,14 @@ class ScreenShot(TaskBarIcon):
             none
 
         """
-        myss_cls = ScreenShot
         match event.GetId():
-            case myss_cls.ID_MENU_MCURSOR:  # マウスカーソルキャプチャー
+            case ScreenShot.ID_MENU_MCURSOR:  # マウスカーソルキャプチャー
                 self.settings.capture_mcursor = not self.settings.capture_mcursor
-            case myss_cls.ID_MENU_SOUND:  # キャプチャー終了時に音を鳴らす
+            case ScreenShot.ID_MENU_SOUND:  # キャプチャー終了時に音を鳴らす
                 self.settings.sound_on_capture = not self.settings.sound_on_capture
-            case myss_cls.ID_MENU_DELAYED:  # 遅延キャプチャー
+            case ScreenShot.ID_MENU_DELAYED:  # 遅延キャプチャー
                 self.settings.delayed_capture = not self.settings.delayed_capture
-            case myss_cls.ID_MENU_TRIMMING:  # トリミング
+            case ScreenShot.ID_MENU_TRIMMING:  # トリミング
                 self.settings.trimming = not self.settings.trimming
             case _:
                 pass
@@ -730,13 +644,13 @@ class ScreenShot(TaskBarIcon):
                         or old_settings.periodic_stop_fkey != self.settings.periodic_stop_fkey
                     ):
                         self.remove_periodic_stop_hotkey()
-                        self.set_periodic_stop_hotkey()
+                        self.add_periodic_stop_hotkey()
                         logger.debug("Change periodic stop Hotkey.")
                 case wx.ID_EXECUTE:
                     logger.debug("on_menu_periodic_settings closed 'Start'")
                     # 実行開始
                     self.settings.periodic_capture = True
-                    wx.CallLater(self.settings.periodic_interval_ms, self.do_periodic)
+                    wx.CallLater(self.settings.periodic_interval_to_ms(), self.do_periodic)
                 case wx.ID_STOP:
                     logger.debug("on_menu_periodic_settings closed 'Stop'")
                     # 実行停止
@@ -748,7 +662,7 @@ class ScreenShot(TaskBarIcon):
         self.settings.periodic_capture = False
         logger.debug("Stop periodic capture")
         if self.settings.sound_on_capture:
-            self.sound_manager.success()
+            self.capture.success()
 
     # ruff: noqa: FBT001, FBT002
     def create_filename(self, periodic: bool = False) -> str:
@@ -832,7 +746,7 @@ class ScreenShot(TaskBarIcon):
             self.req_queue.put((moni_no, filename))
             wx.CallAfter(self.do_capture)
             # 次回を予約
-            wx.CallLater(self.settings.periodic_interval_ms, self.do_periodic)
+            wx.CallLater(self.settings.periodic_interval_to_ms(), self.do_periodic)
 
     def copy_to_clipboard(self, menu_id: int, from_menu: bool = True) -> None:
         """キャプチャー要求処理（Clipboardコピー）
@@ -847,13 +761,16 @@ class ScreenShot(TaskBarIcon):
             none
 
         """
-        myss_cls = ScreenShot
         # ターゲット取得
-        moni_no: int = 90 if menu_id == myss_cls.ID_MENU_ACTIVE_CB else (menu_id - myss_cls.ID_MENU_SCREEN0_CB)
+        moni_no: int = 90 if menu_id == ScreenShot.ID_MENU_ACTIVE_CB else (menu_id - ScreenShot.ID_MENU_SCREEN0_CB)
         self.req_queue.put((moni_no, ""))
         # 遅延時間算出（遅延キャプチャー以外でメニュー経由は"BASE_DELAY_TIME"遅延させる）
         delay_ms: int = (
-            self.settings.delayed_time_ms if self.settings.delayed_capture else 0 if not from_menu else myss_cls.BASE_DELAY_TIME
+            self.settings.delayed_time_to_ms()
+            if self.settings.delayed_capture
+            else 0
+            if not from_menu
+            else ScreenShot.BASE_DELAY_TIME
         )
         # キャプチャー実行
         wx.CallLater(delay_ms, self.do_capture)
@@ -871,9 +788,8 @@ class ScreenShot(TaskBarIcon):
             none
 
         """
-        myss_cls = ScreenShot
         # ターゲット取得
-        moni_no: int = 90 if menu_id == myss_cls.ID_MENU_ACTIVE else (menu_id - myss_cls.ID_MENU_SCREEN0)
+        moni_no: int = 90 if menu_id == ScreenShot.ID_MENU_ACTIVE else (menu_id - ScreenShot.ID_MENU_SCREEN0)
         # 保存ファイル名生成
         filename: str = self.create_filename(self.settings.periodic_capture)
         if len(filename) == 0:
@@ -881,7 +797,11 @@ class ScreenShot(TaskBarIcon):
 
         self.req_queue.put((moni_no, filename))
         delay_ms: int = (
-            self.settings.delayed_time_ms if self.settings.delayed_capture else 0 if not from_menu else myss_cls.BASE_DELAY_TIME
+            self.settings.delayed_time_to_ms()
+            if self.settings.delayed_capture
+            else ScreenShot.BASE_DELAY_TIME
+            if from_menu
+            else 0
         )
         # キャプチャー実行
         wx.CallLater(delay_ms, self.do_capture)
@@ -926,7 +846,8 @@ class ScreenShot(TaskBarIcon):
             none
 
         """
-        self.save_config()  # 設定値を保存
+        # 設定値を保存
+        self.config.save()
 
         wx.CallAfter(self.Destroy)
         self.frame.Close()
